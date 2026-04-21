@@ -1,26 +1,30 @@
 import 'cc'; // mock module
 
-describe('CardComponent', () => {
+// TODO: CardComponent is a Cocos Creator component that requires the full cc runtime
+// to instantiate. Real assertions are deferred until a Cocos Creator headless runner
+// or a component adapter is available.
+// All suites are marked `.skip` to prevent fake assertions from masking coverage.
+
+describe.skip('CardComponent', () => {
   describe('showCardFace', () => {
     it('should display card suit and rank', () => {
-      // CardComponent.showCardFace({ suit: 'spades', rank: 'A', revealed: true })
-      // Expected: label shows '♠A'
-      expect(true).toBe(true); // placeholder - requires Cocos runtime
+      // TODO: Instantiate CardComponent with cc mock, call showCardFace
+      // Expected: label.string === '♠A'
     });
 
     it('should show card back when revealed is false', () => {
-      expect(true).toBe(true); // placeholder
+      // TODO: Call showCardFace({ suit: 'hearts', rank: 'K', revealed: false })
+      // Expected: label shows card-back placeholder text
     });
   });
 
   describe('flipCard', () => {
     it('should trigger a tween animation', async () => {
-      // Expected: tween called with rotateY animation
-      expect(true).toBe(true); // placeholder
+      // TODO: Spy on cc.tween, verify called with rotateY animation params
     });
 
     it('should resolve after animation completes', async () => {
-      expect(true).toBe(true); // placeholder
+      // TODO: Verify Promise resolves when tween.call() callback fires
     });
   });
 });

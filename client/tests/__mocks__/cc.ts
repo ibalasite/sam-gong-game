@@ -26,3 +26,16 @@ export const director = {
 export const sys = {
   copyTextToClipboard: jest.fn(),
 };
+export const Sprite = class { spriteFrame: any = null; };
+export const Animation = class {
+  play = jest.fn();
+  stop = jest.fn();
+  on = jest.fn();
+};
+export const Prefab = class {};
+export const instantiate = jest.fn().mockReturnValue(new Node());
+export const find = jest.fn().mockReturnValue(null);
+export const UITransform = class {
+  setContentSize = jest.fn();
+  contentSize = { width: 0, height: 0 };
+};

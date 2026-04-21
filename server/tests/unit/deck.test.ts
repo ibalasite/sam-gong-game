@@ -15,7 +15,7 @@ describe('createDeck', () => {
     const deck = createDeck();
     const ranks = new Set(deck.map(c => c.rank));
     expect(ranks).toContain('10');
-    expect(ranks).toHaveSize(13);
+    expect(ranks.size).toBe(13);
   });
 
   it('has no duplicate cards', () => {

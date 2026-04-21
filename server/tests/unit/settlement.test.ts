@@ -71,6 +71,30 @@ describe('settle', () => {
     expect(bnk.isBanker).toBe(true);
   });
 
+  it('all players win: banker loses total of all bets', () => {
+    const players = new Map([
+      ['p1', { cards: winnerCards, hasBet: true, isBanker: false, chips: 100 }],
+      ['p2', { cards: winnerCards, hasBet: true, isBanker: false, chips: 100 }],
+      ['banker', { cards: bankerCards, hasBet: true, isBanker: true, chips: 300 }],
+    ]);
+    const results = settle(players, 'banker', 50);
+    const b = results.find(r => r.sessionId === 'banker')!;
+    expect(b.chipsChange).toBe(-100); // -50 -50 = -100
+    expect(b.outcome).toBe('lose');
+  });
+
+  it('all players lose: banker gains total of all bets', () => {
+    const players = new Map([
+      ['p1', { cards: loserCards, hasBet: true, isBanker: false, chips: 100 }],
+      ['p2', { cards: loserCards, hasBet: true, isBanker: false, chips: 100 }],
+      ['banker', { cards: bankerCards, hasBet: true, isBanker: true, chips: 100 }],
+    ]);
+    const results = settle(players, 'banker', 50);
+    const b = results.find(r => r.sessionId === 'banker')!;
+    expect(b.chipsChange).toBe(100); // +50 +50 = 100
+    expect(b.outcome).toBe('win');
+  });
+
   it('throws when bankerId is not in the players map', () => {
     const players = new Map([
       ['p1', { cards: winnerCards, hasBet: true, isBanker: false, chips: 100 }],
