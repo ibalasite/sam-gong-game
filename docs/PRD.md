@@ -20,6 +20,7 @@
 | 版本 | 日期 | 變更摘要 |
 |------|------|---------|
 | v1.0-draft | 2026-04-21 | 初稿，由 STEP-03 自動生成 |
+| v1.1-draft | 2026-04-21 | STEP-04 Round 1 審查修正：牌點語意、狀態機流局路徑、SETTLING命名統一、PQ-1解答、Schema過濾機制、US-013格式、REQ-016新增、RTM補全 |
 
 ---
 
@@ -134,11 +135,11 @@
 **So that** 判斷勝負。
 
 **Acceptance Criteria:**
-- AC-009-1: 牌點計算：A=1, 2-9=面值, J/Q/K=10（即0）
+- AC-009-1: 牌點計算：A=1, 2-9=面值, J/Q/K=10點（三張合計取個位數後，10點貢獻0）
 - AC-009-2: 三張牌點加總 mod 10 = 最終點數（0-9）
-- AC-009-3: 點數 0（即 10/20/30）稱「公牌/三公」，為最高點
-- AC-009-4: 三公 > 9 > 8 > ... > 1 > 0（普通）
-- AC-009-5: 注意：「公牌」= 點數為0（三張合計為10的倍數）是最高牌，而非最低
+- AC-009-3: 合計為 10 的倍數（個位數=0）稱「公牌/三公」，為最強牌型；三張牌合計為10倍數者即為公牌，不存在「普通0點」的情況
+- AC-009-4: 公牌（三公）> 9 > 8 > ... > 2 > 1（點數越大越優；公牌最強）
+- AC-009-5: 實作要點：判斷公牌時先檢查 sum % 10 === 0，若是則為公牌（最高）；否則以 sum % 10 的值（1-9）比大小
 
 #### US-010: 翻牌與比牌
 **As** 玩家，
@@ -177,6 +178,10 @@
 
 ### Epic 6: 錯誤處理
 #### US-013: 籌碼不足保護
+**As** 籌碼不足的閒家，
+**I want to** 在籌碼不足時收到明確提示，
+**So that** 避免誤操作導致負籌碼。
+
 **Acceptance Criteria:**
 - AC-013-1: 籌碼不足以跟注 → 禁止押注，提示不足
 - AC-013-2: 玩家可選擇棄牌
@@ -202,8 +207,9 @@
 | REQ-013 | 籌碼不足保護 | Must | US-013 | O1 |
 | REQ-014 | 房間碼分享功能 | Should | - | O2 |
 | REQ-015 | 遊戲歷史紀錄（本場） | Should | - | O2 |
-| REQ-016 | 多桌（同時多個房間） | Could | - | O2 |
-| REQ-017 | 帳號系統（持久籌碼） | Won't（MVP） | - | Out of scope |
+| REQ-016 | 玩家暱稱設定 | Should | - | O2 |
+| REQ-017 | 多桌（同時多個房間） | Could | - | O2 |
+| REQ-018 | 帳號系統（持久籌碼） | Won't（MVP） | - | Out of scope |
 
 ---
 
@@ -216,19 +222,21 @@ BANKER_SELECTION（莊家選擇）
   ↓ [Server隨機/輪換指定莊]
 BETTING（押注）
   莊家設定底注 → 閒家依序跟注/棄牌（30s 限時）
-  ↓ [至少1閒跟注]
-DEALING（發牌）
+  ↓ [至少1閒跟注]        ↓ [所有閒家棄牌 → 流局]
+DEALING（發牌）          ROUND_END（流局，莊家不贏不輸）
   Server洗牌 → 各自發3張（僅自己可見）
   ↓ [發牌完成]
 REVEAL（翻牌）
   倒計時結束 → Server廣播所有牌
   ↓
-SETTLE（結算）
+SETTLING（結算）
   閒 vs 莊逐一比牌 → 籌碼結算 → 動畫
   ↓
 ROUND_END（本局結束）
   顯示結果 → 莊家輪換 → 回到 BETTING（或返回 LOBBY）
 ```
+
+> **非法狀態轉換（Server 必須拒絕）：** LOBBY→DEALING、LOBBY→SETTLING、BETTING→SETTLING、DEALING→BETTING、ROUND_END→SETTLING
 
 ---
 
@@ -286,8 +294,10 @@ export class PlayerState extends Schema {
   @type("number") chips: number = 1000;
   @type("boolean") isBanker: boolean = false;
   @type("boolean") hasBet: boolean = false;
-  // SECURITY: cards are filtered per-player in onJoin/onChange
-  // Other players only see card count, not actual cards before reveal
+  // SECURITY: cards are filtered per-player via Colyseus onBeforePatch override or custom toJSON.
+  // Before REVEAL phase: only the owning player receives suit/rank data.
+  // Other players receive Card objects with suit="" and rank="" (blanked), only revealed:boolean is visible.
+  // After REVEAL phase: Server sets revealed=true and broadcasts full card data to all players.
   @type([Card]) cards = new ArraySchema<Card>();
 }
 
@@ -348,6 +358,7 @@ export class SamGongState extends Schema {
 | 真實金錢 | 法規限制（ROC §266） | 永不 |
 | Native App | 非 MVP 平台 | v2.0 |
 | 多語言 | 僅繁中 MVP | v1.5 |
+| 玩家頭像 | 依賴帳號系統 | v2.0 |
 
 ---
 
@@ -368,16 +379,19 @@ export class SamGongState extends Schema {
 | REQ-011 | O1 | US-011 | S-011 | 待實作 |
 | REQ-012 | O2 | US-012 | S-012 | 待實作 |
 | REQ-013 | O1 | US-013 | S-013 | 待實作 |
+| REQ-014 | O2 | - | 待定義（Should） | 待實作 |
+| REQ-015 | O2 | - | 待定義（Should） | 待實作 |
+| REQ-016 | O2 | - | 待定義（Should） | 待實作 |
 
 ---
 
 ## 11. Open Questions (PRD Level)
 
-| # | 問題 | 影響 | 截止 |
-|---|------|------|------|
-| PQ-1 | 「公牌」點=0 勝所有點數，還是只勝點9？ | 三公規則變體，影響比牌邏輯 | EDD前確認 |
-| PQ-2 | 同點（非公牌）平局規則？莊贏 or 退注？ | 結算邏輯 | EDD前確認 |
-| PQ-3 | 斷線超 60s 的玩家籌碼如何處理？ | 重連邏輯 | 實作前 |
+| # | 問題 | 影響 | 截止 | 狀態 |
+|---|------|------|------|------|
+| PQ-1 | 「公牌」點=0 勝所有點數，還是只勝點9？ | 三公規則變體，影響比牌邏輯 | EDD前確認 | **RESOLVED**：公牌勝所有1-9點，依 AC-009-4 實作（公牌 > 9 > 8 > ... > 1）|
+| PQ-2 | 同點（非公牌）平局規則？莊贏 or 退注？ | 結算邏輯 | EDD前確認 | OPEN |
+| PQ-3 | 斷線超 60s 的玩家籌碼如何處理？ | 重連邏輯 | 實作前 | OPEN |
 
 ---
 
