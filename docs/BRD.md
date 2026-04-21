@@ -8,13 +8,13 @@
 
 | 欄位 | 內容 |
 |------|------|
-| **DOC-ID** | BRD-SAM-GONG-GAME-20260421 |
+| **DOC-ID** | BRD-SAM-GONG-GAME-20260422 |
 | **專案名稱** | 三公遊戲（Sam Gong 3-Card Poker）即時多人線上平台 |
-| **文件版本** | v0.3-draft |
-| **狀態** | DRAFT（BRD Fixer Round 2 完成）|
+| **文件版本** | v0.4-draft |
+| **狀態** | DRAFT（BRD Fixer Round 3 完成）|
 | **作者** | Evans Tseng（由 /devsop-idea 自動生成） |
 | **日期** | 2026-04-22 |
-| **建立方式** | /devsop-idea 自動生成，請執行 /devsop-brd-review 審查 |
+| **建立方式** | /devsop-idea 自動生成；v0.4-draft 由 /devsop-autodev STEP-01 Review Round 3 自動修正 |
 
 ---
 
@@ -25,6 +25,7 @@
 | v0.1-draft | 2026-04-21 | /devsop-idea | 初稿，由 AI 自動生成 |
 | v0.2-draft | 2026-04-21 | /devsop-autodev STEP 01 BRD Fixer | 修復 16 個 Findings（F1-F16）：新增核心目標宣言、IAP條件語句、三公規則附錄、觀戰模式排除、P0業務驗收條件、NFR章節、年齡驗證方案、防沉迷機制、Colyseus版本鎖定、籌碼經濟約束、市場數據免責聲明、美術策略決策機制、好友系統說明、§9.4合規矩陣、聊天室合規備注、Glossary擴充 |
 | v0.3-draft | 2026-04-22 | /devsop-autodev STEP 01 BRD Fixer Round 2 | 修復 28 個 Findings（F1-F28）：F1新增房間人數及配對超時AC、F2新增輪莊制定義、F3修正同點比牌規則消除歧義並新增D8、F4新增斷線行為定義、F5修正籌碼守恆AC、F6新增Q5截止日及§8.1備注、F7更新O1/O2/O3時間框架錨定基準日、F8定義付費率分母、F9新增北極星量化目標、F10新增PostgreSQL/Redis版本、F11新增OTP年齡驗證風險備注、F12補充白銀/鉑金下注上限、F13新增VIP系統功能描述、F14新增房間生命週期終止條件、F15補充Beta視覺滿意度AC細節、F16鎖定Cocos Creator小版本、F17移動法律問題至Open Questions、F18新增防沉迷計時器重置條件、F19補充洗牌亂度AC樣本數、F20新增每日任務至MoSCoW、F21新增廣告模式功能需求、F22新增Unit Economics免責聲明、F23新增Cookie同意需求、F24替換相對日期、F25修正Colyseus版本標注、F26定義滲透測試頻率、F27新增聊天室關鍵字清單負責人、F28定義誤判率分母 |
+| v0.4-draft | 2026-04-22 | /devsop-autodev STEP-01 Review Round 3 | 24個問題修正（VIP Out of Scope清理、O4/Q4/§3.5絕對日期、TypeScript版本鎖定、Node.js 22.x升級、RTM/Roadmap/商業模式VIP一致性、RTO/RPO NFR、籌碼底池定義等） |
 
 ---
 
@@ -41,7 +42,7 @@
 ### 技術建議
 
 - **Client**：Cocos Creator 3.x（Web + 手機跨平台），TypeScript 開發。
-- **Server**：Colyseus 0.15+（Node.js/TypeScript），`@colyseus/schema` 做狀態同步。
+- **Server**：Colyseus 0.15.x（locked）（Node.js/TypeScript），`@colyseus/schema` 做狀態同步。
 - **架構原則**：Server-authoritative — Schema 類別僅含欄位定義，遊戲邏輯獨立於 State，使用 Command Pattern 管理回合流程。
 - **持久層**：PostgreSQL（玩家資料、牌局紀錄）+ Redis（matchmaking queue、session cache）。
 - **部署**：Colyseus Cloud 或自建 k8s；Client 走 WebSocket + TLS。
@@ -128,7 +129,7 @@
 | O1 | 推出 Server-authoritative 公平三公多人遊戲 | GA 上線、Server 權威計算率 100%、Client 無任何結果計算邏輯 | **4個月（自BRD核准 2026-04-21起，GA目標 2026-08-21）**（F7） | Must |
 | O2 | 建立穩定同時在線（CCU）基礎 | Peak CCU ≥ 500，DAU ≥ 2,000 | **GA後6個月（≤2027-02-21）**（F7） | Must |
 | O3 | 建立變現模式（虛擬籌碼商店）**【F2條件】** 依據法律意見書結果：若IAP合法，啟用虛擬籌碼IAP；若存在法律疑慮，降級為廣告觀看換籌碼模式（Rewarded Ad），IAP停用。 | ARPPU ≥ USD 10，付費率 ≥ 3%（IAP模式）；DAU廣告點擊率 ≥ 15%（廣告模式） | **GA後9個月（≤2027-05-21）**（F7）（法律意見書 2026-05-15 前決定） | Should |
-| O4 | 擴展遊戲品類（大老二、21 點） | 至少 1 個新品類上線 | 12 個月 | Could |
+| O4 | 擴展遊戲品類（大老二、21 點） | 至少 1 個新品類上線 | GA後12個月（≤2027-08-21） | Could |
 
 ### 3.2 與公司策略的對應
 
@@ -153,17 +154,19 @@
 |---------|---------|---------------------|---------|------|
 | O1：Server authoritative 公平性 | Server 權威計算 100%、0 P0 Cheat Bug | REQ-001 Shuffle, REQ-002 Deal, REQ-003 Compare, REQ-004 Settlement | BDD S-001~S-004 | 🔲 待 PRD 填入 |
 | O2：CCU 規模 | Peak CCU ≥ 500 | REQ-010 Matchmaking, REQ-011 Room | Load Test L-001 | 🔲 待 PRD 填入 |
-| O3：變現 | ARPPU ≥ USD 10 | REQ-020 Shop, REQ-021 VIP | BDD S-020 | 🔲 待 PRD 填入 |
+| O3：變現 | ARPPU ≥ USD 10 | REQ-020 Shop/IAP/Ad[^vip-note] | BDD S-020 | 🔲 待 PRD 填入 |
 | O4：品類擴展 | 1 個新品類 | （未來 PRD v2） | N/A | 🔲 待 v2 |
+
+[^vip-note]: REQ-021 VIP列入v1.x Backlog，不納入v1.0 RTM追溯
 
 ### 3.5 Benefits Realization Plan（效益實現計畫）
 
 | 效益 | 基準值（Pre-launch）| 目標值 | 測量時間點 | 測量方式 | 負責人 | 若未達標的行動 |
 |------|:------------------:|:-----:|----------|---------|--------|--------------|
-| 公平性信任度（NPS "認為遊戲公平" 題目） | N/A | ≥ 70 | Launch + 3M | In-app Survey | PM | 公開 Server 洗牌日誌 / 第三方審計 |
-| CCU 規模 | 0 | Peak CCU ≥ 500 | Launch + 6M | Colyseus Monitor | Eng Lead | 啟動廣告採買 / Hotfix Sprint |
-| 付費率 | 0% | ≥ 3% | Launch + 9M | Revenue Dashboard | PM | A/B 測試定價 / 用戶訪談 |
-| 留存率（7 日）| N/A | ≥ 35% | Launch + 6M | Analytics | Product | 新手引導優化 / 每日任務改版 |
+| 公平性信任度（NPS "認為遊戲公平" 題目） | N/A | ≥ 70 | Launch+3M（≤2026-11-21） | In-app Survey | PM | 公開 Server 洗牌日誌 / 第三方審計 |
+| CCU 規模 | 0 | Peak CCU ≥ 500 | Launch+6M（≤2027-02-21） | Colyseus Monitor | Eng Lead | 啟動廣告採買 / Hotfix Sprint |
+| 付費率 | 0% | ≥ 3% | Launch+9M（≤2027-05-21） | Revenue Dashboard | PM | A/B 測試定價 / 用戶訪談 |
+| 留存率（7 日）| N/A | ≥ 35% | Launch+6M（≤2027-02-21） | Analytics | Product | 新手引導優化 / 每日任務改版 |
 
 ---
 
@@ -214,7 +217,7 @@
 
 打造一款 **Server-authoritative 即時多人三公遊戲**，Client 端以 **Cocos Creator** 負責 UI/動畫/輸入，Server 端以 **Colyseus（Node.js/TypeScript）** 負責所有遊戲邏輯。
 
-**【F12 美術策略決策】** v1.0 **以像素風為主要美術風格**（完整實作所有畫面）。賭場風格**僅製作 2-3 個關鍵畫面的 A/B 測試素材**（大廳主頁、牌局主畫面、結算畫面），供 Beta 封測期間進行用戶測試。**Beta 封測結束前**（Launch-1M）由 PM + Art Director 依測試數據做出最終美術方向決策，決策結果記入 Decision Log（D7）。若決策未能於 Beta 前完成，預設維持像素風為正式版風格。
+**【F12 美術策略決策】** v1.0 **以像素風為主要美術風格**（完整實作所有畫面）。賭場風格**僅製作 2-3 個關鍵畫面的 A/B 測試素材**（大廳主頁、牌局主畫面、結算畫面），供 Beta 封測期間進行用戶測試。**2026-07-21（GA-1M）前**由 PM + Art Director 依測試數據做出最終美術方向決策，決策結果記入 Decision Log（D7）。若決策未能於 Beta 前完成，預設維持像素風為正式版風格。
 
 ### 5.2 核心價值主張
 
@@ -240,14 +243,14 @@
 | 功能 | MoSCoW | 對應目標 | 業務層驗收條件（F5） |
 |------|--------|---------|-------------------|
 | 三公核心玩法（發牌/比牌/結算）| Must Have | O1 | 1. 100局牌局中比牌結果與手動驗算一致率 100%；2. P0 Bug 數量 = 0 方可上線 |
-| Server-authoritative 洗牌與判牌 | Must Have | O1 | 1. **洗牌亂度 AC（F19）：** 樣本數 ≥ 10,000 次洗牌；52張牌 × 52位置分佈卡方檢定，自由度 = 51，p-value > 0.05 為通過；2. Client 端無任何判牌邏輯代碼 |
-| Room State + 玩家狀態同步 | Must Have | O1 | 1. 玩家狀態延遲 ≤ 100ms（P95）；2. 斷線重連後狀態完整恢復，無資料遺失；**3. 斷線行為定義（F4）：** 玩家斷線後有 **30 秒重連窗口**；30 秒內未重連則視為棄牌（Fold），下注額沒入底池，牌局繼續進行；重連後可查看當局結果但不可補下注或操作；斷線期間由 Server 維持玩家席位狀態不釋放（30 秒內）；**4. 房間生命週期終止條件（F14）：** (a) 等待玩家超過 60 秒無人加入自動解散房間；(b) 玩家人數低於最低人數（2 人）時停止接受新局、等待玩家補入或解散；(c) 無最大場次限制，玩家可主動離開；(d) 所有玩家離開後房間立即銷毀，Server 釋放 Room 資源 |
-| 下注系統（虛擬籌碼）| Must Have | O1 | 1. 籌碼計算無浮點誤差（整數運算）；2. **籌碼守恆 AC（F5）：每局結算後，所有玩家淨增減籌碼之和 = 負（抽水額）；抽水 = floor(底注 × 5%)，精確整數計算，誤差容忍 = 0** |
+| Server-authoritative 洗牌與判牌 | Must Have | O1 | 1. **洗牌亂度 AC（F19）：** 樣本數 ≥ 10,000 次洗牌；52張牌 × 52位置分佈卡方檢定，自由度 = 51，p-value > 0.05 為通過；2. Client 端無任何判牌邏輯代碼；**測試方式（F7）：靜態代碼分析掃描Client bundle；禁止關鍵字清單：compareCards、calculatePoints、determineWinner、cardValue、handRank；掃描結果0命中為Pass（工具：grep/ESLint custom rule，CI/CD每次build執行）** |
+| Room State + 玩家狀態同步 | Must Have | O1 | 1. 玩家狀態延遲 ≤ 100ms（P95）；2. 斷線重連後狀態完整恢復，無資料遺失；**可測AC（F6）：模擬斷線後29秒重連測試（執行100次），重連成功率 = 100%；重連後玩家手牌/籌碼/當局下注額與Server記錄完全一致，差異容忍 = 0籌碼。**；**3. 斷線行為定義（F4）：** 玩家斷線後有 **30 秒重連窗口**；30 秒內未重連則視為棄牌（Fold），下注額沒入底池，牌局繼續進行；重連後可查看當局結果但不可補下注或操作；斷線期間由 Server 維持玩家席位狀態不釋放（30 秒內）；**4. 房間生命週期終止條件（F14）：** (a) 等待玩家超過 60 秒無人加入自動解散房間；(b) 玩家人數低於最低人數（2 人）時停止接受新局、等待玩家補入或解散；(c) 無最大場次限制，玩家可主動離開；(d) 所有玩家離開後房間立即銷毀，Server 釋放 Room 資源 |
+| 下注系統（虛擬籌碼）| Must Have | O1 | 1. 籌碼計算無浮點誤差（整數運算）；2. **籌碼守恆 AC（F5/F16）：每局結算後，所有玩家淨增減籌碼之和 = 負（抽水額）；抽水 = floor(底池總額（所有玩家本局下注加總） × 5%)，精確整數運算，誤差容忍 = 0** |
 | 大廳 + Matchmaking（快速配對 / 指定房間）| Must Have | O2 | 1. 等待時間中位數 ≤ 30 秒（500 CCU 壓測環境）；2. 配對失敗率 ≤ 5%；3. **每房間最少 2 人、最多 6 人**；4. 快速配對等待超過 60 秒自動取消配對並通知玩家（F1 配對超時 AC） |
 | 像素風 / 賭場風 UI（至少一套完整）| Must Have | O1 | 1. **Beta 封測視覺滿意度 AC（F15）：** in-app 5星問卷「您對本遊戲視覺風格的滿意度」；有效樣本 ≥ 50 人；平均評分 ≥ 4.0/5.0；2. 移動端（375px 寬）無元素重疊或截斷 |
 | 發牌/翻牌/結算動畫 | Must Have | O1 | 1. 動畫流暢度 ≥ 30fps（中低階手機）；2. 動畫時長不超過 3 秒，不阻塞玩家操作 |
 | 帳號系統（遊客登入 + Google/Facebook 綁定）| Must Have | O2 | 1. 遊客轉正式帳號流程 ≤ 3 步驟；2. 年齡驗證閘（出生年份 + OTP）100% 覆蓋新帳號（F7） |
-| 防沉迷提醒（F8）| Must Have | O1 | 1. 連續遊玩 2 小時後顯示提醒彈窗；2. 未成年帳號每日遊戲時數上限 2 小時強制下線；3. 每日遊玩時間顯示於帳號頁 |
+| 防沉迷提醒（F8）| Must Have | O1 | 1. 連續遊玩 2 小時後顯示提醒彈窗；2. 未成年帳號每日遊戲時數上限 2 小時強制下線；3. 每日遊玩時間顯示於帳號頁；**準確度AC（F14）：連續遊玩30分鐘後，帳號頁顯示值與Server Session Log誤差 ≤ 1分鐘（60秒）** |
 | 虛擬籌碼每日贈送（留存機制）| Should Have | O2 | 1. 7 日留存率 ≥ 35%（Launch+6M 追蹤）；2. 每日領取率 ≥ 60% DAU |
 | **每日任務系統（F20）** | **Should Have** | O2 | **AC：每日任務完成率 ≥ 40% DAU（Launch+3M 量測）**；任務範例：每日完成 3 場對戰、連續登入 7 日、完成教學。任務獎勵為虛擬籌碼。 |
 | 好友系統（最小化版本，F13）| Should Have | O2 | 1. 支援搜尋好友 ID 並新增；2. 支援邀請好友進入指定房間；3. **明確不支援好友間籌碼轉移**（防洗籌碼）；4. 好友清單上限 100 人 |
@@ -293,6 +296,7 @@
 | **輪莊規則** | 每局結束後，莊家位置順時鐘移至下一位玩家；中途加入的玩家排隊等待輪莊，不插隊 |
 | **莊家義務** | 莊家需優先下注底注；其他玩家可選擇跟注（Call）或棄牌（Fold） |
 | **無純P2P比牌** | 本版本不採用純P2P比牌模式；所有比牌以莊家為對比基準進行 |
+| **莊家籌碼不足處理（D9）** | 若莊家當前籌碼餘額低於本局最低下注（500籌碼），系統自動輪莊至下一位玩家（跳過本局莊家資格）；此規則無例外。記入 Decision Log D9。 |
 
 #### 基礎規則
 
@@ -378,7 +382,7 @@ Outcome：華人三公玩家信任並長期使用「三公 Online」作為主要
 | 里程碑 | 評估時間 | Go 條件 | No-Go 條件 | 決策者 |
 |--------|---------|---------|-----------|--------|
 | Alpha 驗收 | Launch - 2M | 核心玩法完整、P0 Bug = 0、Server 洗牌通過亂度測試 | P0 Bug ≥ 1 或核心玩法未完成 | PM + Eng Lead |
-| Beta 驗收（封測 100 人） | Launch - 1M | 7日留存 ≥ 25%、主觀公平性評分 ≥ 4/5 | 留存 < 15% 或公平性 < 3.5/5 | PM + Exec Sponsor |
+| Beta 驗收（封測 100 人） | Launch - 1M | 7日留存 ≥ 25%、主觀公平性評分 ≥ 4/5 | 留存 < 15% 或公平性 < 3.5/5；※ Amber Zone：7日留存介於15%-25%時，由PM+Exec Sponsor書面記錄決策是否延期Beta或有條件通過 | PM + Exec Sponsor |
 | GA 決策 | Launch | 負載測試 500 CCU 通過、合規審查完成 | 壓測失敗或法務未簽核 | Exec Sponsor + Legal |
 | Post-Launch 3M | Launch + 3M | DAU ≥ 1,000、付費率 ≥ 1% | DAU < 300 或持續負成長 | Exec Sponsor |
 
@@ -391,7 +395,7 @@ Outcome：華人三公玩家信任並長期使用「三公 Online」作為主要
 | 限制 | 類型 | 影響 |
 |------|------|------|
 | 技術：必須 Cocos Creator Client + Colyseus Server | 硬性 | 技術選型鎖定 |
-| **【F9】Colyseus 版本鎖定：0.15.x（minor locked）** | 硬性 | package.json 固定 `"colyseus": "0.15.x"`；升級需通過完整回歸測試並記入 Change Log；禁止自動升級至 0.16+ |
+| **【F9】Colyseus 版本鎖定：0.15.x（minor locked）** | 硬性 | package.json 固定 `"colyseus": "~0.15.0"`（npm semver ~0.15.0 = ≥0.15.0且<0.16.0，允許patch更新）；升級需通過完整回歸測試並記入 Change Log；禁止自動升級至 0.16+ |
 | **【F6】部署目標決定（Q5）** | 硬性 | 部署目標（Colyseus Cloud vs 自建 k8s）必須於 **2026-05-15 前**決定，否則 EDD 無法啟動；詳見 §14 Q5 |
 | 法規：禁止真實金錢下注 / 籌碼兌換 | 硬性 | 商業模式鎖定 |
 | 規模：MVP 支援 500 Peak CCU | 軟性 | 影響架構設計 |
@@ -414,7 +418,7 @@ Outcome：華人三公玩家信任並長期使用「三公 Online」作為主要
 |---|------|---------|---------|---------|--------|
 | NFR-01 | **效能：延遲** | Server 遊戲邏輯回應延遲（玩家操作至 Server 確認） | ≤ 100ms（P95，亞太區用戶） | 壓測工具（Colyseus Load Test）+ APM 監控 | Must |
 | NFR-02 | **效能：並發** | 支援 Peak CCU 同時在線 | ≥ 500 CCU，單節點；≥ 2,000 CCU（水平擴展後） | 壓測（Artillery / k6） | Must |
-| NFR-03 | **可用性** | 服務可用性（不含計劃維護） | ≥ 99.5% / 月（≤ 3.6 小時停機） | 監控儀表板（Uptime Robot / Grafana） | Must |
+| NFR-03 | **可用性** | 服務可用性（不含計劃維護）；計劃維護窗口：每月最大4小時（需提前24小時公告）；SLA測量排除計劃維護時間；緊急維護（未預告）計入SLA停機時間 | ≥ 99.5% / 月（≤ 3.6 小時停機，不含計劃維護） | 監控儀表板（Uptime Robot / Grafana） | Must |
 | NFR-04 | **安全：傳輸加密** | 所有 Client-Server 通訊 | TLS 1.2+（禁止降級至 TLS 1.0/1.1） | SSL Labs 掃描 / 部署前安全審查 | Must |
 | NFR-05 | **安全：資料加密** | 靜態敏感資料（密碼、KYC、支付） | AES-256 加密儲存 | 安全審查 + **滲透測試（F26）：GA 前執行一次完整滲透測試；後續每 6 個月或重大版本上線前執行一次** | Must |
 | NFR-06 | **相容性：瀏覽器** | Web 端主流瀏覽器支援 | Chrome 100+、Safari 15+、Firefox 100+、Edge 100+ | BrowserStack 跨瀏覽器測試 | Must |
@@ -424,6 +428,7 @@ Outcome：華人三公玩家信任並長期使用「三公 Online」作為主要
 | NFR-10 | **可觀測性** | 關鍵業務指標監控覆蓋 | CCU、延遲 P95/P99、錯誤率、籌碼異常 100% 覆蓋 | Grafana Dashboard | Should |
 | NFR-11 | **合規：個資** | 用戶資料刪除請求處理時效 | 收到請求 7 個工作日內完成刪除 | 合規審計 | Must |
 | NFR-12 | **效能：啟動時間** | 遊戲 Web 端首屏載入時間 | ≤ 5 秒（4G 網路，1MB/s）| Lighthouse 測試 | Should |
+| NFR-13 | **資料備份與還原** | PostgreSQL每日全量備份+每小時WAL增量備份；Redis每15分鐘RDB快照 | RPO ≤ 1小時；RTO ≤ 4小時 | 季度備份恢復演練，實際還原測試通過 | Must |
 
 ---
 
@@ -432,6 +437,8 @@ Outcome：華人三公玩家信任並長期使用「三公 Online」作為主要
 ### 9.0 Web 平台 Cookie 同意需求（F23）
 
 **【F23】** Web 平台首次載入時顯示 Cookie 同意橫幅，符合個資法告知義務。若有歐盟用戶，需符合 GDPR ePrivacy 指令之明確 opt-in 同意（不得預設勾選）。Cookie 分類至少包含：必要性 Cookie（不可拒絕）、分析性 Cookie（可選拒絕）、行銷性 Cookie（可選拒絕）。同意紀錄需記錄時間戳與版本號，保留 3 年。
+
+**歐盟用戶觸發條件（F17）：** 以IP地理位置偵測（CloudFlare CF-IPCountry header或MaxMind GeoIP DB）；若用戶IP所屬國家為歐盟成員國，強制顯示GDPR opt-in同意流程（明確opt-in，非pre-checked）。
 
 ### 9.1 適用法規
 
@@ -470,7 +477,7 @@ Outcome：華人三公玩家信任並長期使用「三公 Online」作為主要
 | 合規領域 | 主責人 | 協作方 | 執行方式 | 驗收標準 | 截止節點 |
 |---------|--------|--------|---------|---------|---------|
 | 博弈罪定位（刑法 §266） | Legal | PM + Exec | 取得法律意見書 | 法律意見書正式出具，明確「合法」或「需調整」 | 2026-05-15 |
-| KYC / 實名制 | Legal + Ops | Eng（帳號模組）| 串接第三方 KYC 服務或手機 OTP 驗證方案；**【F11 升級觸發條件】若法律意見書（2026-05-15）認定 OTP 方案不足，則於 90 日內升級至第三方 KYC（TW 自然人憑證）驗證** | 100% 新帳號經過年齡 + 身份驗證 | Alpha 前 |
+| KYC / 實名制 | Legal + Ops | Eng（帳號模組）| 串接第三方 KYC 服務或手機 OTP 驗證方案；**【F11 升級觸發條件】若法律意見書（2026-05-15）認定 OTP 方案不足，則於 90 日內升級至第三方 KYC（TW 自然人憑證）驗證** | 100% 新帳號經過年齡 + 身份驗證 | 2026-06-21（GA-2M） |
 | 個人資料保護法合規 | Legal + DPO | Eng | 撰寫隱私權政策、實作資料刪除 API | 法務審查通過、DPIA 完成 | 2026-06-01 |
 | 未成年保護（防沉迷）| Product | Eng + Legal | 年齡驗證閘 + 連續遊玩提醒 + 未成年時數限制 | QA 驗收：連續 2 小時提醒出現率 100%；未成年帳號 2 小時強制登出 | Beta 前 |
 | GDPR（歐盟用戶）| Legal + DPO | Eng | DSR 機制、SCCs、DPO 指定 | DPIA 完成；SCCs 簽署 | GA 前（若有歐盟用戶）|
@@ -525,7 +532,7 @@ Outcome：華人三公玩家信任並長期使用「三公 Online」作為主要
 
 | 要素 | 內容 |
 |------|------|
-| **收入來源** | 虛擬籌碼 IAP（基本款）+ VIP 訂閱（進階）+ 廣告（免費用戶觀看取得籌碼） |
+| **收入來源** | 虛擬籌碼 IAP（基本款）+ VIP 訂閱（進階）（VIP訂閱：v1.x計畫，v1.0 Out of Scope）+ 廣告（免費用戶觀看取得籌碼） |
 | **定價策略** | Freemium：免費遊玩、每日贈送基礎籌碼；付費購買虛擬籌碼包 / VIP |
 | **成本結構** | 開發（一次性）、Colyseus Cloud 或 k8s 維運、客服、行銷 CAC、支付手續費 |
 | **核心資源** | Colyseus + Cocos 技術棧、華人美術風格、反作弊演算法、KYC 整合 |
@@ -540,7 +547,7 @@ Outcome：華人三公玩家信任並長期使用「三公 Online」作為主要
 |------|---------|---------|------------|
 | 付費率 3% 可達成 | 封測 + Launch + 3M 追蹤 | Launch + 3M | 改用訂閱制或廣告主導 |
 | 華人市場 CAC < USD 10 | FB/Google 小額測試 | **2026-05-05**（F24） | 行銷預算重估 |
-| VIP 訂閱付費意願 > 單次購買 | A/B 測試 | Launch + 6M | 只保留單次購買 |
+| VIP 訂閱付費意願 > 單次購買 | A/B 測試 | v1.x Launch+3M（v1.x功能，暫列至v1.x計畫確認後移入v1.x BRD） | 只保留單次購買 |
 
 ---
 
@@ -560,7 +567,7 @@ timeline
         Month 4 末 : GA 上線（繁中 / 台港澳）
     section Growth（4–12個月）
         Launch + 3M : 付費系統 + 排行榜
-        Launch + 6M : VIP 訂閱
+        Launch + 6M : 每日任務完整版、排行榜優化（VIP訂閱列入v1.x計畫，Out of Scope v1.0）
         Launch + 12M : 第二品類（大老二或21點）
 ```
 
@@ -586,7 +593,8 @@ timeline
 | **Colyseus** | `0.15.x`（minor locked） | `package.json` 使用 `"colyseus": "~0.15.0"`（patch 可自動更新，minor 禁止跳） | 升級至 0.16+ 需：完整回歸測試通過 + PM + Eng Lead 雙簽核 + Change Log 記錄 |
 | Cocos Creator | **`3.8.x`（minor locked）**（F16） | 鎖定大版本與次版本；patch 更新需 PoC 驗證；使用 `"cocos-creator": "3.8.x"` 版本約束 | 跨次版本（3.8→3.9）或跨大版本升級需 EDD 評估 + PM + Eng Lead 雙簽核 |
 | `@colyseus/schema` | 隨 Colyseus 0.15.x | 與主框架同步 | 同 Colyseus 升級政策 |
-| Node.js | LTS（20.x） | 使用 `.nvmrc` 固定 | 隨 LTS 週期更新，每年評估一次 |
+| Node.js | LTS（22.x，Active LTS） | 使用 `.nvmrc` 固定；Node.js 20.x於2026-04進入Maintenance LTS；22.x為Active LTS，GA目標2026-08-21時仍在Active維護期 | 隨 LTS 週期更新，每年評估一次 |
+| TypeScript | 5.4.x（minor locked） | `tsconfig.json` strict mode 啟用；patch更新允許 | minor升級須全團隊同步，需更新 tsconfig 並全量回歸測試 |
 
 > **風險說明（F9）：** Colyseus 0.15 → 0.16 有重大 API Breaking Changes（Room lifecycle、Schema 序列化格式均有變動）。版本過於寬鬆（`>=0.15`）可能導致 npm install 時自動升級，引發線上不相容問題。
 
@@ -610,7 +618,7 @@ timeline
 | Q1 | 虛擬籌碼是否可由玩家用現金購買？購買是否觸犯賭博罪？ | 策略 | Legal | 2026-05-15 | OPEN |
 | Q2 | 三公的「公牌」規則（地區差異大）採用哪一種標準？ | 範圍 | Game Designer | 2026-05-01 | **CLOSED（F3）** — 採台灣標準版，不啟用公牌規則（詳見 §5.5 及 D6） |
 | Q3 | 是否需要實名 KYC？還是手機簡訊驗證即可？ | 法規 | Legal + Product | 2026-05-15 | OPEN |
-| Q4 | 像素風與賭場風美術，最終採一套或雙主題？ | 產品 | Art + PM | Beta 前 | OPEN |
+| Q4 | 像素風與賭場風美術，最終採一套或雙主題？ | 產品 | Art + PM | 2026-07-21（GA-1M） | OPEN |
 | Q5 | Colyseus Cloud 還是自建 k8s？成本/維運對比？ | 技術 | Eng Lead | **2026-05-15**（F6：部署目標決定截止日，EDD 開始前必須完成） | OPEN |
 | Q6 | 是否支援觀戰模式？（影響 Schema 複雜度） | 範圍 | PM | PRD 前 | **CLOSED（F4）** — v1.0 不支援觀戰模式，移入 Out of Scope（詳見 §5.3 及 D5），v1.x 再評估 |
 
@@ -626,8 +634,9 @@ timeline
 | D4 | 2026-04-21 | 商業模式 | 虛擬籌碼不可兌換（娛樂性質） | 規避賭博罪 | AI + Legal 待確認 | 全產品 |
 | D5 | 2026-04-21 | 觀戰模式（Spectator Mode） | v1.0 不實作觀戰模式，移入 Out of Scope | Schema 複雜度、延遲風險、Q6 評估後延期 | PM | §5.3 Out of Scope、§14 Q6 |
 | D6 | 2026-04-21 | 三公規則標準版本 | 採用台灣標準版三公規則：不啟用公牌規則（N），三公賠率 1:3，9點賠率 1:2，8點以下 1:1 | 地區規則統一減少開發複雜度；Q2 關閉 | PM + Game Designer | §5.5 三公規則草案附錄 |
-| D7 | （待 Beta 前決定）| 美術風格最終選定 | **暫定：像素風為主；Beta 前由 PM + Art Director 依 A/B 測試數據決定** | 像素風成本低風險小，賭場風僅試做關鍵畫面，Beta 數據驅動決策 | PM + Art Director | §5.1、美術資源分配 |
+| D7 | （截止 2026-07-21（GA-1M））| 美術風格最終選定 | **暫定：像素風為主；2026-07-21 前由 PM + Art Director 依 A/B 測試數據決定** | 像素風成本低風險小，賭場風僅試做關鍵畫面，Beta 數據驅動決策 | PM + Art Director | §5.1、美術資源分配 |
 | D8 | 2026-04-22 | 同點比大小決勝規則 | 採單一確定規則：同點數時比最大單張花色（黑桃>紅心>方塊>梅花），花色相同再比最大單張點數（A>K>Q>J>10>...>2），兩者皆同則平手退注；移除「視地區習慣」模糊語句 | 消除地區差異歧義，確保Server判牌邏輯唯一確定性，避免玩家爭議 | PM + Game Designer | §5.5 同點比大小規則 |
+| D9 | 2026-04-22 | 莊家籌碼不足處理規則 | 若莊家當前籌碼餘額低於本局最低下注（500籌碼），系統自動輪莊至下一位玩家（跳過本局莊家資格）；此規則無例外 | 避免莊家無法下注導致牌局卡死，確保遊戲流程不中斷 | PM + Game Designer | §5.5 莊家機制 |
 
 ---
 
@@ -680,6 +689,9 @@ timeline
 | H6 | 法務初步審查已完成（§9 合規需求確認） | 🔲 PENDING | Legal |
 | H7 | PRD Owner 已指定 | 🔲 PENDING | PM |
 | H8 | PRD Kick-off 會議已排程 | 🔲 PENDING | PM |
+| H9 | VIP訂閱已確認Out of Scope v1.0，RTM/Roadmap/商業模式表已清理 | 🔲 PENDING | PM |
+| H10 | 廣告降級模式（AdMob）需求已納入PRD範圍確認 | 🔲 PENDING | PM |
+| H11 | 防沉迷計時器重置條件（30分鐘離線閾值）已由法務確認符合兒少法要求 | 🔲 PENDING | Legal |
 
 ### 18.2 Handoff 時移交的文件
 
@@ -736,7 +748,7 @@ timeline
 | 指標 | 基準 | 目標（Launch + 3M）|
 |------|------|:------------------:|
 | 內部測試活躍度（Alpha Dogfooding） | 0 | ≥ 80% 團隊每週至少 1 局 |
-| 客服 SLA（首回應時間） | N/A | ≤ 4 小時 |
+| 客服 SLA（首回應時間） | N/A | ≤ 4 小時；計算方式：工單系統自動記錄提交至首次回覆時間戳；計算範圍：工作日09:00-18:00（UTC+8），非工作時間不計入 |
 | **反作弊誤判率（F28）** | N/A | ≤ 1%（**誤判率定義：被標記後人工審查確認為誤判帳號數 / 當期所有被標記帳號數 × 100%；以 30 日滾動窗口計算**） |
 
 ---
