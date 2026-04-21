@@ -172,8 +172,8 @@
 | O4：品類擴展 | 1 個新品類 | （未來 PRD v2） | N/A | 🔲 待 v2 |
 | O1 | 動畫流暢度：基準裝置≥30fps；旗艦機型目標≥60fps（§5.3 UI）| REQ-013 UI/Animation | BDD Scenario S-013 | ✅ PRD已對應 |
 | O2 | 帳號系統：日留存率（§5.3 Account）| REQ-014 Account | BDD Scenario S-014 | ✅ PRD已對應 |
-| 法規合規（§9）| 防沉迷合規100%（§5.3 Anti-Addiction）| REQ-015 AntiAddiction | BDD Scenario S-015 | ✅ PRD已對應 |
-| 法規合規（§9）| Cookie同意橫幅覆蓋率（§9.0）| REQ-016 Cookie | BDD Scenario S-016 | ✅ PRD已對應 |
+| O合規 | 防沉迷合規100%（§5.3 Anti-Addiction）| REQ-015 AntiAddiction | BDD Scenario S-015 | ✅ PRD已對應 |
+| O合規 | Cookie同意橫幅覆蓋率（§9.0）| REQ-016 Cookie | BDD Scenario S-016 | ✅ PRD已對應 |
 | O合規 | 個資刪除請求7工作日內完成100% | REQ-014（帳號驗證）、REQ-015（防沉迷）、REQ-016（Cookie）、REQ-019（個資刪除） | IT-delete-001; BDD S-014, S-015, S-016, S-019（STEP-15回填） | ✅ PRD已對應 |
 | O1（Server-authoritative公平性）| 反作弊投訴率≤0.1% | REQ-017 反作弊與速率限制 | BDD S-017; IT-anticheat-001 | ✅ PRD已對應 |
 | O2（留存）| 每日任務完成率≥40% DAU (Should) | REQ-021每日任務系統 | BDD S-021 | 🔲 待填 |
@@ -808,7 +808,7 @@ timeline
 |------|------|
 | **PRD Owner** | Evans Tseng（專案負責人） |
 | **確認聲明** | 已由 /devsop-autodev STEP-03/04 自動生成並通過多輪 Exhaustive Review |
-| **預計 PRD 初稿完成日** | 2026-04-22（已完成，v0.3-draft） |
+| **預計 PRD 初稿完成日** | 2026-04-22（已完成，v0.14-draft） |
 
 ---
 

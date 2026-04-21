@@ -660,7 +660,7 @@ As a **Returning Player**, I want to optionally purchase more chips or watch ads
 | NFR-16 | 效能：資料庫查詢延遲 | PostgreSQL查詢延遲；Redis操作延遲；連線池管理；Circuit Breaker策略：連線池耗盡後啟動30秒Circuit Breaker（返回HTTP 503 + Retry-After:30頭）；30秒後進入Half-Open：允許10%請求通過探測恢復；完全恢復條件：P95查詢延遲恢復至≤50ms持續60秒；若Circuit Breaker實作延至v1.x，在Decision Log中記載（含風險說明） | PostgreSQL P95查詢延遲 ≤ 50ms；Redis P95操作延遲 ≤ 5ms；連線池最大連線數：500 CCU下至少50個DB連線；連線池耗盡返回HTTP 503 + Retry-After:30頭 | APM監控（如Datadog / Grafana）；壓測下P95延遲驗證 | Must | Eng Lead + SRE |
 | NFR-17 | 安全：Session Token（來源：BRD §9合規安全要求 + BRD R10 KYC/個資外洩安全風險）| JWT 存取 Token 有效期 ≤ 1 小時；Refresh Token 有效期 ≤ 7 天；帳號封鎖後所有活躍 Token ≤ 1 分鐘失效（Server 端短效 Token 強制刷新）；簽名演算法：RS256 或 ES256（禁止 HS256）；測試：封號後 60 秒內嘗試已發 Token 操作返回 HTTP 401 | 封號後 Token 失效 ≤ 60 秒；Token 長度符合演算法規格 | 封號流程測試 + Token 驗證 | Must | Eng Lead |
 | NFR-18 | 可用性：DB Failover（來源：BRD NFR-13備份還原 + BRD NFR-03可用性SLA）| PostgreSQL 採主從熱備援（streaming replication）；自動 failover 觸發：主節點不可用 60 秒後；服務恢復目標 ≤ 5 分鐘（計入 NFR-03 SLA）；Redis 採 Sentinel 模式；季度 failover 演練，記錄實際恢復時間 | 服務恢復時間 ≤ 5 分鐘 | 季度 failover 演練（實際恢復測試通過）| Must | SRE |
-| NFR-19 | 安全：REST API Rate Limit（來源：BRD §9.4詐欺防制 + BRD R2外掛風險）| REST API端點Rate Limit：(1)認證端點（/auth/*）：每IP每分鐘≤30次；(2)/player/daily-chip及/tasks/{id}/complete：每帳號每日限1次（AC層面已定義，NFR層面確認）；(3)一般API端點：每用戶每分鐘≤60次；(4)IP全局Rate Limit：每IP每分鐘≤300次請求；超限返回HTTP 429 | 各端點超限返回HTTP 429 | 壓測工具模擬超限請求；驗證返回429及各限制正確執行 | Must | Eng Lead |
+| NFR-19 | 安全：REST API Rate Limit（來源：BRD §9.4詐欺防制 + BRD R2外掛風險）| REST API端點Rate Limit：(1)認證端點（/auth/*）：每IP每分鐘≤30次；(2)/player/daily-chip及/tasks/{id}/complete：每帳號每分鐘≤5次（burst rate limit；每日1次業務限制另由REQ-020a/REQ-021 AC層面定義）；(3)一般API端點：每用戶每分鐘≤60次；(4)IP全局Rate Limit：每IP每分鐘≤300次請求；超限返回HTTP 429 | 各端點超限返回HTTP 429 | 壓測工具模擬超限請求；驗證返回429及各限制正確執行 | Must | Eng Lead |
 
 ---
 
