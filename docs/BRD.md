@@ -10,7 +10,7 @@
 |------|------|
 | **DOC-ID** | BRD-SAM-GONG-GAME-20260421 |
 | **專案名稱** | 三公遊戲（Sam Gong Online — Cocos + Colyseus） |
-| **文件版本** | v0.4-draft |
+| **文件版本** | v0.5-draft |
 | **狀態** | UNDER_REVIEW |
 | **作者** | tobala（由 /devsop-idea 自動生成） |
 | **日期** | 2026-04-21 |
@@ -26,6 +26,7 @@
 | v0.2-draft | 2026-04-21 | /devsop-brd-review | Round 1 審查修正：RTM、North Star、Stakeholder Map、RACI、Benefits Realization、Risk、Compliance、Handoff Checklist、Glossary |
 | v0.3-draft | 2026-04-21 | /devsop-brd-review | Round 2-3 審查修正：投資門檻 Go/No-Go 定義、Data Governance、Vendor Risk、Glossary 補全、合規時程 |
 | v0.4-draft | 2026-04-21 | /devsop-brd-review | Round 4 審查修正：§9.1 標題補全、法律風險新增至 §10、§7.2 留存率目標分層標示、Q1 影響層級升階 |
+| v0.5-draft | 2026-04-21 | /devsop-brd-review | Round 5 審查修正：§9 章節編號修正（9.5/9.6→9.4/9.5）、RTM O2 目標分層一致性、H5 Handoff 更新為 Q1-Q4、頁尾版本更新 |
 
 ---
 
@@ -147,7 +148,7 @@
 | 業務目標 | 成功指標 | 功能需求（PRD REQ-ID）| 測試覆蓋 | 狀態 |
 |---------|---------|---------------------|---------|------|
 | O1：完整牌局可玩 | Alpha P0 Bug = 0（§7） | REQ-001~010 | BDD Scenario S-001~010 | 🔲 待填 |
-| O2：7日留存 ≥ 30% | Beta 7D Retention（§7） | REQ-011~020 | BDD Scenario S-011~015 | 🔲 待填 |
+| O2：7日留存 ≥ 20%（Beta）/ ≥ 30%（GA）| Beta 7D Retention ≥ 20%，GA 目標 ≥ 30%（§7）| REQ-011~020 | BDD Scenario S-011~015 | 🔲 待填 |
 | O3：架構可複用 | 模組化牌型引擎文件完整度 ≥ 80% | REQ-021~025 | 架構審查 | 🔲 待填 |
 
 ### 3.5 Benefits Realization Plan
@@ -346,7 +347,7 @@ Outcome：玩家持續回訪遊玩（7D Retention ≥ 20%（Beta）/ ≥ 30%（G
 | 架構安全審查（WSS + 防作弊）| EDD 完成後 | Engineering | PENDING |
 | 法規合規測試（個資法）| Beta 前 2 週 | QA + Legal | PENDING |
 
-### 9.5 Data Governance
+### 9.4 Data Governance
 
 | 資料類型 | 資料擁有人 | 保留期限 | 存取控制 | 刪除程序 | 稽核需求 |
 |---------|----------|---------|---------|---------|---------|
@@ -354,7 +355,7 @@ Outcome：玩家持續回訪遊玩（7D Retention ≥ 20%（Beta）/ ≥ 30%（G
 | 牌局紀錄 | 系統 | 90 日 | 工程師核准 | 自動清理 | 內部審計 |
 | WebSocket 連線日誌 | SRE | 30 日 | Engineering | 自動清理 | 安全審計 |
 
-### 9.6 IP & Licensing
+### 9.5 IP & Licensing
 
 | 項目 | 內容 |
 |------|------|
@@ -501,7 +502,7 @@ timeline
 | H2 | 北極星指標已確認（Weekly Completed Games）| ✅ | PM |
 | H3 | 三公規則文件（含特殊牌型）已完整記錄 | 🔲 PENDING | Game Designer |
 | H4 | Colyseus + Cocos 技術可行性已確認（PoC）| 🔲 PENDING | Engineering |
-| H5 | Q3/Q4 Open Questions 已解答 | 🔲 PENDING | PM + Engineering |
+| H5 | Q1-Q4 Open Questions 已解答（Q1：規則引擎設計影響；Q2：超時窗口；Q3：帳號系統；Q4：目標平台）| 🔲 PENDING | PM + Engineering + Game Designer |
 | H6 | 虛擬籌碼法律確認 | 🔲 PENDING | Legal |
 | H7 | PRD Owner 已指定 | 🔲 PENDING | PM |
 
@@ -547,4 +548,4 @@ timeline
 
 ---
 
-*此 BRD 由 /devsop-idea 自動生成（v0.1-draft），請執行 /devsop-brd-review 進行正式審查。*
+*此 BRD 由 /devsop-idea 自動生成（v0.4-draft），已執行 /devsop-brd-review 進行 5 輪正式審查。*
