@@ -26,14 +26,14 @@
 | v0.1-draft | 2026-04-21 | /devsop-autodev STEP-03 | 初稿，依 BRD v0.12-draft 自動生成；包含 REQ-001~REQ-016 + REQ-020 規格、遊戲規則實作規格、NFR-01~NFR-14、合規需求、錯誤處理、資料模型、API 端點高層次設計 |
 | v0.2-draft | 2026-04-21 | STEP-04 Review Round 1 | 17個問題修正（REQ-004 AC-3破產算法、REQ-013動畫時長矛盾、莊家機制補齊、REQ-021新增、REQ-012矛盾消除、NFR優先度、好友系統DEFERRED等）|
 | v0.3-draft | 2026-04-22 | STEP-04 Review Round 2 | 56個問題修正（F1~F56）：房間級距下注範圍更正、莊家破產先到先得算法、REQ-006/007/017~019新增、NFR-15/16新增、RTM補齊REQ-015/016/021/測試覆蓋欄位、REQ-020a/b拆分、合規REQ補強、架構邊界、DB事務隔離等）|
-| v0.3-draft | 2026-04-22 | STEP-04 Review Round 3 (24 Findings Fix) | 24個問題修正：F1(Fold底池修正)、F4(配對計時器一致化90秒)、F5(settlement ties陣列)、F6(RTM REQ-019)、F7(REQ-014 Dependencies方向修正)、F8(NFR-03組件99.9%+驗算)、F9(版本號v0.3-draft)、F10(REQ-011計時器AC-5)、F11(REQ-012 Tutorial劇本AC-5)、F12(REQ-015 AC-5轉設計說明)、F13(REQ-006淨籌碼收益AC-7)、F14(REQ-017 AC-2連續5局定義)、F15(NFR-10籌碼異常事件清單)、F16(NFR REST Rate Limit)、F19(§8.6 Graceful Degradation)、F20(REQ-020a冪等性)、F22(REQ-007聊天室AC-4/5/6)、F23(§8.2莊家零餘額行為)、F24(O6截止日更新) |
-| v0.4-draft | 2026-04-21 | STEP-04 Review Round 4 (24 fixes) | 房間級距、escrow時序、BRD RTM準備 |
-| v0.5-draft | 2026-04-21 | STEP-04 Review Round 5 (16 fixes) | Fold bet=0、matchmaking 90s、settlement schema |
-| v0.6-draft | 2026-04-21 | STEP-04 Review Round 6 (12 fixes) | REQ-014 deps、NFR-03 99.9%組件、S-020b |
-| v0.7-draft | 2026-04-21 | STEP-04 Review Round 7 (11 fixes) | escrow Step 2時序、all-fold banker net=0 |
-| v0.8-draft | 2026-04-21 | STEP-04 Review Round 8 (25 fixes) | Step 3 Call扣款、tutorial 3-round、BRD RTM填齊 |
-| v0.9-draft | 2026-04-21 | STEP-04 Review Round 9 (14 fixes) | §4a版本鎖定表、詐欺SOP、empty-pot guard |
-| v0.10-draft | 2026-04-21 | STEP-04 Review Round 10 (7 fixes) | 三公glossary、§8.1來源、成人2h測試向量 |
+| v0.3b-draft | 2026-04-22 | STEP-04 Review Round 3 (24 Findings Fix) | 24個問題修正：F1(Fold底池修正)、F4(配對計時器一致化90秒)、F5(settlement ties陣列)、F6(RTM REQ-019)、F7(REQ-014 Dependencies方向修正)、F8(NFR-03組件99.9%+驗算)、F9(版本號v0.3-draft)、F10(REQ-011計時器AC-5)、F11(REQ-012 Tutorial劇本AC-5)、F12(REQ-015 AC-5轉設計說明)、F13(REQ-006淨籌碼收益AC-7)、F14(REQ-017 AC-2連續5局定義)、F15(NFR-10籌碼異常事件清單)、F16(NFR REST Rate Limit)、F19(§8.6 Graceful Degradation)、F20(REQ-020a冪等性)、F22(REQ-007聊天室AC-4/5/6)、F23(§8.2莊家零餘額行為)、F24(O6截止日更新) |
+| v0.4-draft | 2026-04-22 | STEP-04 Review Round 4 (24 fixes) | 房間級距、escrow時序、BRD RTM準備 |
+| v0.5-draft | 2026-04-22 | STEP-04 Review Round 5 (16 fixes) | Fold bet=0、matchmaking 90s、settlement schema |
+| v0.6-draft | 2026-04-22 | STEP-04 Review Round 6 (12 fixes) | REQ-014 deps、NFR-03 99.9%組件、S-020b |
+| v0.7-draft | 2026-04-22 | STEP-04 Review Round 7 (11 fixes) | escrow Step 2時序、all-fold banker net=0 |
+| v0.8-draft | 2026-04-22 | STEP-04 Review Round 8 (25 fixes) | Step 3 Call扣款、tutorial 3-round、BRD RTM填齊 |
+| v0.9-draft | 2026-04-22 | STEP-04 Review Round 9 (14 fixes) | §4a版本鎖定表、詐欺SOP、empty-pot guard |
+| v0.10-draft | 2026-04-22 | STEP-04 Review Round 10 (7 fixes) | 三公glossary、§8.1來源、成人2h測試向量 |
 | v0.11-draft | 2026-04-22 | STEP-04 Review Round 11 fix (this round) | F1~F9修正（BRD D15 Won't→Should Have說明、PRD Change Log v0.4-v0.11條目補齊、NFR-17 BRD R4→R10來源、REQ-006 AC-7平手語義統一、BRD NFR-17 Refresh Token規格、O12欄位對齊、BRD §5.4 500-999邊緣情況補每日任務、REQ-005 D15引用、§8.6 OTP/KYC/AdMob降級場景） |
 
 ---
@@ -271,7 +271,7 @@ As a **Competitive Player**（林小姐）, I want to view weekly and monthly le
 5. 同籌碼收益平手決勝：依達成時間先後（先達成者排名較前）。
 6. 隱私選項：玩家可在帳號設定選擇「不顯示於排行榜」；選擇後從榜單中隱藏，不計入排名序號。
 7. 測試方法：模擬已知籌碼變動後驗證排行榜更新延遲（≤ 1 分鐘）及排序正確性（依淨收益降冪、同收益以時間先後）。
-8. 淨籌碼收益定義（AC-7）：本週（UTC+8週一00:00至週日23:59:59（UTC+8））內所有tx_type=game_win/game_lose的Transaction amount加總；daily_gift、rescue、iap、task_reward類型均不計入；同收益值平手決勝：依最早達成同淨收益值時的game_win記錄時間戳先後排序；相同淨收益時，較早達到該分數者（timestamp較小）排名較前，與AC-5「先達成者排名較前」保持一致；測試：預置已知遊戲交易序列，驗證排行榜排序與公式計算一致。
+8. 淨籌碼收益定義（AC-8）：本週（UTC+8週一00:00至週日23:59:59（UTC+8））內所有tx_type=game_win/game_lose的Transaction amount加總；daily_gift、rescue、iap、task_reward類型均不計入；同收益值平手決勝：依最早達成同淨收益值時的game_win記錄時間戳先後排序；相同淨收益時，較早達到該分數者（timestamp較小）排名較前，與AC-5「先達成者排名較前」保持一致；測試：預置已知遊戲交易序列，驗證排行榜排序與公式計算一致。
 
 **Out of Scope：** 好友榜（v1.x）；即時榜（毫秒級更新）。
 
@@ -943,6 +943,8 @@ Step 6: 三步驟結算（原子性執行，見 §5.3）
 | `rescueChips` | 救濟籌碼補發通知 |
 
 > **注：settlement廣播schema中`net_chips: -bet`表示負的下注金額，由Server計算後填入實際數值廣播（非字面字串）。**
+
+> **【All-Fold 場景補充說明】全員棄牌時（底池=0，莊家 net=0）：莊家不出現在 winners/losers/folders/ties/insolvent_winners 任何陣列中；其籌碼狀態僅透過 banker_remaining_chips 廣播（含 escrow 退回後的值）；Client 依 folders 陣列顯示所有棄牌閒家，依 banker_remaining_chips 更新莊家籌碼顯示。**
 
 ---
 

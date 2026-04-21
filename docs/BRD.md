@@ -26,14 +26,14 @@
 | v0.2-draft | 2026-04-21 | /devsop-autodev STEP 01 BRD Fixer | 修復 16 個 Findings（F1-F16）：新增核心目標宣言、IAP條件語句、三公規則附錄、觀戰模式排除、P0業務驗收條件、NFR章節、年齡驗證方案、防沉迷機制、Colyseus版本鎖定、籌碼經濟約束、市場數據免責聲明、美術策略決策機制、好友系統說明、§9.4合規矩陣、聊天室合規備注、Glossary擴充 |
 | v0.3-draft | 2026-04-22 | /devsop-autodev STEP 01 BRD Fixer Round 2 | 修復 28 個 Findings（F1-F28）：F1新增房間人數及配對超時AC、F2新增輪莊制定義、F3修正同點比牌規則消除歧義並新增D8、F4新增斷線行為定義、F5修正籌碼守恆AC、F6新增Q5截止日及§8.1備注、F7更新O1/O2/O3時間框架錨定基準日、F8定義付費率分母、F9新增北極星量化目標、F10新增PostgreSQL/Redis版本、F11新增OTP年齡驗證風險備注、F12補充白銀/鉑金下注上限、F13新增VIP系統功能描述、F14新增房間生命週期終止條件、F15補充Beta視覺滿意度AC細節、F16鎖定Cocos Creator小版本、F17移動法律問題至Open Questions、F18新增防沉迷計時器重置條件、F19補充洗牌亂度AC樣本數、F20新增每日任務至MoSCoW、F21新增廣告模式功能需求、F22新增Unit Economics免責聲明、F23新增Cookie同意需求、F24替換相對日期、F25修正Colyseus版本標注、F26定義滲透測試頻率、F27新增聊天室關鍵字清單負責人、F28定義誤判率分母 |
 | v0.4-draft | 2026-04-22 | /devsop-autodev STEP-01 Review Round 3 | 24個問題修正（VIP Out of Scope清理、O4/Q4/§3.5絕對日期、TypeScript版本鎖定、Node.js 22.x升級、RTM/Roadmap/商業模式VIP一致性、RTO/RPO NFR、籌碼底池定義等） |
-| v0.5-draft | 2026-04-21 | /devsop-autodev STEP-01 Review Round 4 | 17個問題修正（三公規則完整化、操作計時器、Sam Gong vs Sam Gong平手規則、§7.3/§9.3絕對日期、WebSocket NFR、MAU詞彙、房間級距表、新手引導納入MoSCoW等） |
-| v0.6-draft | 2026-04-21 | /devsop-autodev STEP-01 Review Round 5 | 12個問題修正（F1：修正D8 Ace為最小與台灣慣例一致，消除§5.5與D8矛盾；F2：三表統一房間級距/等級門檻/Glossary，新增獨立系統說明注，初始籌碼更正為100,000；F3：RTM新增Tutorial O2行；F4：定義斷線期間計時器不暫停行為；F5：新增中途跌破入場門檻移出規則；F6：Glossary新增WAU/Rake/Banker詞條並依字母重排；F7：Step2新增莊家30秒計時器，D12記入決策；F8：Dependencies表新增Node.js 22.x與TypeScript 5.4.x；F9：Q6截止日改為絕對日期2026-04-21；F10：H9/H10/H11補章節參考；F11：Step4明確Fold手牌保持暗牌；F12：救濟機制補充觸發時機與廣播提示） |
-| v0.7-draft | 2026-04-21 | /devsop-autodev STEP-01 Review Round 6 | 8個問題修正（結算雙向方向、三步→兩步統一、RTM格式修正、§7.3 Launch+6M里程碑、Tutorial server-authoritative、Cookie MoSCoW、同花色牌比較規則） |
-| v0.8-draft | 2026-04-21 | /devsop-autodev STEP-01 Review Round 7 | 9個問題修正（莊家破產D13、賠率語義明確化、Step6三步驟結算、Q5待決標注、§7.3 Amber Zone + NPS、Cookie目標修正、混合結算順序） |
-| v0.9-draft | 2026-04-21 | /devsop-autodev STEP-01 Review Round 8 | 9個問題修正（抽水底數統一、Step6c賠付來源明確、§3.1相對日期、每日贈籌重置時間、§9.4絕對日期、§3.3免責聲明、§12 Roadmap日期錨定、D13日期修正、廣告指標統一）|
-| v0.10-draft | 2026-04-21 | /devsop-autodev STEP-01 Review Round 9 | 10個問題修正（結算邏輯五處統一、Glossary Rake修正、D7格式、防沉迷時區、§5.4底池說明、KYC 90日→絕對日期、初始籌碼說明補充）|
-| v0.11-draft | 2026-04-21 | STEP-01 Review Round 10 | 4個問題修正（Step6a底池收齊邏輯、Step6b抽水基數明確化、Glossary補Fold/Call、500-999籌碼邊緣情況）|
-| v0.12-draft | 2026-04-21 | STEP-01 Review Round 11 | 4個問題修正（RTM補齊REQ-013~016、混合結算Step3語義統一、每日任務獎勵範圍、DOC-ID日期）|
+| v0.5-draft | 2026-04-22 | /devsop-autodev STEP-01 Review Round 4 | 17個問題修正（三公規則完整化、操作計時器、Sam Gong vs Sam Gong平手規則、§7.3/§9.3絕對日期、WebSocket NFR、MAU詞彙、房間級距表、新手引導納入MoSCoW等） |
+| v0.6-draft | 2026-04-22 | /devsop-autodev STEP-01 Review Round 5 | 12個問題修正（F1：修正D8 Ace為最小與台灣慣例一致，消除§5.5與D8矛盾；F2：三表統一房間級距/等級門檻/Glossary，新增獨立系統說明注，初始籌碼更正為100,000；F3：RTM新增Tutorial O2行；F4：定義斷線期間計時器不暫停行為；F5：新增中途跌破入場門檻移出規則；F6：Glossary新增WAU/Rake/Banker詞條並依字母重排；F7：Step2新增莊家30秒計時器，D12記入決策；F8：Dependencies表新增Node.js 22.x與TypeScript 5.4.x；F9：Q6截止日改為絕對日期2026-04-21；F10：H9/H10/H11補章節參考；F11：Step4明確Fold手牌保持暗牌；F12：救濟機制補充觸發時機與廣播提示） |
+| v0.7-draft | 2026-04-22 | /devsop-autodev STEP-01 Review Round 6 | 8個問題修正（結算雙向方向、三步→兩步統一、RTM格式修正、§7.3 Launch+6M里程碑、Tutorial server-authoritative、Cookie MoSCoW、同花色牌比較規則） |
+| v0.8-draft | 2026-04-22 | /devsop-autodev STEP-01 Review Round 7 | 9個問題修正（莊家破產D13、賠率語義明確化、Step6三步驟結算、Q5待決標注、§7.3 Amber Zone + NPS、Cookie目標修正、混合結算順序） |
+| v0.9-draft | 2026-04-22 | /devsop-autodev STEP-01 Review Round 8 | 9個問題修正（抽水底數統一、Step6c賠付來源明確、§3.1相對日期、每日贈籌重置時間、§9.4絕對日期、§3.3免責聲明、§12 Roadmap日期錨定、D13日期修正、廣告指標統一）|
+| v0.10-draft | 2026-04-22 | /devsop-autodev STEP-01 Review Round 9 | 10個問題修正（結算邏輯五處統一、Glossary Rake修正、D7格式、防沉迷時區、§5.4底池說明、KYC 90日→絕對日期、初始籌碼說明補充）|
+| v0.11-draft | 2026-04-22 | STEP-01 Review Round 10 | 4個問題修正（Step6a底池收齊邏輯、Step6b抽水基數明確化、Glossary補Fold/Call、500-999籌碼邊緣情況）|
+| v0.12-draft | 2026-04-22 | STEP-01 Review Round 11 | 4個問題修正（RTM補齊REQ-013~016、混合結算Step3語義統一、每日任務獎勵範圍、DOC-ID日期）|
 
 ---
 
@@ -270,7 +270,7 @@
 | 像素風 / 賭場風 UI（至少一套完整）| Must Have | O1 | 1. **Beta 封測視覺滿意度 AC（F15）：** in-app 5星問卷「您對本遊戲視覺風格的滿意度」；有效樣本 ≥ 50 人；平均評分 ≥ 4.0/5.0；2. 移動端（375px 寬）無元素重疊或截斷 |
 | 發牌/翻牌/結算動畫 | Must Have | O1 | 1. 動畫流暢度 ≥ 30fps（中低階手機）；2. 動畫時長不超過 3 秒，不阻塞玩家操作 |
 | 帳號系統（遊客登入 + Google/Facebook 綁定）| Must Have | O2 | 1. 遊客轉正式帳號流程 ≤ 3 步驟；2. 年齡驗證閘（出生年份 + OTP）100% 覆蓋新帳號（F7） |
-| 防沉迷提醒（F8）| Must Have | O1 | 1. 連續遊玩 2 小時後顯示提醒彈窗；2. 未成年帳號每日遊戲時數上限 2 小時強制下線；3. 每日遊玩時間顯示於帳號頁；**準確度AC（F14）：連續遊玩30分鐘後，帳號頁顯示值與Server Session Log誤差 ≤ 1分鐘（60秒）** |
+| 防沉迷提醒（F8）| Must Have | O合規（法規合規） | 1. 連續遊玩 2 小時後顯示提醒彈窗；2. 未成年帳號每日遊戲時數上限 2 小時強制下線；3. 每日遊玩時間顯示於帳號頁；**準確度AC（F14）：連續遊玩30分鐘後，帳號頁顯示值與Server Session Log誤差 ≤ 1分鐘（60秒）** |
 | 虛擬籌碼每日贈送（留存機制）★ | **Must Have**（升級自Should Have，決策D14，2026-04-22） | O2 | 1. 7 日留存率 ≥ 35%（Launch+6M 追蹤）；2. 每日領取率 ≥ 60% DAU |
 | **每日任務系統（F20）** | **Should Have** | O2 | **AC：每日任務完成率 ≥ 40% DAU（Launch+3M 量測）**；任務範例：每日完成 3 場對戰、連續登入 7 日、完成教學。任務獎勵為虛擬籌碼；每項任務獎勵：500–2,000 籌碼（具體金額由 PRD Game Designer 定義，確保 500–999 籌碼邊緣情況玩家可透過單日任務恢復進房資格）。 |
 | 好友系統（最小化版本，F13）| Should Have | O2 | 1. 支援搜尋好友 ID 並新增；2. 支援邀請好友進入指定房間；3. **明確不支援好友間籌碼轉移**（防洗籌碼）；4. 好友清單上限 100 人 |
