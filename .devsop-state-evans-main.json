@@ -14,7 +14,7 @@
   "client_type": "cocos",
   "auto_mode": "full",
   "review_mode": "MODE-B",
-  "log_file": "",
+  "log_file": ".devsop-run-20260421-234828.log",
   "github_repo": "",
   "base_branch": "master",
   "port": 2567,
