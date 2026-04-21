@@ -10,10 +10,10 @@
 |------|------|
 | **DOC-ID** | PRD-SAM-GONG-GAME-20260421 |
 | **專案名稱** | 三公遊戲（Sam Gong 3-Card Poker）即時多人線上平台 |
-| **文件版本** | v0.2-draft |
+| **文件版本** | v0.3-draft |
 | **狀態** | DRAFT |
 | **作者** | Evans Tseng（由 /devsop-autodev STEP-03 自動生成） |
-| **日期** | 2026-04-21 |
+| **日期** | 2026-04-22 |
 | **來源 BRD** | BRD-SAM-GONG-GAME-20260421 v0.12-draft |
 | **建立方式** | /devsop-autodev STEP-03 自動生成 |
 
@@ -26,6 +26,7 @@
 | v0.1-draft | 2026-04-21 | /devsop-autodev STEP-03 | 初稿，依 BRD v0.12-draft 自動生成；包含 REQ-001~REQ-016 + REQ-020 規格、遊戲規則實作規格、NFR-01~NFR-14、合規需求、錯誤處理、資料模型、API 端點高層次設計 |
 | v0.2-draft | 2026-04-21 | STEP-04 Review Round 1 | 17個問題修正（REQ-004 AC-3破產算法、REQ-013動畫時長矛盾、莊家機制補齊、REQ-021新增、REQ-012矛盾消除、NFR優先度、好友系統DEFERRED等）|
 | v0.3-draft | 2026-04-22 | STEP-04 Review Round 2 | 56個問題修正（F1~F56）：房間級距下注範圍更正、莊家破產先到先得算法、REQ-006/007/017~019新增、NFR-15/16新增、RTM補齊REQ-015/016/021/測試覆蓋欄位、REQ-020a/b拆分、合規REQ補強、架構邊界、DB事務隔離等）|
+| v0.3-draft | 2026-04-22 | STEP-04 Review Round 3 (24 Findings Fix) | 24個問題修正：F1(Fold底池修正)、F4(配對計時器一致化90秒)、F5(settlement ties陣列)、F6(RTM REQ-019)、F7(REQ-014 Dependencies方向修正)、F8(NFR-03組件99.9%+驗算)、F9(版本號v0.3-draft)、F10(REQ-011計時器AC-5)、F11(REQ-012 Tutorial劇本AC-5)、F12(REQ-015 AC-5轉設計說明)、F13(REQ-006淨籌碼收益AC-7)、F14(REQ-017 AC-2連續5局定義)、F15(NFR-10籌碼異常事件清單)、F16(NFR REST Rate Limit)、F19(§8.6 Graceful Degradation)、F20(REQ-020a冪等性)、F22(REQ-007聊天室AC-4/5/6)、F23(§8.2莊家零餘額行為)、F24(O6截止日更新) |
 
 ---
 
@@ -215,6 +216,8 @@ As a **Casual Player**, I want the server to automatically calculate and distrib
 | 8 點以下 | 1:1（N=1） | (1+1)× = 2× 下注額 |
 | 平手 | 退注（N=0） | 退回下注額 |
 
+5. 平手玩家通知（AC-5）：平手閒家出現在settlement廣播的`ties`陣列中（見§7 settlement廣播schema）；Client收到後退回該閒家下注額至籌碼餘額並顯示平手動畫；平手不計入底池、不計入抽水底數；Server驗收：測試向量含平手情境，驗證ties陣列正確包含平手玩家，winner/loser陣列不含該玩家。
+
 **Out of Scope：**
 - 真實金錢結算（明確禁止）。
 - 籌碼兌換（明確禁止）。
@@ -254,6 +257,7 @@ As a **Competitive Player**（林小姐）, I want to view weekly and monthly le
 5. 同籌碼收益平手決勝：依達成時間先後（先達成者排名較前）。
 6. 隱私選項：玩家可在帳號設定選擇「不顯示於排行榜」；選擇後從榜單中隱藏，不計入排名序號。
 7. 測試方法：模擬已知籌碼變動後驗證排行榜更新延遲（≤ 1 分鐘）及排序正確性（依淨收益降冪、同收益以時間先後）。
+8. 淨籌碼收益定義（AC-7）：本週（UTC+8週一00:00至週日23:59）內所有tx_type=game_win/game_lose的Transaction amount加總；daily_gift、rescue、iap、task_reward類型均不計入；同收益值平手決勝：依達成時間（最後一筆game_win記錄時間）先後；測試：預置已知遊戲交易序列，驗證排行榜排序與公式計算一致。
 
 **Out of Scope：** 好友榜（v1.x）；即時榜（毫秒級更新）。
 
@@ -275,6 +279,9 @@ As a **Casual Player**, I want to send messages in the game room so that I can c
 1. 敏感關鍵字過濾覆蓋率 ≥ 95%（測試方式：以100條含敏感詞測試訊息驗證過濾命中率）。
 2. 舉報後審核處理 SLA ≤ 24 小時（Ops人工審核）。
 3. 訊息留存 30 日後自動刪除。
+4. 單條聊天消息最大長度200字元（AC-4）；超長消息Server端拒絕並返回`{error:'message_too_long', max_chars:200}`；Client提前截斷顯示。
+5. 聊天消息Rate Limit（AC-5）：每玩家每秒≤2條；超限靜默丟棄（不提示），同一玩家超限累計3次觸發10秒冷卻。
+6. 斷線重連後不推送歷史消息（AC-6）；僅推送重連後的新消息（避免消息洪水）。
 
 **Out of Scope：** 跨房間廣播；語音聊天；表情包。
 
@@ -311,8 +318,8 @@ As a **Casual Player**, I want to quickly join a game through fast matchmaking o
 
 **Acceptance Criteria：**
 
-1. 快速配對（Quick Match）：依玩家持有籌碼量自動匹配相近等級的對手；相近等級 = 同一房間 tier 廳；首先在相同廳級配對，等待超過 30 秒若同廳人數不足（< 2 人等待）則擴展至相鄰廳級（上下各一級）；擴展後等待上限再 60 秒；配對成功後自動進入 Room；等待時間中位數 ≤ 30 秒（500 CCU 壓測環境）；配對失敗率 ≤ 5%。配對失敗定義：配對請求發出後60秒內（配對超時窗口）未成功進入房間的請求；不含玩家主動取消；失敗率 = 失敗次數 / (失敗次數 + 成功次數)。
-2. 快速配對等待超過 **60 秒**自動取消，通知玩家「配對超時，請稍後再試」，並將玩家保留在大廳頁面。
+1. 快速配對（Quick Match）：依玩家持有籌碼量自動匹配相近等級的對手；相近等級 = 同一房間 tier 廳；同廳配對等待最長30秒；若不足（同廳等待玩家<2人），觸發擴展至相鄰廳級（上下各一級）；擴展後額外等待最長60秒；總最長等待=90秒；配對成功後自動進入 Room；等待時間中位數 ≤ 30 秒（500 CCU 壓測環境）；配對失敗率 ≤ 5%。配對失敗定義：配對請求發出後90秒內（配對超時窗口）未成功進入房間的請求；不含玩家主動取消；失敗率 = 失敗次數 / (失敗次數 + 成功次數)。
+2. 配對等待超過**90秒總上限**（30秒同廳+60秒擴展）自動取消，返回大廳並提示「配對超時，請稍後再試」並附帶超時原因；玩家保留在大廳頁面。
 3. 每房間人數：最少 2 人、最多 6 人；房間人數不足 2 人時停止接受新局；系統等待新玩家補入，等待上限 60 秒；60 秒內無新玩家加入則自動解散房間，並向剩餘玩家發送通知「房間已解散，請重新匹配」，玩家不損失本局下注額（本局未完成，下注退回）；所有玩家離開後房間立即銷毀。
 4. 指定房間（Private Room）：玩家可建立並分享房間 ID 邀請特定玩家加入；房間建立後 60 秒內無人加入自動解散；建立者獨自等待 60 秒後房間自動解散，建立者收到通知「房間已解散，無玩家加入」並返回大廳；建立者籌碼無損失。
 5. 中途跌破入場門檻的玩家，在當局結算後自動移出至大廳，不影響進行中的牌局（見 §5.4）。
@@ -341,6 +348,7 @@ As a **Competitive Player**, I want the game room state (player seats, chip coun
 2. 玩家操作（下注、棄牌）至 Server 確認並廣播更新的端對端延遲 ≤ 100ms（P95，亞太區）。測試規格：工具 k6 或 Colyseus load test；測試環境：亞太區模擬（EC2 ap-northeast-1）；負載：500 CCU 持續 10 分鐘；樣本數 ≥ 10,000 次操作；通過條件：P95 ≤ 100ms 且 P99 < 500ms。
 3. 斷線重連行為（BRD §5.3）：玩家斷線後有 30 秒重連窗口；30 秒內重連後，Room State 完整恢復（手牌、籌碼、本局下注額與 Server 記錄完全一致，差異容忍 = 0）；30 秒內重連成功率 = 100%（執行 100 次模擬測試驗證）；逾時未重連自動視為 Fold。
 4. WebSocket 心跳：ping/pong 心跳間隔 ≤ 10 秒；客戶端斷線後自動重連最多 3 次（退避：1/2/4 秒）；超過 30 秒斷線觸發 §5.5 斷線行為處理。
+5. 計時器同步機制（AC-5）：Server在計時器啟動時廣播`{action_deadline_timestamp}`（Server Unix timestamp ms）；Client以本地時鐘計算剩餘時間用於顯示；超時判定由Server執行（Server-authoritative）；Client顯示誤差容忍≤1秒；測試：Client本地時鐘偏移±5秒時驗證Server仍正確執行超時。
 
 **Out of Scope：**
 - 觀戰者 Schema（v1.0 不實作）。
@@ -367,6 +375,7 @@ As a **Returning Player**（王伯伯）, I want a guided tutorial that teaches 
 4. AC-4a: 重複觀看引導教學說明步驟（規則說明文字）：玩家可在帳號設定頁重新觀看，任何時候可跳過說明文字頁面。
 AC-4b: 模擬牌局（不消耗籌碼）：僅在首次進入帳號時必須完成（不可跳過）；後續可隨時從設定頁重新體驗但非強制；首次完成後解鎖正式對戰入口。
 AC-4c: 測試方法：新帳號進入 App 後，在未完成模擬牌局前，正式對戰入口 UI 處於 disabled 狀態，點擊顯示提示「請先完成新手引導」。
+5. Tutorial劇本規格（AC-5，Server端固定劇本）：共進行3輪模擬牌局；第1輪：教學者手牌預設三公，NPC莊家為7點（教學者必勝，展示三公牌型）；第2輪：普通比牌（教學者5點 vs NPC莊家3點，展示普通比牌）；第3輪：平手退注示範（教學者和NPC莊家均為6點）；Server透過固定發牌序列實現劇本，tutorial_mode=true時使用預設牌序而非隨機洗牌。
 
 **Out of Scope：**
 - AI 對戰模式（Tutorial 模擬牌局為 Server 生成劇本，非真實 AI 對手）。
@@ -423,7 +432,7 @@ As a **Casual Player**, I want to quickly start playing as a guest and later lin
 - 台灣自然人憑證 KYC（僅在法律意見書 2026-05-15 要求時升級，截止日 2026-08-13）。
 - 多裝置同時登入限制（v1.0 不實作）。
 
-**Dependencies：** REQ-015（防沉迷需要帳號年齡欄位）、REQ-016（Cookie 同意需在帳號流程前顯示）
+**Dependencies：** REQ-016（Cookie同意須在帳號流程前顯示）
 
 **Priority：** Must Have
 
@@ -443,7 +452,7 @@ As a **Casual Player**, I want the app to remind me when I've been playing for 2
 3. 未成年帳號強制限制：年齡 < 18 歲帳號每日遊玩時數上限 2 小時，達上限後強制登出（UTC+8 次日 00:00 重置）；強制登出前 10 分鐘顯示警告。
 4. 每日遊玩時間顯示：帳號主頁顯示今日累計遊玩時間；準確度 AC：連續遊玩 30 分鐘後，帳號頁顯示值與 Server Session Log 誤差 ≤ 1 分鐘（60 秒）。
 
-5. 未成年帳號識別補充（AC-5）：若 Server 側偵測到帳號行為與申報年齡不符（如同設備指紋同時存在多個帳號、遊玩時間模式異常），觸發人工審查標記（`suspicious_underage_flag`）；法律意見書（2026-05-15）確認後決定是否強制 KYC 升級。注意：此機制為補充防護，v1.0 主要依賴出生年份自填 + OTP 方案（詳見 §9.3）；`suspicious_underage_flag` 的觸發邏輯設計於 EDD 階段細化。
+**[設計說明 — EDD細化] 未成年帳號偵測補充機制：** 若Server偵測到帳號行為異常（如同設備指紋多帳號、遊玩時間模式異常），觸發`suspicious_underage_flag`人工審查標記；具體觸發邏輯將於EDD（STEP-07）細化並補充為正式AC；v1.0 PRD階段此機制無測試標準，不作為v1.0驗收條件。法律意見書（2026-05-15）確認後決定是否強制KYC升級。此機制為補充防護，v1.0主要依賴出生年份自填+OTP方案（詳見§9.3）。
 
 **Out of Scope：**
 - 週 / 月累計遊玩時間顯示（v1.0 僅顯示今日）。
@@ -495,7 +504,7 @@ As a **Competitive Player**, I want the platform to detect and block cheating be
    - **重複請求**：同一玩家同一動作在 1 秒內發送 ≥ 3 次觸發標記。
    - **超速下注**：單局內同一玩家 WebSocket 下注消息發送頻率 > 10 次/秒觸發標記。
    - **非法金額**：下注金額超過帳號餘額或房間限額時，立即拒絕並記錄日誌。
-   - **觸發後行為**：第一次觸發 → 警告 + 記錄日誌；連續 5 局出現異常 → 臨時封號 24 小時；封號通知帳號並記入稽核日誌。
+   - **觸發後行為**：第一次觸發 → 警告 + 記錄日誌；連續5局 = 同一玩家帳號在任意滾動10局時間窗口（Server端以局為計量單位）內累計出現≥5次異常標記（重複請求/超速下注/非法金額任一觸發均計一次）；跨房間、跨session累計；觸發條件達成後帳號臨時封號24小時（UTC+8時間）；封號通知帳號並記入稽核日誌；測試：模擬10局內5次異常觸發，驗證封號行為。
 3. 帳號封鎖機制：確認異常行為後，系統可封鎖帳號（臨時或永久）；封鎖操作記錄於稽核日誌；受封鎖帳號嘗試操作時收到明確錯誤提示。
 
 **Out of Scope：** AI行為模式深度分析（v1.x）；機器學習作弊偵測（v1.x）。
@@ -546,7 +555,7 @@ As a **Returning Player**, I want to receive free chips daily and get an emergen
 
 **Acceptance Criteria：**
 
-1. 每日免費贈送（玩家主動領取模式）：每日免費籌碼採玩家主動領取模式（非自動發送）；大廳顯示「領取今日籌碼」按鈕；Server 驗證當日是否已領取（`daily_chip_claimed_at` 日期 ≠ 今日 UTC+8）；每日重置時間：00:00 UTC+8；超過 7 日未登入者不補發累積天數；每日領取率目標 ≥ 60% DAU（Launch+6M 量測）；領取率量測分母 = 當日 DAU，分子 = 當日成功領取唯一帳號數；每次領取贈送 5,000 籌碼。
+1. 每日免費贈送（玩家主動領取模式）：每日免費籌碼採玩家主動領取模式（非自動發送）；大廳顯示「領取今日籌碼」按鈕；Server 驗證當日是否已領取（`daily_chip_claimed_at` 日期 ≠ 今日 UTC+8）；每日重置時間：00:00 UTC+8；超過 7 日未登入者不補發累積天數；每日領取率目標 ≥ 60% DAU（Launch+6M 量測）；領取率量測分母 = 當日 DAU，分子 = 當日成功領取唯一帳號數；每次領取贈送 5,000 籌碼。**冪等性保護：** 每日贈送請求使用複合Key（player_id + claim_date_utc8）作為唯一性約束；重複請求返回HTTP 200並附帶`{already_claimed: true, chips_awarded: 0}`（不重複發放）；DB使用`INSERT ... ON CONFLICT DO NOTHING`配合唯一約束實現冪等。
 2. 救濟機制：當局結算後玩家餘額 < 500 籌碼時，Server 在下一局開始前自動補發 1,000 救濟籌碼（每帳號每日上限 1 次）；補發時廣播 Client 顯示提示「您的籌碼已不足，系統已補發 1,000 救濟籌碼」；救濟不觸發條件：餘額 500–999（此範圍顯示大廳提示，引導玩家透過每日任務恢復進房資格）。
 
 **Out of Scope：**
@@ -614,14 +623,14 @@ As a **Returning Player**, I want to optionally purchase more chips or watch ads
 |---|------|---------|---------|---------|--------|-------|
 | NFR-01 | 效能：延遲 | Server 遊戲邏輯回應延遲（玩家操作至 Server 確認） | ≤ 100ms（P95，亞太區） | Colyseus Load Test + APM 監控 | Must | Eng Lead |
 | NFR-02 | 效能：並發 | 支援 Peak CCU | ≥ 500 CCU（單節點）；≥ 2,000 CCU（水平擴展後） | Artillery / k6 壓測；測試配置：(a) 單節點500 CCU：N個6人房間持續對戰10分鐘，每玩家每30秒一次決策動作；(b) 水平擴展2,000 CCU：k8s叢集4節點同等配置；Pass條件：P95延遲 ≤ 100ms且無連線錯誤 | Must | Eng Lead |
-| NFR-03 | 可用性 | (1) 整體服務 end-to-end 可用性 ≥ 99.5%/月（≤ 3.6 小時停機，不含計劃維護）；計劃維護窗口：每月最大 4 小時（提前 24 小時公告）；緊急維護計入 SLA 停機時間；(2) 各組件獨立可用性目標：Colyseus WS ≥ 99.8%、REST API ≥ 99.8%、PostgreSQL ≥ 99.8%、Redis ≥ 99.8%（以確保聯合可用性 ≥ 99.5%）；(3) 監控：各組件獨立 health check + 端對端 smoke test，任一失敗計入停機時間 | ≥ 99.5% / 月（end-to-end） | Uptime Robot / Grafana 監控；各組件獨立 health check | Must | SRE |
+| NFR-03 | 可用性 | (1) 整體服務 end-to-end 可用性 ≥ 99.5%/月（≤ 3.6 小時停機，不含計劃維護）；計劃維護窗口：每月最大 4 小時（提前 24 小時公告）；緊急維護計入 SLA 停機時間；(2) 各組件獨立可用性目標：Colyseus WS ≥ 99.9%、REST API ≥ 99.9%、PostgreSQL ≥ 99.9%、Redis ≥ 99.9%；驗算：4個各99.9%串聯聯合可用性=0.999^4≈99.6%>99.5%，滿足end-to-end目標；(3) 監控：各組件獨立 health check + 端對端 smoke test，任一失敗計入停機時間 | ≥ 99.5% / 月（end-to-end） | Uptime Robot / Grafana 監控；各組件獨立 health check | Must | SRE |
 | NFR-04 | 安全：傳輸加密 | 所有 Client-Server 通訊 | TLS 1.2+（禁止 TLS 1.0/1.1） | SSL Labs 掃描 / 部署前安全審查 | Must | Eng Lead |
 | NFR-05 | 安全：資料加密 | 靜態敏感資料（密碼、KYC、支付） | AES-256 加密儲存；加密金鑰管理使用AWS KMS或等效HSM；輪換頻率每90天；金鑰存取日誌保留180天；禁止hardcode金鑰於代碼庫 | 安全審查 + 滲透測試（GA 前 1 次；後續每 6 個月或重大版本前 1 次） | Must | Eng Lead + Legal |
 | NFR-06 | 相容性：瀏覽器 | Web 端主流瀏覽器 | Chrome 100+、Safari 15+、Firefox 100+、Edge 100+ | BrowserStack 跨瀏覽器測試 | Must | QA |
 | NFR-07 | 相容性：行動裝置 | Android / iOS 最低版本 | Android 8.0+（API 26+）、iOS 14+ | 實機測試 + Firebase Test Lab | Must | QA |
 | NFR-08 | 相容性：解析度 | 行動端最小螢幕寬度 | 375px（iPhone SE）以上無 UI 截斷 | 視覺回歸測試 | Must | QA + Art |
 | NFR-09 | 可擴展性 | 水平擴展觸發條件 | 單節點 CPU > 70% 持續 5 分鐘觸發自動擴容 | Colyseus + k8s HPA 設定驗證 | Should | SRE |
-| NFR-10 | 可觀測性 | 關鍵業務指標監控覆蓋 | CCU、延遲 P95/P99、錯誤率、籌碼異常 100% 覆蓋 | Grafana Dashboard 審查 | Should | SRE + PM |
+| NFR-10 | 可觀測性 | 關鍵業務指標監控覆蓋；籌碼異常監控事件清單（以下任一觸發Grafana alert + PagerDuty通報，SRE響應SLA≤15分鐘）：(1)結算後籌碼守恆失敗：所有玩家淨增減之和 ≠ -rake_amount；(2)單玩家chip_balance出現負值；(3)單局rake_amount > 底池10%（異常抽水）；(4)Transaction記錄與chip_balance不一致（T+1日夜間對帳） | CCU、延遲 P95/P99、錯誤率、籌碼異常 100% 覆蓋 | Grafana Dashboard 審查 | Should | SRE + PM |
 | NFR-11 | 合規：個資 | 用戶資料刪除請求處理 | 收到請求 7 個工作日內完成刪除 | 合規稽核 | Must | Legal + DPO |
 | NFR-12 | 效能：啟動時間 | 遊戲 Web 端首屏載入 | ≤ 5 秒（4G 網路，1MB/s） | Lighthouse 測試 | Should | Eng Lead |
 | NFR-13 | 資料備份與還原 | PostgreSQL 每日全量備份 + 每小時 WAL 增量；Redis 每 15 分鐘 RDB 快照 | RPO ≤ 1 小時；RTO ≤ 4 小時 | 季度備份恢復演練（實際還原測試通過） | Must | SRE |
@@ -630,6 +639,7 @@ As a **Returning Player**, I want to optionally purchase more chips or watch ads
 | NFR-16 | 效能：資料庫查詢延遲 | PostgreSQL查詢延遲；Redis操作延遲；連線池管理 | PostgreSQL P95查詢延遲 ≤ 50ms；Redis P95操作延遲 ≤ 5ms；連線池最大連線數：500 CCU下至少50個DB連線；連線池耗盡返回HTTP 503 | APM監控（如Datadog / Grafana）；壓測下P95延遲驗證 | Must | Eng Lead + SRE |
 | NFR-17 | 安全：Session Token | JWT 存取 Token 有效期 ≤ 1 小時；Refresh Token 有效期 ≤ 7 天；帳號封鎖後所有活躍 Token ≤ 1 分鐘失效（Server 端短效 Token 強制刷新）；簽名演算法：RS256 或 ES256（禁止 HS256）；測試：封號後 60 秒內嘗試已發 Token 操作返回 HTTP 401 | 封號後 Token 失效 ≤ 60 秒；Token 長度符合演算法規格 | 封號流程測試 + Token 驗證 | Must | Eng Lead |
 | NFR-18 | 可用性：DB Failover | PostgreSQL 採主從熱備援（streaming replication）；自動 failover 觸發：主節點不可用 60 秒後；服務恢復目標 ≤ 5 分鐘（計入 NFR-03 SLA）；Redis 採 Sentinel 模式；季度 failover 演練，記錄實際恢復時間 | 服務恢復時間 ≤ 5 分鐘 | 季度 failover 演練（實際恢復測試通過）| Must | SRE |
+| NFR-19 | 安全：REST API Rate Limit | REST API端點Rate Limit：(1)認證端點（/auth/*）：每IP每分鐘≤30次；(2)/player/daily-chip及/tasks/{id}/complete：每帳號每日限1次（AC層面已定義，NFR層面確認）；(3)一般API端點：每用戶每分鐘≤120次（2次/秒）；(4)IP全局Rate Limit：每IP每秒≤100次請求；超限返回HTTP 429 | 各端點超限返回HTTP 429 | 壓測工具模擬超限請求；驗證返回429及各限制正確執行 | Must | Eng Lead |
 
 ---
 
@@ -889,7 +899,7 @@ Step 6: 三步驟結算（原子性執行，見 §5.3）
 | `players[*].isConnected` | 玩家連線狀態 |
 | `timer` | 當前計時器剩餘秒數 |
 | `myHand` | 己方手牌（僅發給當事玩家）|
-| `settlement` | 結算明細廣播，payload schema：`{ winners: [{player_id, bet, payout, net_chips, result: "win"\|"tie"}], losers: [{player_id, bet}], folders: [{player_id}], rake_amount: number, banker_insolvent: boolean, banker_remaining_chips: number, phase: "settled" }` |
+| `settlement` | 結算明細廣播，payload schema：`{ winners: [{player_id, bet, payout, net_chips, result: "win"}], ties: [{player_id, bet}], losers: [{player_id, bet}], folders: [{player_id}], rake_amount: number, banker_insolvent: boolean, banker_remaining_chips: number, phase: "settled" }`；平手玩家出現在ties陣列中，Client退回下注額並顯示平手動畫 |
 | `rescueChips` | 救濟籌碼補發通知 |
 
 ---
@@ -900,7 +910,7 @@ Step 6: 三步驟結算（原子性執行，見 §5.3）
 
 | 情境 | 處理行為 |
 |------|---------|
-| 所有閒家均Fold | 莊家自動獲勝；底池（所有Fold閒家下注額之和）扣5%抽水後歸莊家；無須比牌；牌局即時結算 |
+| 所有閒家均Fold | 莊家自動獲勝；所有閒家均未下注（Fold下注額=0），底池=0，空底池守衛觸發，抽水=0，莊家無任何籌碼收益；牌局即時結算。 |
 | 進入比牌條件 | 最少需1位閒家 Call 才進入比牌流程；若無任何閒家Call（全Fold），跳過比牌直接結算 |
 
 ### 8.1 斷線 Mid-Game（來源 BRD §5.3 / §5.5）
@@ -920,6 +930,7 @@ Step 6: 三步驟結算（原子性執行，見 §5.3）
 | 莊家籌碼不足支付所有贏家 | 依閒家順時鐘座位順序逐一結算（先到先得）；每位贏家依序收取本金+N×賠付；莊家籌碼歸零後，後續排隊贏家所得為零（不按比例分配） |
 | 莊家結算後籌碼歸零 | 觸發次局自動輪莊；若莊家救濟後仍 < 本廳最低下注額，跳過本莊家資格（D9）|
 | 抽水計算（破產情境）| 抽水 = floor(莊家破產前已完成結算的輸家閒家下注額加總 × 0.05)，最少1籌碼（若加總 > 0）；未能結算的贏家下注額不計入抽水底數 |
+| 莊家結算後籌碼歸零且今日救濟已用盡 | 若玩家已觸發今日救濟但籌碼再次歸零，提示「今日救濟已用盡，無法獲得補充籌碼」；若餘額500-999（高於<500救濟觸發線），顯示邊緣狀態提示；玩家可選擇：(1)留在房間觀看（不能下注，無輪莊資格直至補充籌碼）；(2)返回大廳；房間不強制驅逐此玩家（由玩家決定） |
 
 ### 8.3 500-999 Chip Edge Case
 
@@ -947,6 +958,14 @@ Step 6: 三步驟結算（原子性執行，見 §5.3）
 | 中途跌破入場門檻 | 當局繼續；結算後提示玩家並自動移至大廳；不影響進行中牌局 |
 | 配對超時（60 秒）| 取消配對，通知玩家「配對超時」，保留在大廳頁面 |
 | Tutorial Room 完成 | 模擬牌局結束後，Room 解散；Client 導向教學完成確認頁，然後解鎖正式大廳 |
+
+### 8.6 Graceful Degradation策略
+
+| 情境 | 降級行為 |
+|------|---------|
+| Redis不可用 | 暫停新配對請求（返回HTTP 503），現有Colyseus房間繼續運作（Room State在記憶體中）；新配對恢復待Redis可用後自動恢復 |
+| PostgreSQL主節點failover期間（最長5分鐘per NFR-18） | 暫停新局開始，現有局繼續但不持久化直至DB恢復；恢復後批次補寫 |
+| 籌碼守恆失敗 | 立即回滾結算事務，所有玩家維持結算前狀態，SRE通報（per REQ-004 AC-2）；寫入CRITICAL log含game_id和差異金額 |
 
 ---
 
@@ -1057,7 +1076,7 @@ Web 首次載入：
 | O3 | 部署目標決定：Colyseus Cloud vs 自建 k8s（EDD 開始前必須完成）| NFR-02、NFR-09、EDD 架構設計 | Eng Lead | **2026-05-15** | OPEN |
 | O4 | 美術風格最終選定：像素風 vs 賭場風（Beta A/B 測試後決定）| REQ-013 UI / 動畫 | PM + Art Director | **2026-07-21** | OPEN |
 | O5 | 好友系統（友人列表、在線狀態、好友邀請通知）— BRD §5.3 Should Have；PRD v1.0 DEFERRED至v1.x（依人力評估）| v1.x PRD | PM | v1.x 計畫確認後 | DEFERRED |
-| O6 | 每日任務具體獎勵設計（500–2,000 籌碼範圍內的任務清單與獎勵配置）| REQ-021（每日任務系統，BRD §5.3 Should Have）| Game Designer | EDD 階段 | OPEN |
+| O6 | 每日任務具體獎勵設計（500–2,000 籌碼範圍內的任務清單與獎勵配置）；**2026-05-15（EDD啟動前）：Game Designer須完成初始任務清單與獎勵配置（確保每項獎勵下限≥500籌碼）；配置完成後補入REQ-021 AC-1並提供BDD測試向量；此為STEP-15 BDD生成的前置條件** | REQ-021（每日任務系統，BRD §5.3 Should Have）| Game Designer | **2026-05-15（EDD啟動前）** | OPEN |
 | O7 | 觀戰模式（Spectator Mode）：v1.0 Out of Scope，v1.x 評估 | v1.x PRD | PM | v1.x 計畫確認後 | DEFERRED |
 | O8 | VIP 訂閱系統：v1.0 Out of Scope，v1.x Backlog | v1.x PRD | PM | v1.x 計畫確認後 | DEFERRED |
 | O9 | 多語系支援（英文 / 簡中）：v1.0 Out of Scope | v1.x PRD | PM | v1.x 計畫確認後 | DEFERRED |
