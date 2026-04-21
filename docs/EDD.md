@@ -116,9 +116,10 @@ For each player's own cards:
   - Set card.suit / card.rank on their PlayerState
   - card.revealed = false
     ↓ (Colyseus sends each player only their own cards with actual suit/rank)
-Other players see Card objects with suit="" rank="" (blanked, revealed=false)
+Other players: @filter returns false → cards field omitted from their patch entirely
+  (Fallback: onBeforePatch blanks suit="" rank="" so structure is visible but data is hidden)
     ↓ (on REVEAL phase)
-Server sets all cards.revealed = true, broadcasts full suit/rank to everyone
+Server sets all cards.revealed = true → @filter returns true → broadcasts full suit/rank to everyone
 ```
 
 ```typescript
@@ -746,6 +747,24 @@ function validateAction(
     throw new Error("Banker cannot call/fold");
   }
 }
+
+// start_game 使用獨立的 Host 驗證（不走 validateAction，因 isHost 非 requiredRole 之一）
+// this.onMessage("start_game", (client, _data) => {
+//   const player = this.state.players.get(client.sessionId);
+//   if (!player?.isHost) {
+//     this.send(client, "error", { code: 4003, message: "Only host can start game" });
+//     return;
+//   }
+//   if (this.state.roomPhase !== "lobby") {
+//     this.send(client, "error", { code: 4004, message: "Not in lobby phase" });
+//     return;
+//   }
+//   if (this.state.players.size < 2) {
+//     this.send(client, "error", { code: 4006, message: "Need at least 2 players" });
+//     return;
+//   }
+//   transition(this, "banker_selection");
+// });
 ```
 
 ---
