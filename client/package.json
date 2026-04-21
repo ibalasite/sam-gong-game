@@ -1,0 +1,32 @@
+{
+  "name": "sam-gong-client",
+  "version": "1.0.0",
+  "description": "三公遊戲 Cocos Creator Client",
+  "scripts": {
+    "test": "jest",
+    "test:unit": "jest tests/unit",
+    "test:coverage": "jest --coverage"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "@types/jest": "^29.0.0",
+    "ts-jest": "^29.0.0",
+    "typescript": "^5.0.0"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "cc": "<rootDir>/tests/__mocks__/cc.ts"
+    },
+    "roots": ["<rootDir>/tests"],
+    "collectCoverageFrom": ["assets/scripts/**/*.ts"],
+    "coverageThreshold": {
+      "global": {
+        "branches": 70,
+        "functions": 70,
+        "lines": 70
+      }
+    }
+  }
+}
