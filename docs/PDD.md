@@ -48,6 +48,12 @@
 - Client **不得**自行計算任何籌碼差值、淨利潤、賠率（`net_chips` 由 Server 廣播）。
 - 所有遊戲狀態轉換由 Server `phase` 廣播驅動；Client 不主動推進 phase。
 
+**單一房間限制 (Single Room Constraint)：**
+- 玩家同一時間只能在一個遊戲房間中。
+- Server 端強制執行：若玩家已在 Room 中，Server 拒絕新的 join 請求，回傳 `errors.already_in_room`。
+- Client 端強制執行：當 `player_state.room_active = true` 時，SCR-004 的配對入口（快速配對、廳別選擇）均顯示 disabled 狀態。
+- 例外：玩家完成本局後（settled phase → waiting 結束），方可加入新房間。
+
 ---
 
 ## 3. Screen Inventory（畫面清單）
@@ -69,6 +75,15 @@
 | SCR-013 | Profile / Account（個人資料 / 帳號）| SCR-004 → 帳號圖示 | 關閉 → SCR-004 |
 | SCR-014 | Daily Tasks & Chips Claim（每日任務與籌碼領取）| SCR-004 → 每日任務圖示 | 關閉 → SCR-004 |
 | SCR-015 | Settings（設定）| SCR-004 → 設定齒輪；SCR-007 → 設定齒輪 | 關閉 → 返回上一頁 |
+| SCR-016 | 籌碼商店（Chip Store，v1.x 佔位）| SCR-004 大廳「購買籌碼」按鈕 / SCR-013 充值入口 | 關閉 → 返回上一頁 |
+
+> SCR-016 為 v1.x 佔位畫面（靜態免責聲明 + 「敬請期待」文字），實際購買功能實作依 2026-05-15 法律意見書決定。v1.0 僅顯示免責聲明：「本遊戲使用虛擬籌碼，不可兌換現金或任何形式之有價資產。」
+
+**旁觀模式 (Spectator Mode)：**
+- v1.0 Out-of-Scope：玩家不可在未占座的情況下觀看他人的遊戲房間。
+- 原因：Server-authoritative 設計下，旁觀者需要不同的 Room 存取模式，且與台灣合規（防沉迷計時）衝突。
+- Deferred: v2.0 roadmap（PDD-Q11）。
+- 實作限制：Server 拒絕無 seat_index 的 Room join 請求。
 
 ---
 
@@ -624,6 +639,7 @@
 |---------|---------|---------|------|
 | 房間已滿 | Toast，顯示 3s 後消失 | `errors.room_full` | 「此房間已滿，請選擇其他房間」 |
 | 無效房間 ID | Inline 紅色錯誤標籤，顯示於 Room ID 輸入欄下方 | `errors.room_not_found` | 「找不到此房間，請確認 ID 是否正確」|
+| 籌碼不足（Insufficient Chips）| Toast（3s 自動消失）| `errors.insufficient_chips_for_tier` | '您的籌碼不足以進入此廳（需 {required} 籌碼，您目前有 {current} 籌碼）' |
 
 ---
 
@@ -763,6 +779,12 @@ SCR-006 有兩種模式，由 `room_type` 參數決定：
 - 底池顯示：桌面中央；monospace 字體；`#D4AF37`
 - 抽水顯示：底池下方；12pt；`#7F8C8D`
 
+**席位序號標示 (Seat Index Badge)：**
+- 每個席位頭像框左下角顯示小型席位標示：「座位1」~「座位5」（本玩家 P0 不顯示，或顯示「您」）
+- 樣式：8pt 字體，顏色 `#7F8C8D`（灰色），背景 `rgba(0,0,0,0.5)`，圓角 4px
+- 順序：席位序號代表 player-bet 的行動順序（順時鐘，從莊家下一席開始）
+- 席位序號由 Room State `seat_index` 欄位決定（Server 分配）
+
 **底池 / 抽水顯示時序邏輯：**
 1. `waiting` / `dealing` phase：底池 = 0、抽水 = 0（重置顯示）
 2. `banker-bet` / `player-bet` phase：底池隨玩家下注實時更新（來自 Server Room State 廣播）
@@ -788,6 +810,27 @@ SCR-007 底部玩家資訊列中的「籌碼：N」來源：
 - 僅顯示 CMP-005（Call / Fold 按鈕）；CMP-004（Bet Slider）隱藏
 
 > 注意：以上兩個操作區在任意時間點只有一個 active；非本玩家回合時（他人操作中）兩者均隱藏；waiting / dealing / showdown / settled phase 時兩者均隱藏。
+
+---
+
+#### 主動離開遊戲流程 (Intentional Leave Flow)
+
+**主動離開遊戲（Mid-Game Leave）：**
+- 觸發：玩家在非 waiting phase 時點擊離開/返回按鈕
+- 確認對話框 (confirmation dialog)：
+  ```
+  ┌──────────────────────────────────────────────────┐
+  │  確定要離開本局？                                   │
+  │  ● 離開後，本局視同棄牌                             │
+  │  ● 若本局已下注，將損失對應籌碼                      │
+  │  [  取消（繼續遊戲）  ]  [  確定離開（紅色）  ]       │
+  └──────────────────────────────────────────────────┘
+  ```
+  i18n key: `errors.leave_mid_game_confirm` = '離開後視同棄牌，本局已下注籌碼將損失。確定離開嗎？'
+- 確認離開後：Server 處理該玩家棄牌（net_chips=-bet if already bet, or 0 if not yet bet）→ Client 導向 SCR-004
+- 中途離開後，該玩家本局在桌面顯示「已離線」狀態（灰色頭像），直到本局結束
+- 重新加入：離開後不可重新加入同一局；若房間仍在等待（waiting phase），可重新加入 → 正常配對流程
+- 在 waiting phase（局間等待）點擊離開：無需確認對話框，直接離開並導向 SCR-004
 
 ---
 
@@ -826,6 +869,16 @@ SCR-007 底部玩家資訊列中的「籌碼：N」來源：
 - 重試進度文字隨 Colyseus 重連嘗試更新（1/3 → 2/3 → 3/3）
 
 **(2) 重連成功：** overlay 淡出消失（0.3s fade-out）；遊戲繼續，Room State 自動同步恢復
+
+**重連成功後狀態還原步驟：**
+1. `cc.game.on(cc.Game.EVENT_RESUME, ...)` 或 Colyseus `client.reconnect(roomId, sessionId)` 觸發重連
+2. Colyseus 自動發送完整 Room State patch 至 Client
+3. 若 phase 為 dealing/banker-bet/player-bet（且本玩家已收過 myHand）：
+   - Server 在重連後重新推送 `myHand` payload
+   - Client 重新套用 face-up 顯示至 P0 的 3 張手牌
+4. 若 phase 為 showdown：所有已揭示的牌從 Room State 中的 revealed_cards 欄位還原為 face-up
+5. 計時器：從 `action_deadline_timestamp - Date.now()` 重新計算剩餘時間並恢復倒數
+6. Overlay 淡出後，所有遊戲 UI 元素（CMP-001~010）從 Room State 重新渲染
 
 **(3) 30 秒超時 / 3 次重連失敗：**
 ```
@@ -1172,6 +1225,12 @@ SCR-007 底部玩家資訊列中的「籌碼：N」來源：
 - 斷線重連後不推送歷史訊息（Server 不儲存聊天記錄）
 - **v1.0 Chat only supports text input (max 200 characters). Emoji/quick-phrase to be added in v2.0.**
 
+**聊天範圍與生命週期：**
+- 範圍：僅限目前所在的遊戲房間（房間級作用域，非全域）
+- 持久化：Server 不儲存聊天記錄；玩家離開房間或重新整理後，聊天記錄消失
+- 重連後：重連成功後聊天面板清空（僅顯示重連後的新訊息）
+- 存取限制：SCR-011 聊天面板僅可從 SCR-007（遊戲中）開啟；在大廳（SCR-004）或其他畫面不可使用聊天功能
+
 **內容過濾回饋（Content Filter Feedback）：**
 
 訊息被伺服器拒絕（內容過濾）時：
@@ -1308,6 +1367,17 @@ SCR-007 底部玩家資訊列中的「籌碼：N」來源：
 - 幫助 / 常見問題：點擊後開啟 WebView 至 `faq_url`（來自 Server config），含返回按鈕
 - 登出帳號：紅色按鈕（`#C0392B` 背景）；點擊後顯示確認對話框（`settings.logout_confirm`）；確認 → 清除 JWT tokens + 導向 SCR-001；取消 → 關閉對話框
 
+**登出（在遊戲中觸發）Mid-Game Logout Special Case：**
+若玩家從 SCR-007（遊戲中）導航至 SCR-015 並點擊登出，確認對話框顯示強化警告：
+i18n key: `settings.logout_confirm_midgame` = '您正在遊戲中！離開將視同棄牌，本局下注籌碼將損失。確定登出？'
+確認後：Server 處理玩家棄牌 → Client 清除 JWT tokens → 導向 SCR-001（登入畫面）
+
+**從 SCR-007 開啟時的特殊限制：**
+- 登出：顯示強化版警告對話框（見 F4 / `settings.logout_confirm_midgame`）
+- 重播新手引導：按鈕顯示 Disabled 狀態（灰色 opacity 0.5），hover/tap tooltip：`settings.tutorial_replay_disabled_midgame` = '本局結束後方可重播教學'
+- 音訊/顯示設定：正常可用（不受限制）
+- 說明：玩家在 SCR-015 設定畫面停留時，Server 端的計時器仍繼續倒數；若計時器歸零，Server 自動判定該動作（如棄牌）
+
 **音訊設定持久化：**
 - 本地儲存：`cc.sys.localStorage.setItem('user_settings_audio', JSON.stringify({music: 70, sfx: 80, vibration: true}))`（預設值 music=70，sfx=80）
 - 伺服器同步：設定更改後 debounce 2s 後呼叫 `PUT /api/v1/player/settings`，payload: `{music_volume: N, sfx_volume: N, vibration: boolean}`
@@ -1387,6 +1457,15 @@ SCR-007 底部玩家資訊列中的「籌碼：N」來源：
 - 每張牌翻轉：0.3s（REQ-013 AC-2 ≤ 0.5s/張）
 - Fold 玩家的牌保持暗牌（不翻面）
 - 資源：`fx_card_flip.anim`
+
+**翻牌順序規格：**
+- 翻牌方式：交錯翻牌（staggered simultaneous）— 非等待前一位翻完才翻下一位
+- 起始席位：莊家的順時鐘下一席（seat_index = (banker_seat_index + 1) % player_count）
+- 每張牌翻面延遲：同一玩家3張牌同時翻面；不同玩家間隔 0.05s（例：P1翻牌0s, P2翻牌0.05s, ..., 莊家最後翻牌）
+- 若玩家為棄牌（folders）：牌面保持暗牌，不翻面
+- 莊家翻牌：最後翻面（壓軸效果）
+- 全翻完後：0.3s pause → 觸發 §6.4 結算動畫
+- 注意：Server 先到先得（insolvent_winners）的結算順序由 Server 決定，與翻牌視覺順序無關；SCR-009 settlement UI 中 insolvent_winners 的列表行順序即代表先到先得的結算序列
 
 ---
 
@@ -1602,7 +1681,7 @@ SCR-007 底部玩家資訊列中的「籌碼：N」來源：
   matchmaking.timeout        → 「配對超時，請稍後再試」
   matchmaking.expanding      → 「⚡ 擴大配對中（{tiers}）」
   otp.daily_limit_exceeded   → 「今日OTP請求已達上限，請於次日UTC+8 00:00後重試」
-  chips.edge_500_999         → 「籌碼不足進入任何房間，請完成每日任務或等待每日免費籌碼（每日 00:00 UTC+8 重置）」
+  lobby.chip_edge_500_999    → 「籌碼不足進入任何房間，請完成每日任務或等待每日免費籌碼（每日 00:00 UTC+8 重置）」
   lobby.daily_chip_claim     → 「領取今日籌碼 +5,000」
 ```
 
@@ -1680,6 +1759,8 @@ SCR-007 底部玩家資訊列中的「籌碼：N」來源：
     "vibration_feedback": "振動回饋",
     "logout": "登出帳號",
     "logout_confirm": "確定要登出嗎？登出後需重新登入。",
+    "logout_confirm_midgame": "您正在遊戲中！離開將視同棄牌，本局下注籌碼將損失。確定登出？",
+    "tutorial_replay_disabled_midgame": "本局結束後方可重播教學",
     "privacy_policy": "隱私權政策",
     "help_faq": "幫助 / 常見問題"
   },
@@ -1715,7 +1796,9 @@ SCR-007 底部玩家資訊列中的「籌碼：N」來源：
     "account_banned": "您的帳號已被封禁，如有疑問請聯繫客服",
     "server_maintenance": "伺服器維護中，預計 {time} 恢復",
     "action_timeout": "操作逾時，請重試或檢查網路連線",
-    "chat_content_filtered": "訊息含有不允許的內容，請修改後重新發送"
+    "chat_content_filtered": "訊息含有不允許的內容，請修改後重新發送",
+    "insufficient_chips_for_tier": "您的籌碼不足以進入此廳（需 {required} 籌碼，目前僅有 {current} 籌碼）",
+    "already_in_room": "您已在其他房間中，請先結束目前的遊戲再加入新房間"
   },
   "leaderboard": {
     "my_rank_unranked": "-- / 未上榜",
