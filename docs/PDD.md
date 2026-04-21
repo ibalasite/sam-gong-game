@@ -261,6 +261,20 @@
 | Disabled | 灰階；`pointer-events=none` | 莊家已執行 see_cards 或已完成 banker-bet 下注 |
 | Processing | 顯示 spinner；`disabled` | `see_cards` 訊息已發送，等待 Server `myHand` 回應 |
 
+**莊家 banker-bet 階段操作說明：**
+- 莊家在 banker-bet 階段，See Cards 按鈕執行後進入 Disabled 狀態（不可再次查看），同時 Confirm Bet 按鈕保持 Enabled 可確認下注
+- 莊家可先查看手牌再調整下注金額（兩個動作是獨立操作）
+- Confirm Bet 按鈕顯示於 Bet Slider 下方（banker-bet phase 時）
+
+**網路延遲回饋規格（Network Latency Feedback）：**
+- 玩家點擊 Call / Fold / Confirm Bet 後：按鈕進入 Processing 狀態（灰色 + 旋轉 spinner icon）
+- 等待上限：8 秒（`ACTION_TIMEOUT_MS = 8000`）
+- 若 8 秒內無 Server 回應：
+  1. 按鈕恢復 Active 狀態（可重新點擊）
+  2. 顯示 Toast: `errors.action_timeout`（「操作逾時，請重試或檢查網路連線」）
+  3. 計時器繼續正常倒數（不因 Client 逾時而停止，Server 有最終決定權）
+- 注意：Client 端**不可**自動代替玩家執行棄牌或任何動作；逾時僅顯示錯誤並恢復按鈕
+
 ---
 
 ### CMP-006：Phase Indicator（階段指示器）
@@ -651,6 +665,44 @@
 
 ---
 
+#### 私人房間等待模式（Private Room Host Waiting Mode）
+
+SCR-006 有兩種模式，由 `room_type` 參數決定：
+
+**模式A：一般配對（Matchmaking）— 現有設計（`room_type=matchmaking`）**
+- 顯示：「配對中...」動畫 + 90s 倒數計時器（如上方 wireframe）
+
+**模式B：私人房間等待（Private Room Waiting，`room_type=private`）**
+
+```
+┌──────────────────────────────────────────────────┐
+│  ← 返回                         房間等待中        │
+│                                                   │
+│  您的房間 ID                                       │
+│  ┌──────────────────────────────────────────────┐ │
+│  │     ABCD12     [複製 ID]  [分享]              │ │
+│  └──────────────────────────────────────────────┘ │
+│                                                   │
+│  玩家 (1/6)                                       │
+│  ● 您（莊家）  [已就緒]                            │
+│  ○ 等待中...                                      │
+│  ○ 等待中...                                      │
+│                                                   │
+│  等待玩家加入...                                   │
+│  [          開始遊戲（最少2人）          ]          │
+│                                                   │
+│ 本遊戲為娛樂性質，虛擬籌碼無任何真實財務價值         │
+└──────────────────────────────────────────────────┘
+```
+
+- 無倒數計時器（私人房間無 90s 限制）
+- 玩家加入時名稱即時更新（Colyseus Room State `players` 陣列 onChange 監聽）
+- 開始遊戲按鈕：`players.length >= 2` 時啟用，否則 disabled（灰色）
+- 複製 ID 按鈕：`cc.sys.copyTextToClipboard(roomId)`，Toast: `locale.room.id_copied`
+- 返回按鈕：顯示確認對話框（「確定離開？房間將被解散」），確認後導向 SCR-004
+
+---
+
 ### SCR-007：Game Table（遊戲桌面）— 最核心畫面
 
 ```
@@ -729,6 +781,8 @@ SCR-007 底部玩家資訊列中的「籌碼：N」來源：
 
 【banker-bet phase 底部操作區】
 - 僅顯示 CMP-004（Bet Slider / Input）；CMP-005（Call/Fold 按鈕）隱藏
+- Bet Slider 下方顯示「確認下注」（Confirm Bet）按鈕（`game.action.confirm_bet`）；點擊後發送 `banker_bet { amount }` 至 Server
+- 莊家可先點擊 CMP-005 See Cards 查看手牌（See Cards 執行後進入 Disabled），再調整 Slider 金額後點擊 Confirm Bet（兩個動作為獨立操作）
 
 【player-bet phase 底部操作區（輪到本玩家）】
 - 僅顯示 CMP-005（Call / Fold 按鈕）；CMP-004（Bet Slider）隱藏
@@ -744,6 +798,8 @@ SCR-007 底部玩家資訊列中的「籌碼：N」來源：
 | 被踢出房間 | 全螢幕 Overlay，含確認按鈕 | `errors.kicked_from_room` | 點擊確認 → 導向 SCR-004 |
 | JWT Token 過期 | 自動嘗試 Token Refresh；失敗則 Toast + 跳轉登入 | `errors.session_expired` | Refresh 失敗 → 導向 SCR-001（登入頁）|
 | 伺服器錯誤 | Toast，3s 自動消失 | `errors.server_error` | 「伺服器發生錯誤，請稍後再試」|
+| 帳號封禁（Banned）| 全螢幕 Overlay（無重試按鈕）；顯示「您的帳號已被封禁」+ 客服聯絡超連結 | `errors.account_banned` | Terminal 狀態；無確認→返回大廳流程；封禁為本次 Session 終止狀態 |
+| 伺服器維護（Maintenance）| 全螢幕 Overlay（無重試按鈕）；顯示「伺服器維護中」+ 預計恢復時間（來自 Server payload `{time}`）+ 倒數計時器 | `errors.server_maintenance` | 無 重試 按鈕，直至維護結束；Server 回傳 503 或 maintenance payload 時觸發 |
 
 ---
 
@@ -859,6 +915,22 @@ SCR-007 底部玩家資訊列中的「籌碼：N」來源：
 
 ---
 
+#### Tutorial 籌碼模擬規格（Tutorial Chip Display）
+
+**Tutorial 籌碼顯示行為：**
+- 初始模擬籌碼：2,000 枚（固定值，顯示於底部玩家資訊列）
+- 下注階段（banker-bet / player-bet）：
+  - 莊家（P0）下注 100 時：籌碼顯示器動畫減少 100（顯示 1,900），模擬 Escrow 扣款
+  - NPC 跟注 100 時：NPC 頭像顯示「-100」浮動文字（不顯示 NPC 的真實籌碼數）
+- 結算後籌碼更新（依各輪結果）：
+  - R1（P0勝）：+100 → 顯示 2,100
+  - R2（P0勝）：+100 → 顯示 2,200
+  - R3（平手）：±0 → 顯示 2,200（退注）
+- Tutorial 結束：模擬籌碼數值不計入真實帳戶；顯示提示「教學結束：您的真實籌碼 N 枚不受影響」（N 來自真實帳戶）
+- 教學說明 Tooltip：在 banker-bet 階段前顯示 `tutorial.escrow_explain`：「下注後，對應籌碼會暫時凍結，結算後返還或支付」
+
+---
+
 #### Tutorial Script 固定腳本
 
 | 欄位 | 第 1 輪（3/5）| 第 2 輪（4/5）| 第 3 輪（5/5）|
@@ -869,10 +941,12 @@ SCR-007 底部玩家資訊列中的「籌碼：N」來源：
 | **莊家下注** | 100 籌碼 | 100 籌碼 | 100 籌碼 |
 | **NPC 下注** | 100 籌碼（跟注）| 100 籌碼（跟注）| 100 籌碼（跟注）|
 | **結算** | P0 勝（三公最高），獲得 100 籌碼淨利 | P0 勝（5 > 3），獲得 100 籌碼淨利 | 平手（`tutorial_force_tie: true`），雙方退注，net_chips = 0 |
-| **重點教學** | 三公介紹（3 張花牌 = 最高手牌）| 普通點數比較規則 | D8 tiebreaker 規則說明，最終平手概念 |
-| **Tooltip i18n keys** | `tutorial.round1.intro`、`tutorial.round1.sam_gong_explain`、`tutorial.round1.win` | `tutorial.round2.points_explain`、`tutorial.round2.win` | `tutorial.round3.tie_explain`、`tutorial.round3.d8_explain`、`tutorial.round3.result_tie` |
+| **重點教學** | 三公介紹（3 張花牌 = 最高手牌）| 普通點數比較規則 | 雙方同分平手概念：當雙方點數相同且平局條件成立，視為平手，雙方退注（net_chips=0）|
+| **Tooltip i18n keys** | `tutorial.round1.intro`、`tutorial.round1.sam_gong_explain`、`tutorial.round1.win` | `tutorial.round2.points_explain`、`tutorial.round2.win` | `tutorial.round3.tie_concept`、`tutorial.round3.result_tie` |
 
-> **第 3 輪說明：** 兩方均為 6 點，教學系統設定 `tutorial_force_tie: true`，Tutorial Narration 逐步說明 D8 tiebreaker（Step1: 最高牌花色比較；Step2: 最高牌點數比較），最終宣告「平手」作為教學示範，讓玩家理解平手退注概念。此為固定劇本，不代表真實牌局中相同手牌必然觸發平手。
+> **第 3 輪說明：** 兩方均為 6 點，教學系統設定 `tutorial_force_tie: true`，強制觸發平手結算結果（net_chips=0，雙方退注）。本輪重點為展示平手退注概念，narration 說明「當雙方點數相同時，系統會進行加時比牌（D8）；在極少數情況下仍會平局，此時雙方退注。」不逐步說明 D8 兩步驟，因實際手牌不產生真正的 D8 兩步驟均相同結果。此為固定劇本示範。
+>
+> **教學設計說明：** R3 使用 `tutorial_force_tie=true` 展示平手結算結果。實際遊戲中平手極為罕見（需要D8兩步驟均相同）。教學不聲稱示範「D8 兩步驟均相同」，僅展示平手退注的結算概念。
 
 ---
 
@@ -955,16 +1029,23 @@ SCR-007 底部玩家資訊列中的「籌碼：N」來源：
 │ │ #2  [頭像] 張先生  🥇        │ │
 │ │     +9,820,000 籌碼        │ │
 │ └────────────────────────────┘ │
-│  ...（最多 Top 100）            │
+│  ...（無限滾動，初始 Top 20）    │
 │                                │
 │ ┌────────────────────────────┐ │
-│ │ 我的排名：#47               │ │
+│ │ 我的排名：#47               │ │  ← 底部固定；未上榜時顯示 leaderboard.my_rank_unranked
 │ │ +345,000 籌碼               │ │
 │ └────────────────────────────┘ │
 │                                │
 │ 娛樂性質，虛擬籌碼無真實財務價值  │
 └────────────────────────────────┘
 ```
+
+**排行榜資料規格：**
+- 滾動方式：無限滾動（Infinite Scroll）；初始載入 Top 20，向下滾動至底部 80% 時自動載入下一批 20 筆
+- 資料更新頻率：頁面開啟時呼叫 `GET /api/v1/leaderboard?type={weekly|chip}` 一次；不自動 Polling；用戶可下拉更新（Pull-to-Refresh）觸發重新呼叫
+- 更新時間顯示：API 回應 `last_updated` 欄位，格式 `YYYY-MM-DD HH:mm`（台灣時區 UTC+8）；i18n key: `leaderboard.last_updated`
+- 載入中：Skeleton UI（灰色佔位條）顯示，避免閃爍；i18n key: `leaderboard.loading`
+- 無排名狀態：底部固定顯示我的排名列；未上榜時顯示 i18n key `leaderboard.my_rank_unranked`（「-- / 未上榜」）；詳見 §8.3 leaderboard 命名空間
 
 ---
 
@@ -1089,7 +1170,16 @@ SCR-007 底部玩家資訊列中的「籌碼：N」來源：
 - 關閉按鈕（右上角）：44×44pt；點擊後面板滑出返回 SCR-007
 - 舉報按鈕：長按聊天氣泡出現「⚑ 舉報」選項；觸控熱區 44×44pt（符合 P3 原則）
 - 斷線重連後不推送歷史訊息（Server 不儲存聊天記錄）
-- **v1.0 Chat only supports text input (max 50 characters). Emoji/quick-phrase to be added in v2.0.**
+- **v1.0 Chat only supports text input (max 200 characters). Emoji/quick-phrase to be added in v2.0.**
+
+**內容過濾回饋（Content Filter Feedback）：**
+
+訊息被伺服器拒絕（內容過濾）時：
+- Server 回傳 `send_message_rejected { reason: 'content_filter' }` 時：
+  1. 訊息**不**出現在聊天列表
+  2. Input field 下方顯示紅色 inline 錯誤標籤（i18n: `errors.chat_content_filtered`）
+  3. 訊息文字**保留**在 Input field 中（不清除，讓用戶可編輯修改）
+  4. 錯誤標籤在用戶重新輸入或刪除字元後自動消失
 
 #### SCR-011 Report Flow（舉報流程）
 
@@ -1200,6 +1290,11 @@ SCR-007 底部玩家資訊列中的「籌碼：N」來源：
 │                                │
 │  [    重播新手引導    ]          │  ← REQ-012 AC-4a：可重播教學
 │                                │
+│  隱私權政策                → [連結] │
+│  幫助 / 常見問題           → [連結] │
+│  ────────────────────────────  │
+│  [      登出帳號（紅色按鈕）    ] │
+│                                │
 │ 娛樂性質，虛擬籌碼無真實財務價值  │
 └────────────────────────────────┘
 ```
@@ -1209,6 +1304,9 @@ SCR-007 底部玩家資訊列中的「籌碼：N」來源：
 - 重播新手引導：點擊後跳轉至 SCR-008 Tutorial（REQ-012 AC-4a）
 - 減少動畫開關：開啟後，計時緊急（≤5s）畫面震動改為 Timer Bar 顏色閃爍（紅色 `#C0392B` 閃爍 0.2s 間隔）；遵循 WCAG 2.3.3 前庭覺敏感設計指引（F19）
 - 設定值儲存至本機（Cocos Creator 本地存儲）及 Server 使用者設定檔
+- 隱私權政策：點擊後開啟 WebView 至 `privacy_policy_url`（來自 Server config），含返回按鈕
+- 幫助 / 常見問題：點擊後開啟 WebView 至 `faq_url`（來自 Server config），含返回按鈕
+- 登出帳號：紅色按鈕（`#C0392B` 背景）；點擊後顯示確認對話框（`settings.logout_confirm`）；確認 → 清除 JWT tokens + 導向 SCR-001；取消 → 關閉對話框
 
 **音訊設定持久化：**
 - 本地儲存：`cc.sys.localStorage.setItem('user_settings_audio', JSON.stringify({music: 70, sfx: 80, vibration: true}))`（預設值 music=70，sfx=80）
@@ -1221,19 +1319,24 @@ SCR-007 底部玩家資訊列中的「籌碼：N」來源：
 
 ### 6.0 畫面轉場動畫 (Screen Transition Animations)
 
-| 轉場 | 動畫類型 | 時長 | Easing |
-|------|---------|------|--------|
-| SCR-001 → SCR-002 | Fade Out / Fade In | 0.4s | Linear |
-| SCR-002 → SCR-003 | Slide Left | 0.25s | ease-out |
-| SCR-003 → SCR-004 | Fade Out / Fade In | 0.3s | Linear |
-| SCR-004 → SCR-005 | Slide Left | 0.25s | ease-out |
-| SCR-005 → SCR-006 | Slide Left | 0.25s | ease-out |
-| SCR-006 → SCR-007 | Fade Out / Fade In | 0.4s | Linear |
-| SCR-007 → SCR-004 (離開) | Fade Out / Fade In | 0.3s | Linear |
-| 返回（任意） | Slide Right | 0.25s | ease-in |
-| Overlay Push (SCR-009/011/012) | Fade In + Slide Up | 0.2s | ease-out |
-| Overlay Dismiss | Fade Out + Slide Down | 0.15s | ease-in |
-| SCR-004 → SCR-013/014/015 | Slide Left | 0.25s | ease-out |
+| 轉場 | 動畫類型 | 時長 | Easing | 備注 |
+|------|---------|------|--------|------|
+| SCR-001 → SCR-003 | Overlay（疊加於 SCR-001）| — | — | 首次啟動，Cookie Banner 以 Overlay 方式顯示，非獨立跳轉 |
+| SCR-003 → SCR-004 | Fade Out / Fade In | 0.3s | Linear | Cookie 同意後繼續載入至大廳 |
+| SCR-004 → SCR-002 | Slide Left | 0.25s | ease-out | 年齡驗證觸發（點擊正式對戰且 age_verified=false）|
+| SCR-002 → SCR-004 | Slide Right | 0.25s | ease-in | OTP 驗證成功後返回大廳 |
+| SCR-004 → SCR-005 | Slide Left | 0.25s | ease-out | |
+| SCR-005 → SCR-006 | Slide Left | 0.25s | ease-out | |
+| SCR-006 → SCR-007 | Fade Out / Fade In | 0.4s | Linear | |
+| SCR-007 → SCR-004 (離開) | Fade Out / Fade In | 0.3s | Linear | |
+| SCR-004 → SCR-008 | Fade Out / Fade In | 0.3s | Linear | 教學入口從大廳進入 |
+| SCR-008 → SCR-004 | Fade Out / Fade In | 0.3s | Linear | 教學完成返回大廳 |
+| SCR-007 → SCR-010 | Overlay / Slide Left | 0.25s | ease-out | 遊戲中開啟排行榜 |
+| SCR-007 → SCR-015 | Slide Left | 0.25s | ease-out | 遊戲中開啟設定 |
+| 返回（任意） | Slide Right | 0.25s | ease-in | |
+| Overlay Push (SCR-009/011/012) | Fade In + Slide Up | 0.2s | ease-out | |
+| Overlay Dismiss | Fade Out + Slide Down | 0.15s | ease-in | |
+| SCR-004 → SCR-013/014/015 | Slide Left | 0.25s | ease-out | |
 
 `UIManager.navigateTo(scene, transition)` 方法 — 統一管理所有轉場，避免個別場景自行實作動畫。
 
@@ -1359,6 +1462,10 @@ SCR-007 底部玩家資訊列中的「籌碼：N」來源：
 | sfx_lose.mp3 | 本玩家 lose result | 0.8s | |
 | sfx_button_click.mp3 | 所有按鈕 tap | 0.05s | 輕觸回饋 |
 | sfx_timer_urgent.mp3 | 計時器剩餘 ≤ 5s | 0.3s 循環 | 每秒播放一次 |
+| sfx_tie.mp3 | 本玩家結算為 ties 陣列成員 | 0.6s | 中性鐘聲，表示平手退注 |
+| sfx_all_fold.mp3 | 所有玩家棄牌，莊家不戰而勝 | 0.8s | 若本玩家為莊家播放 sfx_win_jingle；非莊家播放此音效 |
+| sfx_insolvency.mp3 | settlement.banker_insolvent=true | 0.8s | 低沉警示音，表示莊家破產 |
+| sfx_crown_transition.mp3 | 莊家輪換（banker_seat_index 改變）| 0.4s | v1.0 placeholder: sfx_button_click；正式版替換（詳見 §6.9）|
 | bgm_lobby.mp3 | SCR-004 大廳 | 循環 | 低音量背景音樂 |
 | bgm_game.mp3 | SCR-007 遊戲中 | 循環 | 緊張節奏背景音樂 |
 
@@ -1385,7 +1492,7 @@ SCR-007 底部玩家資訊列中的「籌碼：N」來源：
    - 橫幅樣式：`#D4AF37` 金色文字，半透明深色底框，24pt
 3. 新莊家皇冠：延遲 0.1s 後 Scale 0→1 + Fade In（0.3s ease-out），位置：玩家頭像正上方
 4. 皇冠資產：`fx_crown_appear.anim`（Cocos Creator Spine 動畫 或 SpriteFrame 序列）
-5. 音效：`sfx_button_click.mp3`（暫代，v2.0 可替換為專屬皇冠音效）
+5. 音效：`sfx_crown_transition.mp3`（詳見 §6.8 SFX 資產表；v1.0 placeholder 為 sfx_button_click，beta 前替換）
 
 ---
 
@@ -1483,6 +1590,9 @@ SCR-007 底部玩家資訊列中的「籌碼：N」來源：
   settlement.leave_lobby     → 「返回大廳」
   tutorial.skip_rule         → 「跳過說明 ×」
   tutorial.complete_title    → 「教學完成！」
+  tutorial.escrow_explain    → 「下注後，對應籌碼會暫時凍結，結算後返還或支付」
+  tutorial.round3.tie_concept → 「當雙方點數相同時，系統會進行加時比牌（D8）。在極少數情況下仍會平局，此時雙方退注」
+  tutorial.round3.result_tie → 「平手！您的100籌碼退回，本局結算為0。」
   anti_addiction.adult_warning → 「您已連續遊玩 {minutes} 分鐘，請適度休息，注意健康。」
   anti_addiction.underage_stop → 「今日遊戲時間已達上限（2 小時）。依未成年保護規定，請明日再來。」
   anti_addiction.continue    → 「我知道了，繼續遊戲」
@@ -1498,7 +1608,7 @@ SCR-007 底部玩家資訊列中的「籌碼：N」來源：
 
 ### 8.3 `locale/zh-TW.json` 結構（完整命名空間）
 
-頂層命名空間清單：`game`、`settlement`、`tutorial`、`anti_addiction`、`rescue_chips`、`lobby`、`matchmaking`、`settings`、`accessibility`、`chat`、`errors`
+頂層命名空間清單：`game`、`settlement`、`tutorial`、`anti_addiction`、`rescue_chips`、`lobby`、`matchmaking`、`settings`、`accessibility`、`chat`、`errors`、`leaderboard`
 
 ```json
 {
@@ -1533,7 +1643,12 @@ SCR-007 底部玩家資訊列中的「籌碼：N」來源：
     "skip_rule": "跳過說明 ×",
     "complete_title": "教學完成！",
     "progress": "新手引導（{current}/{total}）",
-    "chip_system_title": "籌碼系統說明"
+    "chip_system_title": "籌碼系統說明",
+    "escrow_explain": "下注後，對應籌碼會暫時凍結，結算後返還或支付",
+    "round3": {
+      "tie_concept": "當雙方點數相同時，系統會進行加時比牌（D8）。在極少數情況下仍會平局，此時雙方退注",
+      "result_tie": "平手！您的100籌碼退回，本局結算為0。"
+    }
   },
   "anti_addiction": {
     "adult_warning": "您已連續遊玩 {minutes} 分鐘，請適度休息，注意健康。",
@@ -1562,7 +1677,11 @@ SCR-007 底部玩家資訊列中的「籌碼：N」來源：
     "cookie_management": "Cookie 同意管理",
     "music_volume": "背景音樂音量",
     "sfx_volume": "音效音量",
-    "vibration_feedback": "振動回饋"
+    "vibration_feedback": "振動回饋",
+    "logout": "登出帳號",
+    "logout_confirm": "確定要登出嗎？登出後需重新登入。",
+    "privacy_policy": "隱私權政策",
+    "help_faq": "幫助 / 常見問題"
   },
   "accessibility": {
     "call_button": "跟注，下注金額 {amount} 籌碼",
@@ -1592,7 +1711,19 @@ SCR-007 底部玩家資訊列中的「籌碼：N」來源：
     "room_not_found": "找不到此房間，請確認 ID 是否正確",
     "session_expired": "登入已過期，請重新登入",
     "server_error": "伺服器發生錯誤，請稍後再試",
-    "kicked_from_room": "您已被移出房間"
+    "kicked_from_room": "您已被移出房間",
+    "account_banned": "您的帳號已被封禁，如有疑問請聯繫客服",
+    "server_maintenance": "伺服器維護中，預計 {time} 恢復",
+    "action_timeout": "操作逾時，請重試或檢查網路連線",
+    "chat_content_filtered": "訊息含有不允許的內容，請修改後重新發送"
+  },
+  "leaderboard": {
+    "my_rank_unranked": "-- / 未上榜",
+    "last_updated": "更新時間：{time}",
+    "weekly_tab": "週榜",
+    "chip_tab": "籌碼榜",
+    "rank_label": "#{rank}",
+    "loading": "載入中..."
   }
 }
 ```
