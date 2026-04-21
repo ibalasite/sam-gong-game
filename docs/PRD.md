@@ -42,8 +42,8 @@
 |--------|---------|------------|------------|----------------|
 | **O1** | 推出 Server-authoritative 公平三公多人遊戲；GA 目標 **2026-08-21**；Server 權威計算率 100%，Client 無任何結果計算邏輯 | REQ-001, REQ-002, REQ-003, REQ-004, REQ-017（反作弊） | BDD S-001（REQ-001 洗牌）, S-002（REQ-002 發牌）, S-003（REQ-003 比牌）, S-004（REQ-004 結算）, S-017（REQ-017 反作弊；另含IT-anticheat-001整合測試）；BDD場景詳細內容於STEP-15生成；S-ID已預先保留，確保追溯鏈完整 | REQ-001: UT-shuffle-001（Fisher-Yates 分佈均勻性）；REQ-002: UT-deal-001（發牌三張正確性）；REQ-003: UT-compare-001（比牌向量測試集 ≥ 200）；REQ-004: IT-settlement-001（籌碼守恆並發測試）|
 | **O2** | 建立穩定同時在線（CCU）基礎；Peak CCU ≥ 500，DAU ≥ 2,000（**≤ 2027-02-21**） | REQ-010（配對）, REQ-011（房間狀態）, REQ-012（新手引導）, REQ-013（UI/動畫）, REQ-014（帳號驗證）, REQ-021, REQ-020a（Must Have，留存驅動，升級自O3，決策2026-04-22） | BDD S-010（REQ-010 配對）, S-011（REQ-011 房間）, S-012（REQ-012 教學）, S-013（REQ-013 UI）, S-014（REQ-014 帳號）, S-020a（REQ-020a 籌碼）, S-021（REQ-021 每日任務）；BDD場景詳細內容於STEP-15生成；S-ID已預先保留，確保追溯鏈完整 | REQ-011: IT-roomstate-001（斷線重連狀態同步）；其他 BDD STEP-15 回填 |
-| **O2（留存/社群）** | （補充指標，非O2 Must條件）排行榜週榜活躍玩家數≥500人（Launch+3M目標；N值由PM於O6截止日2026-05-15前確認）| REQ-006（排行榜）— REQ-006為Could Have，其成功指標為補充指標（非O2 Must達成條件）；O2 Must達成條件僅依賴REQ-001~004, REQ-010~012, REQ-013, REQ-020a | UT/IT: IT-rank-001 | BDD S-006（STEP-15回填） |
-| **O2（社群參與）** | 聊天訊息日均發送量≥1,000則（Launch+3M目標；N值由PM於O6截止日2026-05-15前確認）| REQ-007（聊天室） | UT/IT: IT-chat-001 | BDD S-007（STEP-15回填） |
+| **O2（留存/社群）** | （補充指標，非O2 Must條件）排行榜週榜活躍玩家數≥500人[提案值，2026-05-15確認]（Launch+3M目標；**[提案值，待O6截止日2026-05-15 PM確認後正式化；確認前不作為正式驗收標準]**）| REQ-006（排行榜）— REQ-006為Could Have，其成功指標為補充指標（非O2 Must達成條件）；O2 Must達成條件僅依賴REQ-001~004, REQ-010~012, REQ-013, REQ-020a | UT/IT: IT-rank-001 | BDD S-006（STEP-15回填） |
+| **O2（社群參與）** | 聊天訊息日均發送量≥1,000則[提案值，2026-05-15確認]（Launch+3M目標；**[提案值，待O6截止日2026-05-15 PM確認後正式化；確認前不作為正式驗收標準]**）| REQ-007（聊天室） | UT/IT: IT-chat-001 | BDD S-007（STEP-15回填） |
 | **O3** | 建立虛擬籌碼變現模式（依法律意見書 2026-05-15 決定）；付費率 ≥ 3%（**≤ 2027-05-21**） | REQ-020b（Should Have，IAP/廣告） | BDD S-020b（將於STEP-15 BDD文件生成後回填）| STEP-15 回填 |
 | **O合規** | 防沉迷合規；Cookie同意；個資保護 | REQ-015（防沉迷）, REQ-016（Cookie同意）, REQ-019（個資刪除）, REQ-014（帳號驗證） | BDD S-015（REQ-015 防沉迷）, S-016（REQ-016 Cookie）, S-019（REQ-019 個資刪除；另含IT-delete-001整合測試）；BDD場景詳細內容於STEP-15生成；S-ID已預先保留，確保追溯鏈完整 | STEP-15 回填 |
 
@@ -73,7 +73,7 @@
 | Alpha 驗收 | 2026-06-21 | 核心玩法完整、P0 Bug = 0、洗牌通過亂度測試 |
 | Beta 驗收 | 2026-07-21 | 7 日留存 ≥ 25%、公平性評分 ≥ 4/5 |
 | GA 決策 | 2026-08-21 | 負載測試 500 CCU 通過、合規審查完成 |
-| Post-Launch 3M | 2026-11-21 | DAU ≥ 1,000、付費率 ≥ 1%、NPS ≥ 70 |
+| Post-Launch 3M | 2026-11-21 | DAU ≥ 1,000、付費率 ≥ 1%、NPS ≥ 70、每日任務完成率≥40% DAU（僅適用於REQ-021已在GA上線之情況；若REQ-021延至v1.x，本指標從此里程碑評估中移除） |
 | Post-Launch 6M | 2027-02-21 | Peak CCU ≥ 500、DAU ≥ 2,000、7 日留存 ≥ 35% |
 
 ---
@@ -208,9 +208,9 @@ As a **Casual Player**, I want the server to automatically calculate and distrib
 
 **Acceptance Criteria：**
 
-1. 結算依 §5.5 三步驟原子性執行：Step 6a 確認每位閒家比牌結果；Step 6b 從輸家閒家下注額加總中扣除 5% 抽水（`floor(輸家下注額加總 × 0.05)`，最少 1 籌碼）；**空底池守衛（AC-1）：若底池（輸家閒家下注額加總）= 0，則抽水 = 0，最少1籌碼條款不適用；最少1籌碼僅在底池 > 0時生效**；Step 6c 依序支付（閒家勝：莊家直接支付本金 1× + N× 賠率，不經底池；閒家敗：閒家下注額歸底池扣抽水後給莊家）。事務隔離：使用PostgreSQL SERIALIZABLE隔離等級或READ COMMITTED + SELECT FOR UPDATE行級鎖；並發安全測試：100個並發結算請求，驗證籌碼守恆誤差 = 0。
+1. 結算依 §5.5 三步驟原子性執行：Step 6a 確認每位閒家比牌結果；Step 6b 從輸家閒家下注額加總中扣除 5% 抽水（`floor(輸家下注額加總 × 0.05)`，最少 1 籌碼）；**空底池守衛（AC-1）：若底池（輸家閒家下注額加總）= 0，則抽水 = 0，最少1籌碼條款不適用；最少1籌碼僅在底池 > 0時生效**；Step 6c 依序支付（閒家勝：莊家直接支付本金 1× + N× 賠率，不經底池；閒家敗：閒家下注額歸底池扣抽水後給莊家）。事務隔離：使用PostgreSQL SERIALIZABLE隔離等級或READ COMMITTED + SELECT FOR UPDATE行級鎖；並發安全測試：100個並發結算請求，驗證籌碼守恆誤差 = 0。**【F1 莊家預扣時機（AC-1補充）】莊家下注確認後（§5.1 Step 2），Server立即預扣（escrow）banker_bet_amount：banker chip_balance -= banker_bet_amount（預扣至托管態）；Step 6c支付贏家時從預扣額及剩餘餘額中順序支付；破產判斷以Step 2後的chip_balance為準。**
 2. 籌碼守恆驗證：每局結算後，全體玩家籌碼淨增減之和必須等於 `-(抽水額)`；誤差容忍 = 0 籌碼；驗證在結算事務提交後同步執行；失敗時：(1) 立即回滾結算事務；(2) 寫入CRITICAL log含game_id和差異金額；(3) 觸發PagerDuty告警，SRE響應SLA ≤ 15分鐘。
-3. 莊家破產規則（先到先得，D13）：若莊家籌碼不足以支付所有贏家，依閒家順時鐘座位順序逐一支付贏家；每位贏家依序收取本金（1×下注額）+N×下注額賠付；莊家籌碼歸零後，後續排隊贏家所得為零（不按比例分配，不取回本金，得零）；抽水 = floor(莊家破產前已實際完成結算的輸家閒家下注額加總 × 0.05)，最少1籌碼（底池 > 0 時）；莊家破產後未完成結算的輸家下注額不計入抽水底數；移除任何「按比例」抽水語言。破產後得零贏家的結算廣播使用insolvent_winners陣列（見§7 settlement廣播schema）。
+3. 莊家破產規則（先到先得，D13）：若莊家籌碼不足以支付所有贏家，依閒家順時鐘座位順序逐一支付贏家；每位贏家依序收取本金（1×下注額）+N×下注額賠付；莊家籌碼歸零後，後續排隊贏家所得為零（不按比例分配，不取回本金，得零）；抽水 = floor(莊家破產前已實際完成結算的輸家閒家下注額加總 × 0.05)，最少1籌碼（底池 > 0 時）；莊家破產後未完成結算的輸家下注額不計入抽水底數；移除任何「按比例」抽水語言。破產後得零贏家的結算廣播使用insolvent_winners陣列（見§7 settlement廣播schema）。**【F1 破產判定（AC-3補充）】破產判定：若莊家Step 6c支付過程中chip_balance + escrow_amount < 本次應支付額，觸發D13先到先得；後續贏家得零。**
 4. 結算完成後，Server 在 100ms 內廣播最終狀態至所有 Client，包含每位玩家的籌碼變動明細。測試規格：工具 k6 或 Colyseus load test；測試環境：亞太區模擬（EC2 ap-northeast-1）；負載：500 CCU 持續 10 分鐘；樣本數 ≥ 10,000 次操作；通過條件：P95 ≤ 100ms 且 P99 < 500ms。
 
 **Payout Table（台灣標準版）：**
@@ -675,6 +675,7 @@ Step 1: Server 洗牌（Fisher-Yates）
 Step 2: 莊家查看手牌 → 下注底注（≥ 本廳最低下注，≤ 本廳最高下注；玩家實際下注不得超過其當前籌碼餘額）
         → 莊家計時器：30 秒；超時自動以本廳最低下注代為下注（D12）
         → 若莊家籌碼 < 本廳最低下注，自動輪莊至下一位（D9）
+        → 【F1 莊家預扣（Escrow）時機】莊家下注確認後，Server立即預扣（escrow）banker_bet_amount：banker chip_balance -= banker_bet_amount（預扣至托管態）；Step 6c支付贏家時從預扣額及剩餘餘額中順序支付；破產判斷以Step 2後的chip_balance為準
         → 莊家下注確認後，Server立即更新Room State中的banker_bet_amount欄位並廣播至所有Client；閒家計時器（N秒）隨即啟動（見REQ-011 AC-1 banker_bet_amount欄位定義）
 
 Step 3: 閒家依順時鐘順序逐一決策
@@ -690,6 +691,7 @@ Step 5: Server 比牌（依 §5.2 比牌規則）
         → 計算每位未 Fold 閒家與莊家的比牌結果
 
 Step 6: 三步驟結算（原子性執行，見 §5.3）
+        → **【F2 全閒家Fold特殊情境】** 底池=0，抽水=0，莊家底注退回（見§8.0）
 ```
 
 ### 5.2 比牌規則
@@ -716,7 +718,7 @@ Step 6: 三步驟結算（原子性執行，見 §5.3）
 
 **Step 6b — 抽水（Rake）：**
 - 抽水底數 = 輸家閒家下注額加總（底池）。
-- 抽水額 = `Math.floor(底池 × 0.05)`，最少 1 籌碼。
+- 抽水額 = `floor(底池 × 0.05)`，最少 1 籌碼。
 - **空底池守衛（F3）：** 若底池（輸家閒家下注額加總）= 0（即全部閒家均勝或全員棄牌），則抽水 = 0，最少1籌碼條款不適用；最少1籌碼僅在底池 > 0時生效。
 - 抽水進入遊戲維運基金（不返還給任何玩家）。
 
@@ -911,7 +913,7 @@ Step 6: 三步驟結算（原子性執行，見 §5.3）
 | `players[*].isConnected` | 玩家連線狀態 |
 | `timer` | 當前計時器剩餘秒數 |
 | `myHand` | 己方手牌（僅發給當事玩家）|
-| `settlement` | 結算明細廣播，payload schema：`{ winners: [{player_id, bet, payout, net_chips, result: "win"}], insolvent_winners: [{player_id, bet, payout: 0, net_chips: -bet, result: "win_insolvency_zero"}], ties: [{player_id, bet}], losers: [{player_id, bet}], folders: [{player_id}], rake_amount: number, banker_insolvent: boolean, banker_remaining_chips: number, phase: "settled" }`；平手玩家出現在ties陣列中，Client退回下注額並顯示平手動畫；破產後得零贏家出現在insolvent_winners陣列；其bet已記為game_lose Transaction；Client顯示「因莊家破產，本局得零」提示 |
+| `settlement` | 結算明細廣播，payload schema：`{ winners: [{player_id, bet, payout, net_chips, result: "win"}], insolvent_winners: [{player_id, bet, payout: 0, net_chips: -bet, result: "win_insolvency_zero"}], ties: [{player_id, bet}], losers: [{player_id, bet, net_chips: -bet}], folders: [{player_id}], rake_amount: number, banker_insolvent: boolean, banker_remaining_chips: number, phase: "settled" }`；**【F6】net_chips=-bet由Server計算後廣播；Client不得自行計算任何籌碼差值（Server-authoritative原則）**；平手玩家出現在ties陣列中，Client退回下注額並顯示平手動畫；破產後得零贏家出現在insolvent_winners陣列；其bet已記為game_lose Transaction；Client顯示「因莊家破產，本局得零」提示 |
 | `rescueChips` | 救濟籌碼補發通知 |
 
 ---
@@ -922,7 +924,7 @@ Step 6: 三步驟結算（原子性執行，見 §5.3）
 
 | 情境 | 處理行為 |
 |------|---------|
-| 所有閒家均Fold | 莊家自動獲勝；所有閒家均未下注（Fold下注額=0），底池=0，空底池守衛觸發，抽水=0，莊家無任何籌碼收益；牌局即時結算。 |
+| 所有閒家均Fold | 莊家自動獲勝；所有閒家均未下注（Fold下注額=0），底池=0，空底池守衛觸發，抽水=0，莊家無任何籌碼收益；牌局即時結算。**【F2 莊家底注退回】** 莊家Step 2已預扣的底注額（escrow）釋放退回：banker chip_balance += banker_bet_amount；莊家淨收益=0，淨損失=0；結算廣播中banker_remaining_chips = 結算前chip_balance（退回後）。 |
 | 進入比牌條件 | 最少需1位閒家 Call 才進入比牌流程；若無任何閒家Call（全Fold），跳過比牌直接結算 |
 
 ### 8.1 斷線 Mid-Game（來源 BRD §5.3 / §5.5）
