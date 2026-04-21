@@ -16,6 +16,23 @@ interface PlayerData {
   chips: number;
 }
 
+/**
+ * 流局結算（AC-007-6）：所有閒家棄牌，底注退回莊家，無盈虧。
+ * Forfeit / no-game path: all non-banker players folded.
+ * No chips change for anyone. All entries return outcome='no_game'.
+ */
+export function settleForfeit(
+  players: Map<string, PlayerData>,
+): SettlementResult[] {
+  return Array.from(players.entries()).map(([sid, player]) => ({
+    sessionId: sid,
+    outcome: 'no_game' as const,
+    chipsChange: 0,
+    finalChips: player.chips,
+    isBanker: player.isBanker,
+  }));
+}
+
 export function settle(
   players: Map<string, PlayerData>,
   bankerId: string,
