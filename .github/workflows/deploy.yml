@@ -1,0 +1,125 @@
+name: Deploy to Production
+
+on:
+  # Manual trigger — allows specifying an image tag
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Docker image tag to deploy (e.g. sha-abc1234 or latest)'
+        required: false
+        default: 'latest'
+
+  # Automatic trigger — runs after docker.yml completes successfully on main
+  workflow_run:
+    workflows: ['Docker Build & Push']
+    branches: [main]
+    types: [completed]
+
+# Only allow one deployment at a time
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy Server to Production
+    runs-on: ubuntu-latest
+    # For workflow_run: only deploy when the upstream workflow succeeded
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+
+    environment:
+      name: production
+      # TODO: set url to your production endpoint, e.g.:
+      # url: https://sam-gong.example.com
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # -----------------------------------------------------------------------
+      # SETUP: Write kubeconfig from secret
+      # -----------------------------------------------------------------------
+      - name: Configure kubectl
+        run: |
+          # TODO: Create a GitHub Actions secret named KUBE_CONFIG containing
+          #       the base64-encoded kubeconfig for your production cluster.
+          #       Generate it with:
+          #         base64 -w0 ~/.kube/config
+          #       Then add it to Settings → Secrets → Actions in your repo.
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > /tmp/kubeconfig
+          echo "KUBECONFIG=/tmp/kubeconfig" >> "$GITHUB_ENV"
+
+      # -----------------------------------------------------------------------
+      # OPTIONAL: Install kubectl if not pre-installed on the runner
+      # -----------------------------------------------------------------------
+      # - name: Install kubectl
+      #   uses: azure/setup-kubectl@v3
+      #   with:
+      #     version: 'v1.29.0'
+
+      # -----------------------------------------------------------------------
+      # DETERMINE IMAGE TAG
+      # -----------------------------------------------------------------------
+      - name: Resolve image tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.image_tag }}"
+          else
+            # Use the short SHA of the triggering push
+            TAG="sha-${GITHUB_SHA::7}"
+          fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "Deploying image tag: ${TAG}"
+
+      # -----------------------------------------------------------------------
+      # DEPLOY: Update Kubernetes deployment
+      # -----------------------------------------------------------------------
+      - name: Deploy to Kubernetes
+        run: |
+          IMAGE="ghcr.io/${{ github.repository }}/server:${{ steps.tag.outputs.tag }}"
+
+          # TODO: Replace 'sam-gong-server' and 'sam-gong' with your actual
+          #       Kubernetes deployment name and namespace.
+          kubectl set image deployment/sam-gong-server \
+            server="${IMAGE}" \
+            --namespace=sam-gong \
+            --record
+
+      # -----------------------------------------------------------------------
+      # VERIFY: Wait for rollout to complete
+      # -----------------------------------------------------------------------
+      - name: Wait for rollout
+        run: |
+          # TODO: Adjust the deployment name and namespace to match your cluster.
+          kubectl rollout status deployment/sam-gong-server \
+            --namespace=sam-gong \
+            --timeout=5m
+
+      # -----------------------------------------------------------------------
+      # SMOKE TEST (optional)
+      # -----------------------------------------------------------------------
+      # - name: Smoke test production endpoint
+      #   run: |
+      #     # TODO: Replace with your production health endpoint
+      #     curl -f https://sam-gong.example.com/health || exit 1
+
+      # -----------------------------------------------------------------------
+      # ROLLBACK on failure
+      # -----------------------------------------------------------------------
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "Deployment failed — rolling back..."
+          # TODO: Adjust the deployment name and namespace.
+          kubectl rollout undo deployment/sam-gong-server \
+            --namespace=sam-gong
+          echo "Rollback initiated. Check cluster status manually."
+
+      - name: Deployment summary
+        if: success()
+        run: |
+          echo "Deployment complete."
+          echo "Image: ghcr.io/${{ github.repository }}/server:${{ steps.tag.outputs.tag }}"
+          echo "SHA: ${{ github.sha }}"
