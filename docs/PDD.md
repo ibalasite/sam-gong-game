@@ -10,7 +10,7 @@
 |------|------|
 | **DOC-ID** | PDD-SAM-GONG-GAME-20260422 |
 | **專案名稱** | 三公遊戲（Sam Gong 3-Card Poker）即時多人線上平台 |
-| **文件版本** | v0.1-draft |
+| **文件版本** | v0.2-draft |
 | **狀態** | DRAFT |
 | **作者** | Evans Tseng（由 /devsop-autodev STEP-05 自動生成） |
 | **日期** | 2026-04-22 |
@@ -574,7 +574,7 @@
 
 **SCR-004 籌碼餘額資料來源：**
 - 「籌碼：N」顯示：畫面掛載（mount）時呼叫 REST API `GET /api/v1/player/me` 取得最新籌碼餘額，確保顯示新鮮資料。
-- 每局結算後：籌碼餘額從 Colyseus Room State 廣播的 `player_chip_balance` 欄位即時更新（無需重新呼叫 REST API）。
+- 每局結算後：籌碼餘額從 Colyseus Room State 廣播的 `players[self_seat_index].chip_balance` 欄位即時更新（無需重新呼叫 REST API）。
 - 從遊戲房間返回大廳時：重新呼叫 REST API `GET /api/v1/player/me` 取得最新餘額，確保結算結果正確反映於大廳顯示。
 - 資料優先順序：REST API（進入大廳時）> Room State broadcast（遊戲中）> 本地 cache（僅離線降級顯示用）。
 
@@ -917,6 +917,7 @@ SCR-007 底部玩家資訊列中的「籌碼：N」來源：
 │  • 比大小規則...               │
 │                                │
 │  [    下一步    ]               │
+│  娛樂性質，虛擬籌碼無真實財務價值                 │
 └────────────────────────────────┘
 ```
 
@@ -939,6 +940,7 @@ SCR-007 底部玩家資訊列中的「籌碼：N」來源：
 │  救濟籌碼（系統自動補發 1,000）  │
 │                                │
 │  [    下一步    ]               │
+│  娛樂性質，虛擬籌碼無真實財務價值                 │
 └────────────────────────────────┘
 ```
 
@@ -1636,7 +1638,7 @@ i18n key: `settings.logout_confirm_midgame` = '您正在遊戲中！離開將視
 | 發牌動畫（總計）| ≤ 1.5s | ≥ 30fps |
 | 翻牌動畫（每張）| ≤ 0.3s | ≥ 30fps |
 | 結算動畫 | ≤ 0.5s | ≥ 30fps |
-| 三段合計 P90（發牌 1.5s + Showdown 0.85s + 結算 0.5s = 合計 2.85s）| ≤ 3.0s | ≥ 30fps |
+| 三段合計 P90（發牌 1.5s + Showdown 0.85s（= 0.3s 翻牌 + 5 seats × 0.05s 交錯延遲 + 0.3s pause = 0.85s，依據 §6.3 規格） + 結算 0.5s = 合計 2.85s）| ≤ 3.0s | ≥ 30fps |
 | 三公揭示 | ≤ 1.0s | ≥ 30fps |
 | 莊家破產 | ≤ 0.8s | ≥ 30fps |
 
@@ -1734,7 +1736,7 @@ i18n key: `settings.logout_confirm_midgame` = '您正在遊戲中！離開將視
   lobby.disclaimer           → 「娛樂性質，虛擬籌碼無真實財務價值」
   matchmaking.timeout        → 「配對超時，請稍後再試」
   matchmaking.expanding      → 「⚡ 擴大配對中（{tiers}）」
-  otp.daily_limit_exceeded   → 「今日OTP請求已達上限，請於次日UTC+8 00:00後重試」
+  errors.otp_daily_limit_exceeded → 「今日OTP請求已達上限，請於次日UTC+8 00:00後重試」
   lobby.chip_edge_500_999    → 「籌碼不足進入任何房間，請完成每日任務或等待每日免費籌碼（每日 00:00 UTC+8 重置）」
   lobby.daily_chip_claim     → 「領取今日籌碼 +5,000」
 ```
@@ -2086,7 +2088,7 @@ room.state.settlement.winners.forEach((winner) => {
 | settlement.rake_amount | number | 抽水金額 | settled |
 | settlement.banker_insolvent | boolean | 莊家是否破產 | settled |
 | settlement.banker_remaining_chips | number | 結算後莊家剩餘籌碼 | settled |
-| matchmaking_status.expanded_tiers | boolean | 跨廳配對是否已擴展 | waiting |
+| matchmaking_status.expanded_tiers | string[] | 擴大配對中的相鄰廳別名稱清單（空陣列 [] 表示未擴展，有值時如 ["白銀廳","青銅廳"] 表示已擴展至相鄰廳） | waiting |
 | player_state.room_active | boolean | 玩家是否在房間中（用於 Client 禁用重複加入）| 全局 |
 
 > 此表為 PDD 客戶端實作參考，Colyseus Schema 型別定義詳見 EDD（STEP-07 產出）。
@@ -2107,7 +2109,7 @@ room.state.settlement.winners.forEach((winner) => {
 | REQ-010 | 配對系統（Matchmaking）| SCR-005（廳別選擇）、SCR-006（配對等待）、§3（Screen Inventory 流程）| 90s 倒數計時條；擴大配對提示；配對超時返回大廳 |
 | REQ-011 | Room State 同步；計時器由 action_deadline_timestamp 驅動 | CMP-006（Phase Indicator）、CMP-007（Timer Bar）、SCR-007 佈局 | CMP-007 說明 Client 用本地時鐘計算顯示；Server 判定超時 |
 | REQ-012 | 新手引導（3 輪固定劇本，不消耗籌碼）| SCR-008（Tutorial 畫面）| 教學模式標籤；3 輪動畫與正式局相同；完成後解鎖正式對戰 |
-| REQ-013 | UI / 動畫系統；像素風；動畫時長限制；免責聲明 | §2.1（P5 像素風原則）、§6（動畫規格）、§7（色彩排版）、免責聲明出現於 SCR-001/004/007/009/010/013/014/SCR-016（佔位）共 8 個畫面；另 SCR-014 task_reward_popup 子元件亦包含免責聲明：(1) SCR-001 啟動畫面；(2) SCR-004 主大廳；(3) SCR-007 遊戲桌面；(4) SCR-009 結算疊加層；(5) SCR-010 排行榜；(6) SCR-013 個人資料；(7) SCR-014 每日任務（含 task_reward_popup 子元件）；(8) SCR-016 籌碼商店（v1.x 佔位，免責聲明需求已記錄）| 動畫時長預算 ≤ 3s；免責聲明 12pt 最小 |
+| REQ-013 | UI / 動畫系統；像素風；動畫時長限制；免責聲明 | §2.1（P5 像素風原則）、§6（動畫規格）、§7（色彩排版）、免責聲明出現於 SCR-001/002/004/005/006/007/009/010/013/014/015/016 共 12 個畫面；另 SCR-014 task_reward_popup 子元件亦包含免責聲明：(1) SCR-001 啟動畫面；(2) SCR-002 年齡驗證；(3) SCR-004 主大廳；(4) SCR-005 廳別選擇；(5) SCR-006 配對等待；(6) SCR-007 遊戲桌面；(7) SCR-009 結算疊加層；(8) SCR-010 排行榜；(9) SCR-013 個人資料；(10) SCR-014 每日任務（含 task_reward_popup 子元件）；(11) SCR-015 設定；(12) SCR-016 籌碼商店（v1.x 佔位，免責聲明需求已記錄）| 動畫時長預算 ≤ 3s；免責聲明 12pt 最小 |
 | REQ-014 | 帳號系統；OTP 年齡驗證 | SCR-002（Age Gate OTP）、SCR-004（帳號登入流程）、SCR-013（個人資料）| OTP 流程 ≤ 3 步驟；年齡驗證閘 100% 覆蓋 |
 | REQ-015 | 防沉迷系統；成人 2h 彈窗；未成年 2h 強制登出 | CMP-010（Anti-Addiction Overlay）、SCR-012（防沉迷彈窗）、SCR-013（每日遊玩時間顯示）| 兩種版本（成人可繼續 / 未成年強制停止）；必須明確點擊確認 |
 | REQ-016 | Cookie 同意橫幅（Web 限定）| SCR-003（Cookie Consent Banner）| 3 類 Cookie 分別同意；歐盟 IP 非 pre-checked；台灣 IP 告知式 |
@@ -2126,19 +2128,19 @@ room.state.settlement.winners.forEach((winner) => {
 
 以下問題需在實作前由 PM 或 Game Designer 決策：
 
-| # | 問題 | 影響範圍 | 截止日 | 優先度 |
-|---|------|---------|--------|--------|
-| PDD-Q1 | 美術風格最終選定（像素風 vs 賭場風）；Beta A/B 測試後由 PM + Art Director 決定（BRD D7，截止 2026-07-21）| 所有畫面 SCR-001 ~ SCR-015 美術資源；需準備兩套 Atlas | 2026-07-21 | HIGH |
-| PDD-Q2 | 遊戲桌面 6 人空桌位（未滿員）的顯示方式：(a) 空白座位；(b) 匿名剪影；(c) 不顯示空座位 | SCR-007 Game Table 佈局 | 2026-05-15（EDD 前）| MEDIUM |
-| PDD-Q3 | Settlement Overlay 的「下一局」自動倒數秒數（目前設計 5s）；Game Designer 確認 | SCR-009 | 2026-05-15 | MEDIUM |
-| PDD-Q4 | 頭像圖片來源：(a) 固定預設 8 款像素頭像；(b) 玩家上傳自訂頭像；v1.0 決策 | CMP-003；SCR-013 | 2026-05-15 | MEDIUM |
-| PDD-Q5 | 籌碼商店（REQ-020b）UI 設計是否現在預設佔位？法律意見書 2026-05-15 前不進入 Sprint | SCR-013 / 獨立 SCR-016（待分配）| 2026-05-15 | LOW（依 O1 法律意見）|
-| PDD-Q6 | 聊天室（REQ-007 Could Have）在 v1.0 是否實作？若實作，SCR-007 聊天圖示入口優先排入哪個 Sprint？ | SCR-011；SCR-007 頂部導航 | 2026-05-15 | LOW |
-| PDD-Q7 | 排行榜（REQ-006 Could Have）SCR-010 的我的排名「未上榜」時顯示什麼（顯示「--」或「未上榜，繼續加油！」）| SCR-010 | RESOLVED — §8.3 leaderboard.my_rank_unranked = '-- / 未上榜'，SCR-010 規格已明確 | LOW |
-| PDD-Q8 | 三公揭示動畫（§6.4）的 Particle 特效由 Cocos Creator 3.x Particle System 實作或 SpineAnimation；需 Art Director 確認 | §6.4 三公揭示動畫；`fx_sam_gong_particles.png` | 2026-05-15 | MEDIUM |
-| PDD-Q9 | 私人房間（SCR-005 AC-4）建立後的「等待加入」畫面是否共用 SCR-006 還是獨立設計？ | SCR-005；SCR-006 | RESOLVED — SCR-006 已含私人房間等待模式B完整規格 | LOW |
-| PDD-Q10 | 每日任務（SCR-014）UI 中的任務完成動畫規格（checkbox 打勾動畫 / 彩帶爆炸動畫）需 Game Designer 確認。暫定預設規格：checkbox ✓ 打勾縮放動畫（scale 0→1.2→1.0，0.3s ease-out）+ #27AE60 綠色 + 0.1s 延遲後顯示完成文字（`tutorial.step_completed`）；此規格為 PDD-Q10 解答前的過渡實作。如 2026-05-15 前未決定，使用暫定規格實作。 | SCR-014 | 2026-05-15 | LOW |
-| PDD-Q11 | 旁觀模式（Spectator Mode）— v1.0 Out-of-Scope 確認 | §3（旁觀模式說明）| RESOLVED | v2.0 roadmap |
+| # | 問題 | 影響範圍 | 截止日 | 優先度 | 負責人（Owner）|
+|---|------|---------|--------|--------|--------------|
+| PDD-Q1 | 美術風格最終選定（像素風 vs 賭場風）；Beta A/B 測試後由 PM + Art Director 決定（BRD D7，截止 2026-07-21）| 所有畫面 SCR-001 ~ SCR-015 美術資源；需準備兩套 Atlas | 2026-07-21 | HIGH | Art Director |
+| PDD-Q2 | 遊戲桌面 6 人空桌位（未滿員）的顯示方式：(a) 空白座位；(b) 匿名剪影；(c) 不顯示空座位 | SCR-007 Game Table 佈局 | 2026-05-15（EDD 前）| MEDIUM | PM |
+| PDD-Q3 | Settlement Overlay 的「下一局」自動倒數秒數（目前設計 5s）；Game Designer 確認 | SCR-009 | 2026-05-15 | MEDIUM | Game Designer |
+| PDD-Q4 | 頭像圖片來源：(a) 固定預設 8 款像素頭像；(b) 玩家上傳自訂頭像；v1.0 決策 | CMP-003；SCR-013 | 2026-05-15 | MEDIUM | PM |
+| PDD-Q5 | 籌碼商店（REQ-020b）UI 設計是否現在預設佔位？法律意見書 2026-05-15 前不進入 Sprint | SCR-013 / 獨立 SCR-016（待分配）| 2026-05-15 | LOW（依 O1 法律意見）| Legal/PM |
+| PDD-Q6 | 聊天室（REQ-007 Could Have）在 v1.0 是否實作？若實作，SCR-007 聊天圖示入口優先排入哪個 Sprint？ | SCR-011；SCR-007 頂部導航 | 2026-05-15 | LOW | Engineering Lead |
+| PDD-Q7 | 排行榜（REQ-006 Could Have）SCR-010 的我的排名「未上榜」時顯示什麼（顯示「--」或「未上榜，繼續加油！」）| SCR-010 | RESOLVED — §8.3 leaderboard.my_rank_unranked = '-- / 未上榜'，SCR-010 規格已明確 | LOW | RESOLVED — N/A |
+| PDD-Q8 | 三公揭示動畫（§6.4）的 Particle 特效由 Cocos Creator 3.x Particle System 實作或 SpineAnimation；需 Art Director 確認 | §6.4 三公揭示動畫；`fx_sam_gong_particles.png` | 2026-05-15 | MEDIUM | Game Designer |
+| PDD-Q9 | 私人房間（SCR-005 AC-4）建立後的「等待加入」畫面是否共用 SCR-006 還是獨立設計？ | SCR-005；SCR-006 | RESOLVED — SCR-006 已含私人房間等待模式B完整規格 | LOW | RESOLVED — N/A |
+| PDD-Q10 | 每日任務（SCR-014）UI 中的任務完成動畫規格（checkbox 打勾動畫 / 彩帶爆炸動畫）需 Game Designer 確認。暫定預設規格：checkbox ✓ 打勾縮放動畫（scale 0→1.2→1.0，0.3s ease-out）+ #27AE60 綠色 + 0.1s 延遲後顯示完成文字（`tutorial.step_completed`）；此規格為 PDD-Q10 解答前的過渡實作。如 2026-05-15 前未決定，使用暫定規格實作。 | SCR-014 | 2026-05-15 | LOW | Game Designer |
+| PDD-Q11 | 旁觀模式（Spectator Mode）— v1.0 Out-of-Scope 確認 | §3（旁觀模式說明）| RESOLVED | v2.0 roadmap | RESOLVED — N/A |
 
 ---
 
