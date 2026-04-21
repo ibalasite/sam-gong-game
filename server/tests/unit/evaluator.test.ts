@@ -67,13 +67,27 @@ describe('compareHands', () => {
 
   it('passes 1000 random comparisons with consistent tie rule', () => {
     // verify tie always returns 'banker'
+    // makeHand builds valid 3-card hands yielding the target point value (mod 10)
+    // All ranks used are valid members of the Rank union.
+    const makeHand = (p: number): CardData[] => {
+      // Points map: each entry is a valid [rank, rank, rank] combination whose sum % 10 === p
+      const handsByPoints: Record<number, [string, string, string]> = {
+        0: ['J', 'Q', 'K'],   // 10+10+10=30 → 0
+        1: ['A', 'A', '9'],   // 1+1+9=11 → 1
+        2: ['A', 'A', 'K'],   // 1+1+10=12 → 2
+        3: ['A', 'A', 'A'],   // 1+1+1=3 → 3
+        4: ['A', '3', 'K'],   // 1+3+10=14 → 4
+        5: ['A', '4', 'K'],   // 1+4+10=15 → 5
+        6: ['A', '5', 'K'],   // 1+5+10=16 → 6
+        7: ['A', '6', 'K'],   // 1+6+10=17 → 7
+        8: ['A', '7', 'K'],   // 1+7+10=18 → 8
+        9: ['9', '9', 'A'],   // 9+9+1=19 → 9
+      };
+      const [r1, r2, r3] = handsByPoints[p];
+      return [card(r1), card(r2, 'hearts'), card(r3, 'diamonds')];
+    };
     for (let i = 0; i < 1000; i++) {
       const pts = Math.floor(Math.random() * 10);
-      const makeHand = (p: number): CardData[] => {
-        if (p === 0) return [card('J'), card('Q'), card('K')];
-        if (p === 9) return [card('9'), card('9', 'hearts'), card('A', 'diamonds')];
-        return [card('A'), card(String(p > 2 ? p - 2 : 1) as string, 'hearts'), card('A', 'diamonds')];
-      };
       const result = compareHands(makeHand(pts), makeHand(pts));
       expect(result).toBe('banker');
     }

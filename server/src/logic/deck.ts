@@ -9,6 +9,9 @@ export interface CardData {
 const SUITS: Suit[] = ['spades', 'hearts', 'diamonds', 'clubs'];
 const RANKS: Rank[] = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
+/** Number of cards dealt to each player per round in 三公 (Sam Gong). */
+export const CARDS_PER_PLAYER = 3;
+
 export function createDeck(): CardData[] {
   return SUITS.flatMap(suit => RANKS.map(rank => ({ suit, rank })));
 }
@@ -26,7 +29,7 @@ export function dealCards(deck: CardData[], playerCount: number): CardData[][] {
   if (playerCount < 1) {
     throw new Error(`playerCount must be at least 1, got ${playerCount}`);
   }
-  const cardsNeeded = playerCount * 3;
+  const cardsNeeded = playerCount * CARDS_PER_PLAYER;
   if (deck.length < cardsNeeded) {
     throw new Error(
       `Deck has ${deck.length} cards but ${cardsNeeded} are needed for ${playerCount} players`
