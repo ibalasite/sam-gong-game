@@ -219,8 +219,10 @@
 | 功能 | MoSCoW | 對應目標 |
 |------|--------|---------|
 | 2-6 人房間建立/加入 | Must Have | O1 |
+| 莊家制玩法（1 莊 N 閒，輪流坐莊）| Must Have | O1 |
 | Server 洗牌 + 發牌（防作弊）| Must Have | O1 |
-| 三公規則比牌 + 結算引擎 | Must Have | O1 |
+| 三公規則比牌引擎（0-9 點 + 公牌）| Must Have | O1 |
+| 閒 vs 莊單獨結算引擎 | Must Have | O1 |
 | 下注流程（押注/跟注/棄牌）| Must Have | O1 |
 | Cocos 發牌/翻牌/結算動畫 | Must Have | O1 |
 | 斷線重連（60 秒窗口）| Must Have | O1 |
@@ -286,7 +288,7 @@ Outcome：玩家持續回訪遊玩（7D Retention ≥ 30%）
 
 | 里程碑 | 評估時間 | Go 條件 | No-Go 條件 | 決策者 |
 |--------|---------|---------|-----------|--------|
-| Alpha 驗收 | 開發 3M 後 | 完整牌局可玩，P0 Bug = 0 | P0 Bug ≥ 1 or 核心功能缺失 | Engineering + PM |
+| Alpha 驗收 | 開發 3M 後 | 完整牌局可玩，P0 Bug = 0（P0 = 影響牌局無法完成的 Critical Bug）| P0 Bug ≥ 1 or 核心功能缺失 | Engineering + PM |
 | Beta 驗收 | Alpha + 1M | 7D Retention ≥ 20%（Beta 目標）| 7D Retention < 10% | PM |
 | GA 決策 | Beta + 1M | NPS ≥ 20，DAU ≥ 200 | NPS < 0 | PM |
 
