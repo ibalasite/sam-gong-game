@@ -117,7 +117,7 @@ room.send("start_game", {});
 **Server validation rules**:
 - Sender must be host → else `4003`
 - `roomPhase` must be `"lobby"` → else `4004`
-- `players.size >= 2` → else `4005` (reused for "insufficient players" in this context; see Section 5)
+- `players.size >= 2` → else `4006` (invalid request: insufficient players to start)
 
 **Success path**: Server transitions `lobby → banker_selection`, randomly selects initial banker, then immediately transitions `banker_selection → betting` and starts the 30 s betting countdown.
 
@@ -127,7 +127,7 @@ room.send("start_game", {});
 |-----------|------|
 | Sender is not host | 4003 |
 | Wrong phase | 4004 |
-| Fewer than 2 players | 4005 |
+| Fewer than 2 players | 4006 |
 
 ---
 
@@ -417,7 +417,7 @@ class SamGongState extends Schema {
   @type({ map: PlayerState }) players = new MapSchema<PlayerState>();
   // Key: sessionId; max 6 entries
 
-  @type(["string"]) seatOrder = new ArraySchema<string>();
+  @type(["string"]) bankerQueue = new ArraySchema<string>();
   // sessionIds in join order; used for banker rotation
   // Entries are NOT removed when players leave (seat stability)
 
