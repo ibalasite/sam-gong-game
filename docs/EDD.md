@@ -190,11 +190,18 @@ async onLeave(client: Client, consented: boolean) {
   player.status = "disconnected"; // 廣播給其他玩家顯示「離線」
 
   if (!consented && this.state.roomPhase !== "lobby") {
+    // 記錄斷線前的狀態，以便重連後正確恢復
+    const statusBeforeDisconnect = player.status !== "disconnected"
+      ? player.status
+      : "waiting";
     try {
       // 等待 60 秒重連（AC-012-1）
       await this.allowReconnection(client, 60);
-      // 重連成功（AC-012-2）
-      player.status = "deciding"; // 或依照之前狀態恢復
+      // 重連成功（AC-012-2）：恢復斷線前的狀態（非一律 "deciding"）
+      // 例：betting 階段斷線 → 恢復 "deciding"；reveal/settling 斷線 → 恢復原狀態
+      player.status = statusBeforeDisconnect !== "disconnected"
+        ? statusBeforeDisconnect
+        : "waiting";
     } catch {
       // 60s 超時（AC-012-3）
       if (player.status === "disconnected") {
@@ -237,12 +244,21 @@ startBettingCountdown(seconds: number = 30) {
 
 ```typescript
 // 生成 6 位英數房間碼（唯一，AC-001-1）
+// 備注：32^6 = ~1B 組合，Pilot 版 50 concurrent 房間碰撞機率極低，
+// 但仍需在 SamGongRoom.onCreate 中確認唯一性（Colyseus roomId 衝突時重試）
 function generateRoomCode(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // 去除易混淆字符
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // 去除易混淆字符（O/0/I/1）
   return Array.from({ length: 6 }, () =>
     chars[Math.floor(Math.random() * chars.length)]
   ).join("");
 }
+
+// SamGongRoom.onCreate 中使用（搭配方案A：覆寫 roomId = roomCode）
+// onCreate(options: any) {
+//   const code = generateRoomCode();
+//   this.roomId = code; // Colyseus 允許在 onCreate 中覆寫 roomId
+//   // 若 Colyseus 因 roomId 衝突拋出，onCreate 重試由框架處理
+// }
 ```
 
 ---
@@ -452,6 +468,11 @@ export function selectInitialBanker(playerIds: string[]): string {
 /**
  * 下一位莊家（順時針輪換，AC-005-1）
  * seatOrder: 玩家加入順序（座位順序）
+ *
+ * 實作說明：seatOrder 必須在 SamGongState schema 中以 @type(["string"]) 定義：
+ *   @type(["string"]) seatOrder = new ArraySchema<string>();
+ * 玩家加入時（onJoin）append sessionId；玩家離開後不移除（維持座位號穩定）。
+ * getNextBanker 調用時傳入 room.state.seatOrder.toArray()。
  */
 export function getNextBanker(
   seatOrder: string[],
@@ -740,9 +761,10 @@ function validateAction(
 ```
 1. Server.shuffle() → 牌組存於 SamGongRoom 私有屬性（非 Schema state）
 2. 發牌時，依每位玩家 sessionId 寫入其 PlayerState.cards（suit/rank）
-3. @filter decorator → 其他玩家收到的 Card patch 中 suit="" rank=""（反作弊）
-4. revealed = false 期間：開發者工具無法看到他人牌面
-5. 翻牌（REVEAL）：Server 將所有 cards.revealed = true → 廣播完整牌面
+3. @filter decorator → 對非牌主的 client，cards 欄位從 patch 中完全省略（不下發）
+   備案：onBeforePatch 手動清空 suit/rank 為 ""，使 client 看到有結構但無牌面的 Card
+4. revealed = false 期間：開發者工具無法看到他人牌面（cards 欄位不存在於 patch 中）
+5. 翻牌（REVEAL）：Server 將所有 cards.revealed = true → @filter 返回 true → 廣播完整牌面
 ```
 
 ### 7.2 Rate Limiting
@@ -842,7 +864,7 @@ PRAGMA journal_mode = WAL;
 Internet
     ↓
 [Nginx: 80/443]
-    ├── /ws → upstream colyseus:2567 (WebSocket proxy)
+    ├── /colyseus/ → upstream colyseus:2567 (WebSocket proxy)
     └── / → /var/www/sam-gong/（Cocos Build Output）
             
 [Colyseus: Node.js process（pm2 管理）]
