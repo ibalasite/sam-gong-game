@@ -23,6 +23,7 @@
 | 版本 | 日期 | 作者 | 變更摘要 |
 |------|------|------|---------|
 | v0.1-draft | 2026-04-22 | /devsop-autodev STEP-05 | 初稿；依 PRD v0.14-draft + BRD v0.12-draft 生成；涵蓋所有 SCR/CMP、動畫規格、色彩排版、i18n、無障礙、Cocos Creator 場景結構、PRD↔PDD 追溯矩陣 |
+| v0.2-draft | 2026-04-22 | STEP-06 Review (Exhaustive, 6 Rounds) | 92 項修正：動畫時長數學修正（三公1.0s/破產0.7s/結算0.5s），全16個畫面（SCR-001~016）線框圖完整，§6.8音效規格、§6.9莊家皇冠動畫、§6.0轉場表，i18n命名空間完整（room/tutorial/game/lobby/leaderboard），所有錯誤狀態設計（禁令/維護/中途離開/層級資格），PDD-Q7/Q9/Q11解決，結算邊界案例、防沉迷、重連、旁觀out-of-scope等 |
 
 ---
 
@@ -103,18 +104,18 @@
 | 狀態 | 視覺描述 | 資源命名 |
 |------|---------|---------|
 | 面朝下（face-down）| 深藍色背面圖案（像素菱形紋）；顯示背面圖示 | `card_back.png` |
-
-**`card_back.png` 設計規格（供美術參考）：**
-- 底色：`#0D2137`（深海藍）
-- 菱形紋路顏色：`#1E3A5F`（較亮深藍），8px × 8px 重複 tile，45° 旋轉像素菱形
-- 邊框：2px 寬 `#D4AF37`（金色）內嵌 4px，四角圓弧 4px
-- 中央 Logo：16×16pt 像素藝術「三公」文字 mark，顏色 `#D4AF37`
-- 整體風格：像素藝術（pixel art），與遊戲整體美術風格一致
 | 面朝上 — 數字牌（2–9）| 白色牌面（`#FEFEFE`）；左上/右下角顯示點數 + 花色；中央大花色符號 | `card_[suit]_[value].png` |
 | 面朝上 — 人頭牌（10/J/Q/K）| 白色牌面；像素人物插圖；10/J/Q/K 字樣；此牌計分為 0 點 | `card_[suit]_[face].png` |
 | 面朝上 — A 牌 | 白色牌面；大 A 字樣；計分為 1 點 | `card_[suit]_a.png` |
 | 三公高亮（Sam Gong）| 金色（`#D4AF37`）邊框光暈動畫；牌面正常顯示；Server 廣播 `is_sam_gong=true` 後觸發 | `card_[suit]_[face].png` + `fx_sam_gong_glow.png` |
 | 禁用（disabled）| 灰階濾鏡（brightness 60%）；棄牌（Fold）玩家的牌保持 face-down 不翻開 | — |
+
+> **card_back.png 設計規格（供美術參考）：**
+> - 底色：`#0D2137`（深海藍）
+> - 菱形紋路顏色：`#1E3A5F`（較亮深藍），8px × 8px 重複 tile，45° 旋轉像素菱形
+> - 邊框：2px 寬 `#D4AF37`（金色）內嵌 4px，四角圓弧 4px
+> - 中央 Logo：16×16pt 像素藝術「三公」文字 mark，顏色 `#D4AF37`
+> - 整體風格：像素藝術（pixel art），與遊戲整體美術風格一致
 
 **花色顏色規格：**
 - 黑桃（♠）：`#1A1A1A`（黑）
@@ -188,6 +189,7 @@
 | 敗（Settlement）| `#C0392B`（紅）光暈 | — | losers 陣列中 |
 | 破產（Insolvency）| `#C0392B`（紅）閃爍 | 「破產！」標籤 | `banker_insolvent=true` |
 | 破產得零（insolvent_winner）| `#C0392B`（紅）+ 紅色光暈 | 頭像右上角「⚠ -{bet}籌碼損失」標籤（紅色背景）| 技術上贏牌但因莊家破產 payout=0、net_chips=-bet（實際損失，以紅色顯示）|
+| 載入中（Loading）| #7F8C8D 灰色虛線圓框 | 骨架佔位圖（Skeleton circle，直徑與頭像相同，灰色脈衝動畫）| 頭像圖片網路載入期間；圖片載入完成後無動畫直接切換 |
 
 **包含子元素：**
 - 玩家暱稱標籤（最多 8 字元，超出顯示 `...`）：字體 12pt，`#FFFFFF`
@@ -623,7 +625,7 @@
 1. 點擊「建立房間」→ Server 建立房間並回傳 Room ID（格式：6 位大寫英數字，例：`ABCD12`）
 2. 顯示「房間建立成功」Modal：
    - 房間 ID 大字顯示（24pt，`#D4AF37` 金色）
-   - 「複製 ID」按鈕 → `cc.sys.copyTextToClipboard(roomId)`，Toast: `locale.room.id_copied`
+   - 「複製 ID」按鈕 → `cc.sys.copyTextToClipboard(roomId)`，Toast: `room.id_copied`
    - 「開始等待」按鈕 → 進入 SCR-006 等待畫面
 3. Room ID 有效期：本局結束後自動失效
 
@@ -714,7 +716,7 @@ SCR-006 有兩種模式，由 `room_type` 參數決定：
 - 無倒數計時器（私人房間無 90s 限制）
 - 玩家加入時名稱即時更新（Colyseus Room State `players` 陣列 onChange 監聽）
 - 開始遊戲按鈕：`players.length >= 2` 時啟用，否則 disabled（灰色）
-- 複製 ID 按鈕：`cc.sys.copyTextToClipboard(roomId)`，Toast: `locale.room.id_copied`
+- 複製 ID 按鈕：`cc.sys.copyTextToClipboard(roomId)`，Toast: `room.id_copied`
 - 返回按鈕：顯示確認對話框（「確定離開？房間將被解散」），確認後導向 SCR-004
 
 ---
@@ -986,6 +988,8 @@ SCR-007 底部玩家資訊列中的「籌碼：N」來源：
 
 #### Tutorial Script 固定腳本
 
+> **設計說明**：以下固定腳本中的牌值計算（如「15 mod 10 = 5」）為設計文件說明用途，代表 Server 側 Tutorial 腳本的固定設定值。**Client 不執行任何點數計算**，所有結果由 Server 確認後廣播。
+
 | 欄位 | 第 1 輪（3/5）| 第 2 輪（4/5）| 第 3 輪（5/5）|
 |------|------------|------------|------------|
 | **P0 手牌** | ♠K / ♥Q / ♣J = 三公（0 點，最高）| ♠5 / ♥4 / ♣6 = 15 mod 10 = **5 點** | ♠5 / ♥A / ♣K = 5+1+10=16 mod 10 = **6 點** |
@@ -1218,7 +1222,7 @@ SCR-007 底部玩家資訊列中的「籌碼：N」來源：
 **佈局規格：**
 - 面板從右側滑入（0.3s ease-out）；高度：螢幕高度 60%；寬度：全寬
 - 訊息列表區：可垂直滾動；新訊息自動捲至底部
-- 輸入框：固定於底部；高度 44pt；placeholder 文字：`locale.chat.input_placeholder`（zh-TW: 「輸入訊息（最多200字）」）
+- 輸入框：固定於底部；高度 44pt；placeholder 文字：`chat.input_placeholder`（zh-TW: 「輸入訊息（最多200字）」）
 - 發送按鈕：48×44pt；背景 `#2980B9`；文字「發送」白色 14pt；Rate Limit：每玩家每秒 ≤ 2 條，超限靜默丟棄
 - 關閉按鈕（右上角）：44×44pt；點擊後面板滑出返回 SCR-007
 - 舉報按鈕：長按聊天氣泡出現「⚑ 舉報」選項；觸控熱區 44×44pt（符合 P3 原則）
@@ -1249,8 +1253,8 @@ SCR-007 底部玩家資訊列中的「籌碼：N」來源：
 2. **點擊「舉報此訊息」** → 舉報原因選擇器（單選）：
    - i18n keys: `chat.report_reason.spam`、`chat.report_reason.harassment`、`chat.report_reason.inappropriate`、`chat.report_reason.cheating`、`chat.report_reason.other`
 3. **確認按鈕** → 送出 `report_player { target_id: string, message_id: string, reason: string }` 至 Server
-4. **成功**：Toast `locale.chat.report_success`（「舉報已提交，謝謝您的回報」）
-5. **失敗**：Toast `locale.errors.server_error`
+4. **成功**：Toast `chat.report_success`（「舉報已提交，謝謝您的回報」）
+5. **失敗**：Toast `errors.server_error`
 6. **Emoji picker**：v2.0 deferred（不在 v1.0 scope）；**Quick-phrase 按鈕**：v2.0 deferred
 
 ---
@@ -1425,6 +1429,7 @@ i18n key: `settings.logout_confirm_midgame` = '您正在遊戲中！離開將視
 | 轉場 | 動畫類型 | 時長 | Easing | 備注 |
 |------|---------|------|--------|------|
 | SCR-001 → SCR-003 | Overlay（疊加於 SCR-001）| — | — | 首次啟動，Cookie Banner 以 Overlay 方式顯示，非獨立跳轉 |
+| SCR-001 → SCR-004 | Fade Out / Fade In | 0.3s | Linear | 載入完成（非首次啟動，Cookie 已同意，直接進入大廳）|
 | SCR-003 → SCR-004 | Fade Out / Fade In | 0.3s | Linear | Cookie 同意後繼續載入至大廳 |
 | SCR-004 → SCR-002 | Slide Left | 0.25s | ease-out | 年齡驗證觸發（點擊正式對戰且 age_verified=false）|
 | SCR-002 → SCR-004 | Slide Right | 0.25s | ease-in | OTP 驗證成功後返回大廳 |
@@ -1440,6 +1445,10 @@ i18n key: `settings.logout_confirm_midgame` = '您正在遊戲中！離開將視
 | Overlay Push (SCR-009/011/012) | Fade In + Slide Up | 0.2s | ease-out | |
 | Overlay Dismiss | Fade Out + Slide Down | 0.15s | ease-in | |
 | SCR-004 → SCR-013/014/015 | Slide Left | 0.25s | ease-out | |
+| SCR-004 → SCR-016 | Slide Left | 0.25s | ease-out | 購買籌碼入口 |
+| SCR-013 → SCR-016 | Slide Left | 0.25s | ease-out | 充值入口 |
+| SCR-016 → SCR-004 | Slide Right | 0.25s | ease-in | 返回大廳 |
+| SCR-016 → SCR-013 | Slide Right | 0.25s | ease-in | 返回個人頁 |
 
 `UIManager.navigateTo(scene, transition)` 方法 — 統一管理所有轉場，避免個別場景自行實作動畫。
 
@@ -1477,6 +1486,8 @@ i18n key: `settings.logout_confirm_midgame` = '您正在遊戲中！離開將視
 - 總時長上限：1.5s（無論玩家人數 N，固定 3 輪並行；REQ-013 AC-2）
 - 資源：`fx_deal_card.anim`
 
+🔊 音效：`sfx_card_deal.mp3`（每張牌落下時，pitch 略有差異）
+
 ---
 
 ### 6.3 翻牌動畫（Showdown Flip）
@@ -1500,6 +1511,8 @@ i18n key: `settings.logout_confirm_midgame` = '您正在遊戲中！離開將視
 - 全翻完後：0.3s pause → 觸發 §6.4 結算動畫
 - 注意：Server 先到先得（insolvent_winners）的結算順序由 Server 決定，與翻牌視覺順序無關；SCR-009 settlement UI 中 insolvent_winners 的列表行順序即代表先到先得的結算序列
 
+🔊 音效：`sfx_card_flip.mp3`（每張牌翻面一次）
+
 ---
 
 ### 6.4 三公揭示動畫（Sam Gong Reveal）
@@ -1512,6 +1525,8 @@ i18n key: `settings.logout_confirm_midgame` = '您正在遊戲中！離開將視
   3. 「三公！」文字從牌面中央升起並淡出：0.5s（monospace 20pt，`#D4AF37`）
 - 總時長：1.0s
 - 資源：`fx_sam_gong_glow.anim`、`fx_sam_gong_particles.png`
+
+🔊 音效：`sfx_sam_gong_fanfare.mp3`（三公出現，最高優先級打斷其他音效）
 
 ---
 
@@ -1527,6 +1542,8 @@ i18n key: `settings.logout_confirm_midgame` = '您正在遊戲中！離開將視
 - 負值（-）：金幣從玩家頭像飛向莊家方向
 - 資源：`fx_chip_fly.anim`、`fx_chip_counter.anim`
 
+🔊 音效：勝方 `sfx_win_jingle.mp3` + `sfx_chip_collect.mp3`；敗方 `sfx_lose.mp3`；平手 `sfx_tie.mp3`；全棄牌 `sfx_all_fold.mp3`（詳見 §6.8）
+
 ---
 
 ### 6.6 莊家破產動畫（Banker Insolvency）
@@ -1539,6 +1556,8 @@ i18n key: `settings.logout_confirm_midgame` = '您正在遊戲中！離開將視
   - 若 `banker_insolvent=true` 且 `banker_remaining_chips>0`（部分破產，仍有餘額）：Counter 動畫至剩餘值（不歸零）；顯示「⚠ 部分賠付」橙色標籤；不顯示「破產」badge。
 - 「破產！」紅色標籤（完全破產場景）從頭像上方升起：0.3s fade-in（總時長：2×0.2s + 0.3s = 0.7s）
 - 資源：`fx_insolvency.anim`
+
+🔊 音效：`sfx_insolvency.mp3`（banker_insolvent=true 時觸發）
 
 ---
 
@@ -1557,6 +1576,8 @@ i18n key: `settings.logout_confirm_midgame` = '您正在遊戲中！離開將視
 - **「減少動畫」模式：** 若用戶在 SCR-015 Settings 中開啟「減少動畫」開關，Expired 閃爍改為靜態純紅色（`#C0392B`）顯示，無任何閃爍效果（0Hz）；同時顯示「時間到」文字標籤替代視覺閃爍提示。
 
 **無障礙設定：** 若 Settings（SCR-015）中「減少動畫」開關開啟，畫面震動改為 Timer Bar 靜態紅色（無閃爍）；遵循 WCAG 2.3.1（閃爍頻率限制）及 WCAG 2.3.3（前庭覺敏感設計指引）。
+
+🔊 音效：`sfx_timer_urgent.mp3`（≤5s 每秒循環）
 
 ---
 
@@ -1608,7 +1629,7 @@ i18n key: `settings.logout_confirm_midgame` = '您正在遊戲中！離開將視
 
 ---
 
-### 6.10 動畫效能約束（Performance Budget）
+### 6.10 動畫效能約束 (Animation Timing Constraints)
 
 | 動畫類型 | 時長上限 | 基準裝置幀率目標 |
 |---------|---------|--------------|
@@ -1758,6 +1779,7 @@ i18n key: `settings.logout_confirm_midgame` = '您正在遊戲中！離開將視
     "progress": "新手引導（{current}/{total}）",
     "chip_system_title": "籌碼系統說明",
     "escrow_explain": "下注後，對應籌碼會暫時凍結，結算後返還或支付",
+    "step_completed": "完成！",
     "round1": {
       "intro": "歡迎來到三公教學！讓我們開始第一局。",
       "sam_gong_explain": "恭喜！您拿到三公（3張花牌）！這是最高手牌。",
@@ -2023,6 +2045,8 @@ room.state.settlement.winners.forEach((winner) => {
 
 ### 10.6 效能預算 (Performance Budget)
 
+> 動畫時長上限詳見 §6.10（Animation Timing Constraints）；本節規範 GPU 記憶體、Draw Call 及 Bundle 大小指標。
+
 | 項目 | 規格 |
 |------|------|
 | GPU 紋理記憶體上限 | ≤ 128MB（基準裝置 2GB RAM 之 6.25%）|
@@ -2034,6 +2058,38 @@ room.state.settlement.winners.forEach((winner) => {
 | 目標幀率 | 60fps；降功耗模式 30fps（可在 SCR-015 設定中切換）|
 | 記憶體清理 — 離開 SCR-007 | `cc.resources.release()` 釋放遊戲 Atlas |
 | 記憶體清理 — 回到大廳 | 釋放遊戲音效資源 |
+
+---
+
+### 10.7 Colyseus Room State 欄位參考（Client 依賴欄位）
+
+| 欄位名稱 | 型別 | 說明 | 相關 Phase |
+|---------|------|------|-----------|
+| phase | string enum | waiting/dealing/banker-bet/player-bet/showdown/settled | 全局 |
+| banker_seat_index | number | 莊家席位索引（0~5）| 全局 |
+| action_deadline_timestamp | number (ms) | 當前行動截止時間（Unix ms）| banker-bet/player-bet |
+| min_bet | number | 本廳最低下注額 | banker-bet/player-bet |
+| max_bet | number | 本廳最高下注額 | banker-bet/player-bet |
+| quick_bet_amounts | number[] | Server 建議快速下注金額 | banker-bet/player-bet |
+| players[N].chip_balance | number | 玩家N當前籌碼餘額 | 全局 |
+| players[N].seat_index | number | 玩家N席位序號 | 全局 |
+| players[N].isConnected | boolean | 玩家N連線狀態 | 全局 |
+| players[N].player_id | string | 玩家N識別碼 | 全局 |
+| players[N].display_name | string | 玩家N顯示名稱 | 全局 |
+| revealed_cards | object[] | showdown 後各玩家已揭示的牌組 | showdown/settled |
+| settlement | object | 結算完整結果（見 §5 SCR-009 schema）| settled |
+| settlement.winners | object[] | 勝方清單 | settled |
+| settlement.losers | object[] | 敗方清單 | settled |
+| settlement.ties | object[] | 平手清單 | settled |
+| settlement.folders | object[] | 棄牌清單 | settled |
+| settlement.insolvent_winners | object[] | 莊家破產-受影響勝方 | settled |
+| settlement.rake_amount | number | 抽水金額 | settled |
+| settlement.banker_insolvent | boolean | 莊家是否破產 | settled |
+| settlement.banker_remaining_chips | number | 結算後莊家剩餘籌碼 | settled |
+| matchmaking_status.expanded_tiers | boolean | 跨廳配對是否已擴展 | waiting |
+| player_state.room_active | boolean | 玩家是否在房間中（用於 Client 禁用重複加入）| 全局 |
+
+> 此表為 PDD 客戶端實作參考，Colyseus Schema 型別定義詳見 EDD（STEP-07 產出）。
 
 ---
 
@@ -2081,7 +2137,7 @@ room.state.settlement.winners.forEach((winner) => {
 | PDD-Q7 | 排行榜（REQ-006 Could Have）SCR-010 的我的排名「未上榜」時顯示什麼（顯示「--」或「未上榜，繼續加油！」）| SCR-010 | RESOLVED — §8.3 leaderboard.my_rank_unranked = '-- / 未上榜'，SCR-010 規格已明確 | LOW |
 | PDD-Q8 | 三公揭示動畫（§6.4）的 Particle 特效由 Cocos Creator 3.x Particle System 實作或 SpineAnimation；需 Art Director 確認 | §6.4 三公揭示動畫；`fx_sam_gong_particles.png` | 2026-05-15 | MEDIUM |
 | PDD-Q9 | 私人房間（SCR-005 AC-4）建立後的「等待加入」畫面是否共用 SCR-006 還是獨立設計？ | SCR-005；SCR-006 | RESOLVED — SCR-006 已含私人房間等待模式B完整規格 | LOW |
-| PDD-Q10 | 每日任務（SCR-014）UI 中的任務完成動畫規格（checkbox 打勾動畫 / 彩帶爆炸動畫）需 Game Designer 確認 | SCR-014 | O6 截止 2026-05-15 | LOW |
+| PDD-Q10 | 每日任務（SCR-014）UI 中的任務完成動畫規格（checkbox 打勾動畫 / 彩帶爆炸動畫）需 Game Designer 確認。暫定預設規格：checkbox ✓ 打勾縮放動畫（scale 0→1.2→1.0，0.3s ease-out）+ #27AE60 綠色 + 0.1s 延遲後顯示完成文字（`tutorial.step_completed`）；此規格為 PDD-Q10 解答前的過渡實作。如 2026-05-15 前未決定，使用暫定規格實作。 | SCR-014 | 2026-05-15 | LOW |
 | PDD-Q11 | 旁觀模式（Spectator Mode）— v1.0 Out-of-Scope 確認 | §3（旁觀模式說明）| RESOLVED | v2.0 roadmap |
 
 ---
