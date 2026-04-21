@@ -10,7 +10,7 @@
 |------|------|
 | **DOC-ID** | BRD-SAM-GONG-GAME-20260421 |
 | **專案名稱** | 三公遊戲（Sam Gong Online — Cocos + Colyseus） |
-| **文件版本** | v0.5-draft |
+| **文件版本** | v0.6-draft |
 | **狀態** | UNDER_REVIEW |
 | **作者** | tobala（由 /devsop-idea 自動生成） |
 | **日期** | 2026-04-21 |
@@ -27,6 +27,7 @@
 | v0.3-draft | 2026-04-21 | /devsop-brd-review | Round 2-3 審查修正：投資門檻 Go/No-Go 定義、Data Governance、Vendor Risk、Glossary 補全、合規時程 |
 | v0.4-draft | 2026-04-21 | /devsop-brd-review | Round 4 審查修正：§9.1 標題補全、法律風險新增至 §10、§7.2 留存率目標分層標示、Q1 影響層級升階 |
 | v0.5-draft | 2026-04-21 | /devsop-brd-review | Round 5 審查修正：§9 章節編號修正（9.5/9.6→9.4/9.5）、RTM O2 目標分層一致性、H5 Handoff 更新為 Q1-Q4、頁尾版本更新 |
+| v0.6-draft | 2026-04-21 | /devsop-brd-review | Round 6 審查修正：§3.5 Benefits Realization 留存率目標補充分層（Beta ≥20% / GA ≥30%），確保全文指標一致性 |
 
 ---
 
@@ -156,7 +157,7 @@
 | 效益 | 基準值（Pre-launch）| 目標值 | 測量時間點 | 測量方式 | 負責人 | 若未達標的行動 |
 |------|:------------------:|:-----:|----------|---------|--------|--------------|
 | 完整牌局可玩率 | 0% | 100%（P0 Bug=0）| Alpha 完成時 | QA 測試報告 | Engineering | 延長 Bug Fix Sprint |
-| 7 日留存率 | N/A | ≥ 30% | Beta Launch + 7D | Analytics | PM | 用戶訪談 → 玩法調整 |
+| 7 日留存率 | N/A | ≥ 20%（Beta）/ ≥ 30%（GA）| Beta Launch + 7D（≥20%）；GA + 7D（≥30%）| Analytics | PM | 用戶訪談 → 玩法調整 |
 | 平均局數/日/活躍用戶 | N/A | ≥ 5 局 | GA + 30D | Analytics | PM | 縮短局時 or 加入快速模式 |
 
 ---
@@ -548,4 +549,4 @@ timeline
 
 ---
 
-*此 BRD 由 /devsop-idea 自動生成（v0.4-draft），已執行 /devsop-brd-review 進行 5 輪正式審查。*
+*此 BRD 由 /devsop-idea 自動生成（v0.6-draft），已執行 /devsop-brd-review 進行 6 輪正式審查。*
