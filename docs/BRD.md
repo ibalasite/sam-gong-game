@@ -10,8 +10,8 @@
 |------|------|
 | **DOC-ID** | BRD-SAM-GONG-GAME-20260421 |
 | **專案名稱** | 三公遊戲（Sam Gong Online — Cocos + Colyseus） |
-| **文件版本** | v0.1-draft |
-| **狀態** | DRAFT |
+| **文件版本** | v0.4-draft |
+| **狀態** | UNDER_REVIEW |
 | **作者** | tobala（由 /devsop-idea 自動生成） |
 | **日期** | 2026-04-21 |
 | **建立方式** | /devsop-idea 自動生成，請執行 /devsop-brd-review 審查 |
@@ -23,6 +23,9 @@
 | 版本 | 日期 | 作者 | 變更摘要 |
 |------|------|------|---------|
 | v0.1-draft | 2026-04-21 | /devsop-idea | 初稿，由 AI 自動生成 |
+| v0.2-draft | 2026-04-21 | /devsop-brd-review | Round 1 審查修正：RTM、North Star、Stakeholder Map、RACI、Benefits Realization、Risk、Compliance、Handoff Checklist、Glossary |
+| v0.3-draft | 2026-04-21 | /devsop-brd-review | Round 2-3 審查修正：投資門檻 Go/No-Go 定義、Data Governance、Vendor Risk、Glossary 補全、合規時程 |
+| v0.4-draft | 2026-04-21 | /devsop-brd-review | Round 4 審查修正：§9.1 標題補全、法律風險新增至 §10、§7.2 留存率目標分層標示、Q1 影響層級升階 |
 
 ---
 
@@ -276,7 +279,7 @@
 ### 7.2 業務指標階層
 
 ```
-Outcome：玩家持續回訪遊玩（7D Retention ≥ 30%）
+Outcome：玩家持續回訪遊玩（7D Retention ≥ 20%（Beta）/ ≥ 30%（GA））
   Output：每週完成牌局數 ≥ 1,000 局（Beta 後 30 天）
   Output：平均局時 10-15 分鐘（流暢體驗）
     Input：房間建立成功率 ≥ 99%
@@ -318,11 +321,14 @@ Outcome：玩家持續回訪遊玩（7D Retention ≥ 30%）
 
 ## 9. Regulatory & Compliance Requirements
 
+### 9.1 適用法規清單
+
 | 法規 / 標準 | 適用範圍 | 關鍵義務 | 負責人 |
 |-----------|---------|---------|--------|
 | 台灣個資法（個人資料保護法）| 玩家帳戶、遊戲紀錄 | 資料最小化、用戶同意 | Legal |
 | 遊戲橘書（遊戲軟體分級）| 若上架平台 | 分級申請 | PM |
 | GDPR（若服務歐洲用戶）| 玩家個資 | 資料主權 | Legal |
+| 刑法 §266（賭博罪）| 虛擬籌碼設計 | 籌碼不可兌換真實金錢，無真實獲利機制 | Legal |
 
 ### 9.2 合規影響評估
 
@@ -368,6 +374,7 @@ Outcome：玩家持續回訪遊玩（7D Retention ≥ 30%）
 | Colyseus 版本不相容 | 技術 | LOW | MEDIUM | 鎖定 Colyseus 0.15.x + Cocos SDK 特定版本 | Engineering |
 | 斷線處理不完善 | 技術 | HIGH | HIGH | 60 秒重連窗口 + 自動棄牌規則 | Engineering |
 | 三公規則理解差異 | 業務 | MEDIUM | HIGH | 完整規則文件 + 玩家內測確認 | PM |
+| 賭博法規合規風險（刑法 §266）| 法律 | MEDIUM | CRITICAL | 虛擬籌碼不可兌換真實金錢，BRD 審查後 2 週內完成法律初審確認 | Legal |
 
 ---
 
@@ -440,7 +447,7 @@ timeline
 
 | # | 問題 | 影響層級 | 負責人 | 截止日 | 狀態 |
 |---|------|---------|--------|--------|------|
-| Q1 | 三公「公牌」特殊組合的完整規則定義（各地規則略有差異）| 策略 | Game Designer | BRD 審查後 1 週 | OPEN |
+| Q1 | 三公「公牌」特殊組合的完整規則定義（各地規則略有差異）。**注意：規則定義分歧將直接影響 Server 比牌引擎設計（牌點計算邏輯、公牌判定條件），必須在 EDD 前確認，否則引擎設計需重做。** | 架構 | Game Designer | EDD 前 | OPEN |
 | Q2 | 斷線後超時自動棄牌的時間窗口（10s / 30s / 60s？）| 範圍 | Engineering + Game Designer | EDD 前 | OPEN |
 | Q3 | 初版是否需要帳號系統（或匿名房間碼即可）？ | 範圍 | PM | BRD 審查後 | OPEN |
 | Q4 | Cocos Creator 目標平台：Web only / Mobile Web / iOS+Android 原生？| 架構 | Engineering | EDD 前 | OPEN |
