@@ -154,7 +154,7 @@
 
 **狀態：**
 - Default：靜態堆疊顯示，上方顯示數字標籤（monospace 字體）
-- Animating：籌碼飛行動畫（結算時 net_chips 飛向/飛離玩家頭像，0.8s）
+- Animating：籌碼飛行動畫（結算時 net_chips 飛向/飛離玩家頭像，0.5s）
 - Empty：不顯示籌碼堆疊，顯示「0」文字
 
 **大額面額顯示：**
@@ -913,7 +913,7 @@ SCR-007 底部玩家資訊列中的「籌碼：N」來源：
 │                                │
 │  [規則說明圖示 + 文字]           │
 │  • 3 張牌，點數加總 mod 10      │
-│  • 三公 = 3 張 10 點牌（最大）  │
+│  • 三公 = 3 張花牌（10/J/Q/K，各計 10 點，合計 mod10 = 0，最高手牌）  │
 │  • 比大小規則...               │
 │                                │
 │  [    下一步    ]               │
@@ -1944,6 +1944,7 @@ i18n key: `settings.logout_confirm_midgame` = '您正在遊戲中！離開將視
 - 有效對比度：`#7F8C8D` 灰字在 `rgba(0,0,0,0.65)` 混合底色上 ≈ 5.1:1（通過 WCAG AA）。
 - SCR-007 遊戲桌面、SCR-009 結算疊加層（非全黑背景區域）、SCR-010 排行榜（若有綠色背景區域）均須套用此底條規格。
 - SCR-004 主大廳、SCR-013、SCR-014 等深色背景畫面：`#7F8C8D` 在 `#0D2137` 深藍黑上對比度 ≈ 4.7:1（通過 AA），無需額外底條。
+- SCR-016（籌碼商店佔位）：背景色 `#0D2137`（深藍）與 SCR-001/004 相同；免責聲明文字 `#7F8C8D` on `#0D2137` 對比度 ~4.7:1，通過 WCAG AA（≥4.5:1）。無需額外底框處理。
 
 ---
 
@@ -1970,7 +1971,8 @@ Canvas（設計解析度：750×1334）
     │   ├── LeaderboardScreen         // SCR-010
     │   ├── ProfileScreen             // SCR-013
     │   ├── DailyTaskScreen           // SCR-014
-    │   └── SettingsScreen            // SCR-015
+    │   ├── SettingsScreen            // SCR-015
+    │   └── ChipStoreScreen           // SCR-016 籌碼商店（v1.x 佔位）
     │
     └── Overlays/                     // 疊加層（始終在 Screens 上方）
         ├── SettlementOverlay         // SCR-009（opacity toggle）
@@ -2073,6 +2075,8 @@ room.state.settlement.winners.forEach((winner) => {
 | min_bet | number | 本廳最低下注額 | banker-bet/player-bet |
 | max_bet | number | 本廳最高下注額 | banker-bet/player-bet |
 | quick_bet_amounts | number[] | Server 建議快速下注金額 | banker-bet/player-bet |
+| banker_bet_amount | number | 莊家本局下注額（閒家 Call 按鈕顯示用）| banker-bet/player-bet |
+| current_pot | number | 當前底池金額（隨玩家下注即時更新，用於 SCR-007 底池顯示）| banker-bet/player-bet/showdown |
 | players[N].chip_balance | number | 玩家N當前籌碼餘額 | 全局 |
 | players[N].seat_index | number | 玩家N席位序號 | 全局 |
 | players[N].isConnected | boolean | 玩家N連線狀態 | 全局 |
@@ -2116,8 +2120,8 @@ room.state.settlement.winners.forEach((winner) => {
 | REQ-017 | 反作弊；速率限制（Server 端，Client 顯示錯誤提示）| SCR-007 → 操作按鈕 Processing 狀態；錯誤 Toast 通知（errors.rate_limit Toast） | Client 顯示速率限制錯誤提示；不含反作弊邏輯 |
 | REQ-019 | 個資刪除請求 | SCR-013（Profile/Account）→「刪除帳號」入口 | 帳號設定頁提供刪除入口；刪除確認對話框 |
 | REQ-020a | 每日免費籌碼（主動領取）+ 救濟機制 | SCR-004（領取今日籌碼按鈕）、CMP-010（救濟籌碼 Toast）、SCR-014（每日任務）| 大廳顯示「領取今日籌碼」按鈕；救濟為底部 Toast |
-| REQ-020b | 虛擬籌碼商店 IAP / 廣告（Should Have，條件啟用）| SCR-013 或 SCR-004 → 籌碼商店入口（UI 佔位；實際功能依法律意見書 2026-05-15 決定）| 籌碼商店入口已預留；不含 IAP 計算邏輯 |
-| REQ-009 | 每日/週任務籌碼（Daily/Weekly Chip Tasks）| SCR-004（任務入口按鈕：底部快捷列「每日任務」圖示）、SCR-015（任務/排行榜整合畫面 SCR-014 + SCR-010 入口）、SCR-014（每日任務與籌碼領取畫面：任務列表、完成進度、籌碼領取）| 任務列表及獎勵金額由 Server API 提供，Client 不硬編碼；每日籌碼任務在 SCR-004 大廳設有明顯入口按鈕（i18n key: `lobby.daily_task_entry`）；週任務在 SCR-014 以獨立 Tab 顯示（v1.x 預留） |
+| REQ-020b | 虛擬籌碼商店 IAP / 廣告（Should Have，條件啟用）| SCR-013 或 SCR-004 → 籌碼商店入口（UI 佔位；實際功能依法律意見書 2026-05-15 決定）、SCR-016（籌碼商店佔位畫面）| 籌碼商店入口已預留；不含 IAP 計算邏輯 |
+| REQ-009 | 每日/週任務籌碼（Daily/Weekly Chip Tasks）| SCR-004（任務入口按鈕：底部快捷列「每日任務」圖示）、SCR-004（大廳底部快捷列：每日任務圖示 → SCR-014；排行榜圖示 → SCR-010）、SCR-014（每日任務與籌碼領取畫面：任務列表、完成進度、籌碼領取）| 任務列表及獎勵金額由 Server API 提供，Client 不硬編碼；每日籌碼任務在 SCR-004 大廳設有明顯入口按鈕（i18n key: `lobby.daily_task_entry`）；週任務在 SCR-014 以獨立 Tab 顯示（v1.x 預留） |
 | REQ-018 | KYC / 實名認證 / 防沉迷合規（Compliance）| SCR-003（Age Verification flow：OTP 年齡驗證閘，`age_verified` 旗標控制正式對戰入口）、CMP-010（Anti-Addiction Overlay：成人 2h 提醒 + 未成年 2h 硬停兩版本）、SCR-012（防沉迷彈窗：完整 wireframe 兩版本，含倒數至午夜計時器）| KYC 年齡驗證由 Server 執行（`currentYear - birthYear ≥ 18`）；Client 提供 SCR-002 OTP 輸入介面；防沉迷信號由 Server 廣播（`anti_addiction_warning` / `anti_addiction_signal`）；Client CMP-010 依信號類型（adult/underage）顯示對應版本；所有合規 UI 元素不可在任何設定下被略過（P7 原則） |
 | REQ-021 | 每日任務系統 | SCR-014（Daily Tasks & Chips Claim）、SCR-004（每日任務圖示入口）| 任務列表；完成動畫；獎勵發放 Toast |
 | REQ-008 | 多語系 i18n 框架（v1.x）| §8（Localization）、§2.1 P6（零硬編碼字串）| v1.0 僅繁體中文；英文/簡中框架預留至 v1.x |
