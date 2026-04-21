@@ -130,16 +130,9 @@ class SamGongRoom extends Room<SamGongState> {
   onCreate(options: any) {
     this.setState(new SamGongState());
     this.maxClients = 6;
-    
-    // 關鍵：為每個 client 的 patch 設定過濾邏輯
-    this.onMessage("*", () => {}); // catch-all for safety
-  }
-  
-  // 每次 patch 前，過濾其他玩家的未翻牌牌面
-  // 確保 client 只收到自己牌的 suit/rank（其他人牌的 suit/rank 清空）
-  patchedStateFor(client: Client): SamGongState {
-    // 依照 sessionId 遮蔽其他玩家未 revealed 的牌
-    // 回傳過濾後的 state patch（實作細節見 Section 2.3.1）
+    // @filter decorator（見 Section 2.3.1）在 Schema 層面攔截 patch，
+    // 確保每位 client 只收到自己的 cards suit/rank。
+    // 注意：Colyseus 沒有 patchedStateFor() API，過濾完全由 @filter decorator 處理。
   }
 }
 ```
@@ -164,17 +157,23 @@ export class PlayerState extends Schema {
   @type("string") status: string = "waiting";
   @type("number") chips: number = 1000;
   @type("boolean") isBanker: boolean = false;
+  @type("boolean") isHost: boolean = false;   // 第一個加入的玩家為 Host，有權發送 start_game
   @type("boolean") hasBet: boolean = false;
 
-  // @filter 讓 Colyseus 在發送 patch 時，
-  // 對每個 client 個別決定 cards 欄位的內容
+  // @filter 讓 Colyseus 在發送 patch 時，對每個 client 個別決定是否包含 cards 欄位。
+  // 當 filter 返回 false → 該 client 的 patch 中完全省略 cards 欄位（不是空字串，而是整個陣列不下發）。
+  // 備案（EQ-1）：若 @filter 只能過濾整個 ArraySchema 而非個別 Card，
+  // 則改用 onBeforePatch：在 patch 前手動將 cards 中每張 Card 的 suit/rank 清空為 ""，
+  // 發出 patch 後再恢復。這樣 client 收到的是 suit="" rank=""（可見結構但無牌面資訊）。
   @filter(function(
     this: PlayerState,
     client: Client,
     value: ArraySchema<Card>,
     root: SamGongState
   ) {
-    // 牌主本人 or 已翻牌：完整發送
+    // 牌主本人 → 完整發送（true）
+    // 已全部翻牌（REVEAL 階段後）→ 完整發送（true）
+    // 其他情況 → 過濾（false）：cards 欄位從 patch 中省略
     return this.sessionId === client.sessionId || value.toArray().every(c => c.revealed);
   })
   @type([Card]) cards = new ArraySchema<Card>();
@@ -256,7 +255,8 @@ function generateRoomCode(): string {
 // server/src/logic/deck.ts
 
 export type Suit = "spades" | "hearts" | "diamonds" | "clubs";
-export type Rank = "A" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "J" | "Q" | "K";
+// 標準 52 張牌：A, 2-10, J, Q, K（含 "10"，勿遺漏）
+export type Rank = "A" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "J" | "Q" | "K";
 
 export interface CardData {
   suit: Suit;
@@ -265,9 +265,10 @@ export interface CardData {
 
 export function createDeck(): CardData[] {
   const suits: Suit[] = ["spades", "hearts", "diamonds", "clubs"];
-  const ranks: Rank[] = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "J", "Q", "K"];
+  // 52 張標準撲克（含 "10"）
+  const ranks: Rank[] = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
   return suits.flatMap(suit => ranks.map(rank => ({ suit, rank })));
-  // 返回新陣列（immutable）
+  // 返回新陣列（immutable），共 52 張
 }
 
 // Fisher-Yates shuffle（AC-008-1）
@@ -302,7 +303,8 @@ export function dealCards(
 const RANK_VALUE: Record<Rank, number> = {
   "A": 1,  "2": 2,  "3": 3,  "4": 4,  "5": 5,
   "6": 6,  "7": 7,  "8": 8,  "9": 9,
-  "J": 10, "Q": 10, "K": 10
+  "10": 10, "J": 10, "Q": 10, "K": 10
+  // 10, J, Q, K 均計 10 點，取個位數後貢獻 0
 };
 
 /**
@@ -414,6 +416,12 @@ export function settle(
 
 /**
  * 流局結算（AC-007-6）：所有閒家棄牌，底注退回莊家，無盈虧
+ *
+ * 實作說明：
+ * - 閒家在 player_action="call" 時「預扣籌碼」（chips -= betAmount）。
+ * - 流局發生時，所有閒家均已棄牌（hasBet=false），因此未預扣任何籌碼。
+ * - 莊家的底注設定（set_bet_amount）不預扣籌碼，僅在結算時才計算盈虧。
+ * - 故流局時所有人 chipsChange=0，finalChips 不變，符合 AC-007-6 無盈虧。
  */
 export function settleForfeit(
   players: Map<string, PlayerInput>,
@@ -556,7 +564,13 @@ export class GameManager {
   }
 
   async joinRoom(roomCode: string): Promise<void> {
-    // joinById 用房間碼（Colyseus 預設 roomId = roomCode for custom lobby）
+    // 實作說明：Colyseus 的 roomId 是系統自動生成（非自訂房間碼）。
+    // 要用房間碼加入，有兩個方案：
+    // 方案A（建議）：在 SamGongRoom.onCreate() 中，用 roomCode 作為 roomId：
+    //   this.roomId = roomCode;（Colyseus 允許覆寫 roomId）
+    //   這樣 joinById(roomCode) 可直接使用。
+    // 方案B：維護 roomCode→roomId Map（在 Server 端 Lobby 查詢），然後 joinById(actualRoomId)。
+    // MVP 採方案A（最簡單）：SamGongRoom.onCreate 覆寫 roomId = generateRoomCode()
     this._room = await this.client.joinById<SamGongState>(roomCode);
     this.setupListeners();
   }
@@ -845,13 +859,16 @@ server {
   server_name game.example.com;
 
   # WebSocket 代理（Colyseus）
-  location /ws {
-    proxy_pass http://localhost:2567;
+  # Colyseus 預設所有 WebSocket 路徑均走根目錄（/）的 HTTP Upgrade，
+  # 或可透過 Server 設定 server.listen({ publicAddress: "..." }) 指定路徑。
+  # 若 Nginx 同時提供靜態檔案，建議用 /colyseus/ 前綴與靜態資源區分：
+  location /colyseus/ {
+    proxy_pass http://localhost:2567/;
     proxy_http_version 1.1;
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection "upgrade";
     proxy_set_header Host $host;
-    proxy_read_timeout 3600s; # 長連接
+    proxy_read_timeout 3600s; # 長連接（WebSocket 持久連線）
   }
 
   # 靜態檔案（Cocos Build）
@@ -1059,8 +1076,13 @@ describe("calculatePoints", () => {
 
 describe("compareHands", () => {
   test("平局（同點非公牌）→ 莊贏（AC-010-3）", () => {
-    // 兩手牌都是1點
-    expect(compareHands(/* 1pt cards */, /* 1pt cards */)).toBe("banker");
+    // 兩手牌都是 1 點：A+J+K = 1+10+10 = 21 → 21 % 10 = 1
+    const onePoint = [
+      { suit: "spades", rank: "A" },
+      { suit: "hearts", rank: "J" },
+      { suit: "clubs", rank: "K" },
+    ] as CardData[];
+    expect(compareHands(onePoint, onePoint)).toBe("banker");
   });
 
   test("雙方均為公牌 → 莊贏（AC-010-3）", () => {
