@@ -165,14 +165,14 @@
 | O1：Server authoritative 公平性 | Server 權威計算 100%、0 P0 Cheat Bug | REQ-001 Shuffle, REQ-002 Deal, REQ-003 Compare, REQ-004 Settlement | BDD S-001~S-004 | 🔲 待 PRD 填入 |
 | O2：CCU 規模 | Peak CCU ≥ 500 | REQ-010 Matchmaking, REQ-011 Room | Load Test L-001 | 🔲 待 PRD 填入 |
 | O2 | 新手引導完成率 ≥ 60%（§7） | REQ-012 Tutorial, REQ-010, REQ-011 | BDD Scenario S-012 | 🔲 待填 |
-| O3：變現 | ARPPU ≥ USD 10 | REQ-020 Shop/IAP/Ad[^vip-note] | BDD S-020 | 🔲 待 PRD 填入 |
+| O3：變現 | ARPPU ≥ USD 10 | REQ-020a（Must Have）, REQ-020b（Should Have）[^req021-note] | BDD S-020 | 🔲 待 PRD 填入 |
 | O4：品類擴展 | 1 個新品類 | （未來 PRD v2） | N/A | 🔲 待 v2 |
 | O1 | 發牌/翻牌/結算動畫完成率 ≥ 60 fps（§5.3 UI）| REQ-013 UI/Animation | BDD Scenario S-013 | 🔲 待 PRD 填入 |
 | O2 | 帳號系統：日留存率（§5.3 Account）| REQ-014 Account | BDD Scenario S-014 | 🔲 待 PRD 填入 |
 | 法規合規（§9）| 防沉迷合規100%（§5.3 Anti-Addiction）| REQ-015 AntiAddiction | BDD Scenario S-015 | 🔲 待 PRD 填入 |
 | 法規合規（§9）| Cookie同意橫幅覆蓋率（§9.0）| REQ-016 Cookie | BDD Scenario S-016 | 🔲 待 PRD 填入 |
 
-[^vip-note]: REQ-021 VIP列入v1.x Backlog，不納入v1.0 RTM追溯
+[^req021-note]: REQ-021 每日任務系統（Should Have，v1.0範圍內）；VIP系統為Won't Have (v1.0)，暫無REQ編號。
 
 ### 3.5 Benefits Realization Plan（效益實現計畫）
 
