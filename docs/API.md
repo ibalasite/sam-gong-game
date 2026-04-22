@@ -75,6 +75,22 @@ Authorization: Bearer {access_token}
 | `Deprecation` | API 廢棄日期（若已廢棄） |
 | `Sunset` | API 下線日期（若已廢棄） |
 
+### 1.6 CORS 設定
+
+REST API 端點採用嚴格 CORS 策略（Express `cors` 套件）：
+
+| 設定項目 | 值 |
+|---------|---|
+| `Access-Control-Allow-Origin` | 白名單（`https://samgong.io`, `https://www.samgong.io`）；非白名單 Origin 回傳 CORS 錯誤 |
+| `Access-Control-Allow-Methods` | `GET, POST, PUT, DELETE, OPTIONS` |
+| `Access-Control-Allow-Headers` | `Authorization, Content-Type, X-Request-ID` |
+| `Access-Control-Allow-Credentials` | `false`（Bearer Token 模式不需要 Credentials） |
+| `Access-Control-Max-Age` | `86400`（Preflight Cache 24h） |
+
+- Preflight OPTIONS 請求直接回傳 `204 No Content`
+- Admin API（內網 VPN Only）不設 CORS（僅 VPN 內網存取，無跨域需求）
+- WebSocket（WSS）不受 CORS 限制，由 JWT Bearer Token 驗證
+
 ---
 
 ## 2. Authentication
@@ -439,11 +455,11 @@ Token 驗證時：
 }
 ```
 
-**Response 400（餘額不足條件）**：
+**Response 400（餘額不符條件：chip_balance ≥ 500）**：
 ```json
 {
-  "error": "rescue_chip_claimed",
-  "message": "Rescue chip balance threshold not met or already claimed today"
+  "error": "rescue_unavailable",
+  "message": "Chip balance is sufficient; rescue chip threshold not met (balance >= 500)"
 }
 ```
 
@@ -456,7 +472,7 @@ Token 驗證時：
 }
 ```
 
-**Response Codes**：`200` / `400` 格式或條件錯誤 / `401` Token 無效 / `403` 今日已領取 / `429` Rate Limit
+**Response Codes**：`200` / `400` 餘額 ≥ 500 不符申請條件 / `401` Token 無效 / `403` 今日已領取（`rescue_chip_claimed`）/ `429` Rate Limit
 
 ---
 
@@ -677,7 +693,7 @@ Token 驗證時：
 }
 ```
 
-**Response 200**：
+**Response 201**：
 ```json
 {
   "kyc_id": "uuid",
@@ -687,7 +703,7 @@ Token 驗證時：
 }
 ```
 
-**Response Codes**：`200` / `400` 格式錯誤 / `401` Token 無效
+**Response Codes**：`201` 提交成功（資源已建立）/ `400` 格式錯誤 / `401` Token 無效
 
 ---
 
@@ -830,7 +846,7 @@ Token 驗證時：
       "created_at": "2026-04-22T10:00:00Z"
     }
   ],
-  "pagination": { "page": 1, "total": 50 }
+  "pagination": { "page": 1, "limit": 20, "total": 50, "total_pages": 3 }
 }
 ```
 
@@ -998,8 +1014,8 @@ const reconnectInfo = { roomId: room.id, sessionId: room.sessionId };
 | `showdown_reveal` | `{ hands: { [seat_index]: Card[] } }` | 所有未 Fold 玩家手牌（廣播，showdown phase） |
 | `anti_addiction_warning` | `{ type: "adult", session_minutes: number }` | 成人 2h 連續遊玩提醒（需確認） |
 | `anti_addiction_signal` | `{ type: "underage", daily_minutes_remaining: number, midnight_timestamp: number }` | 未成年每日 2h 硬停訊號 |
-| `rescue_chips` | `{ amount: 1000, new_balance: number }` | 結算後餘額 < 500 自動觸發補發 |
-| `rescue_not_available` | `{ reason: "already_claimed" \| "balance_sufficient" }` | 救援籌碼不可用通知 |
+| `rescue_chips` | `{ amount: 1000, new_balance: number }` | 結算後偵測 chip_balance < 500 且今日未領取時自動觸發補發（DB 原子 UPDATE 防 Race Condition） |
+| `rescue_not_available` | `{ reason: "already_claimed" \| "balance_sufficient" }` | 結算後偵測餘額 < 500 但今日已領取（`already_claimed`）或餘額 ≥ 500（`balance_sufficient`）時推送；Client 顯示對應提示 |
 | `rate_limit` | `{ error: "rate_limit", retry_after_ms: number }` | 訊息速率超限回應 |
 | `error` | `{ code: string, message: string }` | 一般錯誤回應（非法操作、驗證失敗） |
 | `matchmaking_expanded` | `{ expanded_tiers: string[] }` | 配對擴展至相鄰廳別（30s 後） |
@@ -1137,7 +1153,8 @@ interface WsErrorMessage {
 |------|:-----------:|------|
 | `rate_limit_exceeded` | 429 | 超過速率限制 |
 | `daily_task_limit` | 400 | 每日任務已完成 |
-| `rescue_chip_claimed` | 403 | 今日已領取救援籌碼 |
+| `rescue_unavailable` | 400 | 救援籌碼不符申請條件（chip_balance ≥ 500）|
+| `rescue_chip_claimed` | 403 | 今日已領取救援籌碼（每日 1 次上限）|
 
 **KYC/合規**：
 | Code | 說明 |
@@ -1166,6 +1183,7 @@ Client 端根據 `code`（即 i18n key `error.{code}`）本地化顯示。
 |------|---------|-----------|------|---------|
 | L1 認證 | `/auth/*` | `rl:auth:{ip}` | 30 次/min/IP | HTTP 429 |
 | L2 高敏感 | `POST /player/daily-chip`, `POST /tasks/:id/complete` | `rl:sensitive:{player_id}` | 5 次/min/user | HTTP 429 |
+| L2b 每日唯一 | `POST /player/rescue-chip` | `rl:rescue:{player_id}:{date}` | ≤ 1 次/day/user（UTC+8 日期 key）| HTTP 429 |
 | L3 一般 | 所有其他 `/api/v1/*` | `rl:general:{player_id}` | 60 次/min/user | HTTP 429 |
 | L4 IP 全局 | 所有端點 | `rl:global:{ip}` | 300 次/min/IP | HTTP 429 |
 
