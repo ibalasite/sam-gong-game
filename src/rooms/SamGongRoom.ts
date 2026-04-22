@@ -69,13 +69,17 @@ interface AntiAddictionConfirmMessage {
 }
 
 /** 廳別設定對照表 */
-const TIER_CONFIGS: Record<string, { entry_chips: number; min_bet: number; max_bet: number; quick_bets: number[] }> = {
+export const TIER_CONFIGS: Record<string, { entry_chips: number; min_bet: number; max_bet: number; quick_bets: number[] }> = {
   '青銅廳': { entry_chips: 1000,     min_bet: 100,    max_bet: 500,    quick_bets: [100, 200, 300, 500] },
   '白銀廳': { entry_chips: 10000,    min_bet: 1000,   max_bet: 5000,   quick_bets: [1000, 2000, 3000, 5000] },
   '黃金廳': { entry_chips: 100000,   min_bet: 10000,  max_bet: 50000,  quick_bets: [10000, 20000, 30000, 50000] },
   '鉑金廳': { entry_chips: 1000000,  min_bet: 100000, max_bet: 500000, quick_bets: [100000, 200000, 300000, 500000] },
   '鑽石廳': { entry_chips: 10000000, min_bet: 1000000, max_bet: 5000000, quick_bets: [1000000, 2000000, 3000000, 5000000] },
 };
+
+/** 狀態機所有合法 phase 值（EDD §3.5） */
+export const VALID_PHASES = ['waiting', 'dealing', 'banker-bet', 'player-bet', 'showdown', 'settled'] as const;
+export type Phase = typeof VALID_PHASES[number];
 
 /**
  * SamGongRoom — 三公遊戲 Colyseus Room

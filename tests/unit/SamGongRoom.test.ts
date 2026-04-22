@@ -25,7 +25,7 @@
  * - 補充 AntiAddictionManager Mock（成人/未成年計時）
  */
 
-import { SamGongRoom } from '../../src/rooms/SamGongRoom';
+import { SamGongRoom, TIER_CONFIGS, VALID_PHASES } from '../../src/rooms/SamGongRoom';
 
 // ──────────────────────────────────────────────
 // Mock 設定（Colyseus 核心依賴）
@@ -79,32 +79,25 @@ describe('SamGongRoom', () => {
 
   describe('廳別設定（Tier Config）', () => {
     it('TC-ROOM-001: TIER_CONFIGS 青銅廳設定正確', () => {
-      // 直接驗證模組層級常數，不啟動 Colyseus
-      // 廳別設定由 SamGongRoom 內的 TIER_CONFIGS 常數定義
-      // 與 EDD §3.3 對齊
-      const expectedBronze = {
-        entry_chips: 1000,
-        min_bet: 100,
-        max_bet: 500,
-        quick_bets: [100, 200, 300, 500],
-      };
+      // 從實際 TIER_CONFIGS 匯出驗證，與 EDD §3.3 對齊
+      const bronze = TIER_CONFIGS['青銅廳'];
 
-      expect(expectedBronze.entry_chips).toBe(1000);
-      expect(expectedBronze.min_bet).toBe(100);
-      expect(expectedBronze.max_bet).toBe(500);
-      expect(expectedBronze.quick_bets).toEqual([100, 200, 300, 500]);
+      expect(bronze).toBeDefined();
+      expect(bronze.entry_chips).toBe(1000);
+      expect(bronze.min_bet).toBe(100);
+      expect(bronze.max_bet).toBe(500);
+      expect(bronze.quick_bets).toEqual([100, 200, 300, 500]);
     });
 
     it('TC-ROOM-002: 鑽石廳設定值正確', () => {
-      const expectedDiamond = {
-        entry_chips: 10000000,
-        min_bet: 1000000,
-        max_bet: 5000000,
-      };
+      // 從實際 TIER_CONFIGS 匯出驗證，與 EDD §3.3 對齊
+      const diamond = TIER_CONFIGS['鑽石廳'];
 
-      expect(expectedDiamond.entry_chips).toBe(10000000);
-      expect(expectedDiamond.min_bet).toBe(1000000);
-      expect(expectedDiamond.max_bet).toBe(5000000);
+      expect(diamond).toBeDefined();
+      expect(diamond.entry_chips).toBe(10000000);
+      expect(diamond.min_bet).toBe(1000000);
+      expect(diamond.max_bet).toBe(5000000);
+      expect(diamond.quick_bets).toEqual([1000000, 2000000, 3000000, 5000000]);
     });
   });
 
@@ -135,17 +128,15 @@ describe('SamGongRoom', () => {
   });
 
   describe('Phase 狀態機驗證', () => {
-    it('TC-ROOM-005: Phase 枚舉值定義正確（靜態驗證）', () => {
-      const validPhases = ['waiting', 'dealing', 'banker-bet', 'player-bet', 'showdown', 'settled'];
-
-      // 確認所有 phase 值與 EDD §3.5 對齊
-      expect(validPhases).toContain('waiting');
-      expect(validPhases).toContain('dealing');
-      expect(validPhases).toContain('banker-bet');
-      expect(validPhases).toContain('player-bet');
-      expect(validPhases).toContain('showdown');
-      expect(validPhases).toContain('settled');
-      expect(validPhases).toHaveLength(6);
+    it('TC-ROOM-005: Phase 枚舉值定義正確（驗證實際 VALID_PHASES 匯出）', () => {
+      // 從實際 VALID_PHASES 匯出驗證，與 EDD §3.5 對齊
+      expect(VALID_PHASES).toContain('waiting');
+      expect(VALID_PHASES).toContain('dealing');
+      expect(VALID_PHASES).toContain('banker-bet');
+      expect(VALID_PHASES).toContain('player-bet');
+      expect(VALID_PHASES).toContain('showdown');
+      expect(VALID_PHASES).toContain('settled');
+      expect(VALID_PHASES).toHaveLength(6);
     });
   });
 
