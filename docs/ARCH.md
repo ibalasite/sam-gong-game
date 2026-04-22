@@ -25,6 +25,7 @@
 | v1.0 | 2026-04-22 | STEP-09 | 初稿；依 EDD v1.4-draft 生成；涵蓋系統架構、組件設計、部署拓樸、安全架構、可觀測性、TDR |
 | v1.1 | 2026-04-22 | STEP-10 Round 1 | 修復 8 個 findings：F1 readiness probe 說明補齊（DB+Redis+Room state init）；F2 Redis Key Pattern 補充 active_device（多裝置登入偵測）；F3 staging 環境描述補充 Beta 測試；F4 監控表補充 rake_exceeds_theoretical_max 指標；F5 CCU 告警說明強調非 HPA 觸發；F6 Alertmanager 規則補充路由說明（critical→PagerDuty/warning→Slack 5min 匯聚）；F7 Colyseus Monitor 矛盾說明修正（Production 預設禁用）；F8 settled phase 補充 rescue_chips 觸發機制及結算步驟描述精確化 |
 | v1.1 | 2026-04-22 | STEP-10 Round 2 | 修復 4 個 findings：F1 Document Control 版本號更新為 v1.1；F2 SettlementEngine 模組描述修正（多步驟原子性結算）；F3 §6.1 Pub/Sub 補充 force_disconnect_device 頻道；F4 頁腳版本號更新 |
+| v1.1 | 2026-04-22 | STEP-10 Round 3 | 修復 1 個 finding：F1 §5.4 補充結算賠率規格（N×banker_bet_amount）、底池定義（losers' called_bets）、Rake 計算公式，確保與關鍵規格完全一致 |
 
 ---
 
@@ -424,7 +425,17 @@ settled phase（≈ 5s）：
 ### 5.4 結算引擎籌碼守恆驗證
 
 ```
-結算完成後必須滿足：
+賠率規格（PRD §5.4）：
+  三公（is_sam_gong）  N = 3
+  9點                  N = 2
+  1-8點（非三公）      N = 1
+  平手                  N = 0（退回 called_bet，net_chips = 0）
+
+贏家淨利：Winner net_chips = N × banker_bet_amount（純利潤）
+底池定義：pot_amount = 所有輸家（losers）的 called_bet 加總
+Rake 計算：rake = pot_amount > 0 ? Math.max(Math.floor(pot_amount × 0.05), 1) : 0
+
+籌碼守恆驗證（結算完成後必須滿足）：
   sum(all participants' net_chips) + rake_amount === 0
 
 若驗證失敗：
