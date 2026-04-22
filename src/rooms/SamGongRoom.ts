@@ -495,8 +495,10 @@ export class SamGongRoom extends Room<SamGongState> {
       }
     });
 
-    // 鎖定房間：遊戲進行中不接受新玩家，避免 mid-game join 導致結算爆炸
-    this.lock();
+    // 變更追蹤 BUG-20260422-001：移除遊戲開局時的房間鎖定。
+    // 依 PRD §5.0.3，中途加入者應排隊至下一局，不應被拒於房間之外。
+    // 中途加入者以 PlayerState.is_waiting_next_round=true 旗標區隔，
+    // 不進當前局的發牌 / 下注 / 輪莊；resetForNextRound 時清除旗標正式入局。
 
     // 進入莊家下注 phase
     this.state.phase = 'banker-bet';

@@ -2303,3 +2303,16 @@ APM：
 *本文件由 /devsop-autodev STEP-07 依 PRD v0.14-draft + BRD v0.12-draft + PDD v0.2-draft 自動生成。*
 *所有架構決策須由 Engineering Lead 審查確認後方可執行。*
 *開放問題（§11）須於各截止日前決策，否則影響 Alpha（2026-06-21）里程碑。*
+
+---
+
+## 變更追蹤
+
+### BUG-20260422-001：SamGongRoom 不再於 startNewRound 鎖房 + PlayerState 新增 is_waiting_next_round
+- **狀態**：⏳ PENDING
+- **分類**：BUG / 工程
+- **日期**：2026-04-22
+- **描述**：既有 `this.lock()` 於遊戲開始時阻擋新玩家加入，與 PRD §5.0.3「中途加入：遊戲進行中加入的玩家排隊等待下一局」不一致。移除 `this.lock()`，改以 PlayerState 上的 `is_waiting_next_round` 旗標，讓中途加入者不入當前局的發牌 / 下注 / 輪莊序列，待 `resetForNextRound` 清除旗標後正式加入下一局。
+- **影響範圍**：§3 SamGongRoom 設計（onJoin / startNewRound / resetForNextRound / getNextPlayerToAct / BankerRotation）、PlayerState Schema 新增 `is_waiting_next_round` 欄位
+- **修正/實作內容**：（待完成後填入）
+- **commit**：—

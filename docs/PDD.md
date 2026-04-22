@@ -2179,3 +2179,16 @@ room.state.settlement.winners.forEach((winner) => {
 ---
 
 > **文件維護聲明：** 本 PDD 由 /devsop-autodev STEP-05 自動生成，依據 PRD v0.14-draft 及 BRD v0.12-draft。Client 設計嚴格遵循 Server-authoritative 原則；所有遊戲邏輯計算均由 Colyseus Server 執行，Client 僅為渲染顯示層。
+
+---
+
+## 變更追蹤
+
+### BUG-20260422-001：押注/跟注 CMP-012 自動押注 checkbox 預設不勾選
+- **狀態**：⏳ PENDING
+- **分類**：BUG / 工程
+- **日期**：2026-04-22
+- **描述**：全部人不管怎麼加入房間（一開始加入 / 中途加入）, 預設不能打開押注或跟注, CHECKBOX DEFAULT 是不打勾
+- **影響範圍**：CMP-012 BettingPanelComponent — 自動押注 Toggle 初始值；進入 banker-bet / player-bet 時重置為未勾選
+- **修正/實作內容**：（待完成後填入）
+- **commit**：—
