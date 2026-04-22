@@ -316,5 +316,97 @@ describe('HandEvaluator', () => {
         expect(calcPoint(v)).toBe(0);
       }
     });
+
+    // ────────────────────────────────────────────
+    // D8 tiebreak：A 因花色排名低而落敗（覆蓋 maxSuitA < maxSuitB → -1）
+    // ────────────────────────────────────────────
+
+    it('TC-HE-027: tiebreak — A 花色 < B 花色時 compare 返回 -1（A=club, B=spade）', () => {
+      // hand A: 2♣+3♣+K♣ = 5pt, maxSuit=club(1)
+      // hand B: 2♠+3♣+K♦ = 5pt, maxSuit=spade(4)
+      // A 點數相同，但 A.maxSuit(1) < B.maxSuit(4) → -1
+      const resultA = evaluator.evaluate(hand(card('2','club'), card('3','club'), card('K','club')));
+      const resultB = evaluator.evaluate(hand(card('2','spade'), card('3','club'), card('K','diamond')));
+      expect(evaluator.compare(resultA, resultB)).toBe(-1);
+    });
+
+    it('TC-HE-028: tiebreak — A 牌值 < B 牌值時 compare 返回 -1（同花色，A=Q♠ B=K♠）', () => {
+      // hand A: Q♠+4♣+A♦ = 5pt, maxSuit=spade(4), maxValueRank=12(Q)
+      // hand B: K♠+2♣+3♦ = 5pt, maxSuit=spade(4), maxValueRank=13(K)
+      // A 點數相同，最大花色相同，A.maxValue(12) < B.maxValue(13) → -1
+      const resultA = evaluator.evaluate(hand(card('Q','spade'), card('4','club'), card('A','diamond')));
+      const resultB = evaluator.evaluate(hand(card('K','spade'), card('2','club'), card('3','diamond')));
+      expect(evaluator.compare(resultA, resultB)).toBe(-1);
+    });
+
+    it('TC-HE-029: tiebreak — A 含未知花色應安全降級為 0（A.??0 防禦分支）', () => {
+      // 直接構造含有未知花色的 Card（繞過 makeCard，測試防禦分支）
+      const unknownSuitCard: import('../../src/game/HandEvaluator').Card = {
+        value: '2', suit: 'joker', point: 2,
+      };
+      const handWithUnknown = [
+        unknownSuitCard,
+        card('3','club'),
+        card('K','club'),
+      ];
+      // 同點數 5pt，A 含未知花色（suit_rank=0 via ??0），B 含 club(1)
+      const resultA = evaluator.evaluate(handWithUnknown);
+      const resultB = evaluator.evaluate(hand(card('2','club'), card('3','club'), card('K','club')));
+      // A 的 maxSuit=max(0,1,1)=1, B 的 maxSuit=max(1,1,1)=1 → 同花色 → 比牌值
+      // A.maxValue=K(13), B.maxValue=K(13) → 平手
+      expect(evaluator.compare(resultA, resultB)).toBe(0);
+    });
+
+    it('TC-HE-029b: tiebreak — B 含未知花色應安全降級為 0（B.??0 防禦分支）', () => {
+      // 把未知花色放在 B 手牌，以覆蓋 b.hand.map 的 ??0 分支（line 153）
+      const unknownSuitCard: import('../../src/game/HandEvaluator').Card = {
+        value: '2', suit: 'joker', point: 2,
+      };
+      const handBWithUnknown = [
+        unknownSuitCard,
+        card('3','club'),
+        card('K','club'),
+      ];
+      const resultA = evaluator.evaluate(hand(card('2','club'), card('3','club'), card('K','club')));
+      const resultB = evaluator.evaluate(handBWithUnknown);
+      // A.maxSuit=max(1,1,1)=1, B.maxSuit=max(0,1,1)=1 → 同花色 → 比牌值 → 平手
+      expect(evaluator.compare(resultA, resultB)).toBe(0);
+    });
+
+    it('TC-HE-030: tiebreak — A 含未知牌值應安全降級為 0（A.??0 防禦分支）', () => {
+      // 直接構造含有未知牌值的 Card
+      const unknownValueCard: import('../../src/game/HandEvaluator').Card = {
+        value: 'JOKER', suit: 'spade', point: 0,
+      };
+      const handWithUnknown = [
+        unknownValueCard,
+        card('3','spade'),
+        card('K','spade'),
+      ];
+      // 0+3+0=3pt（JOKER point=0），B 也 3pt
+      const resultA = evaluator.evaluate(handWithUnknown);
+      const resultB = evaluator.evaluate(hand(card('3','spade'), card('K','spade'), card('Q','spade')));
+      // A: maxSuit=spade(4), maxValue=max(0,3,13)=13(K) via ??0 for JOKER
+      // B: maxSuit=spade(4), maxValue=max(13,13,12)=13(K)
+      // A.maxSuit = B.maxSuit, A.maxValue = B.maxValue → 平手
+      expect(evaluator.compare(resultA, resultB)).toBe(0);
+    });
+
+    it('TC-HE-030b: tiebreak — B 含未知牌值應安全降級為 0（B.??0 防禦分支）', () => {
+      // 把未知牌值放在 B 手牌，覆蓋 b.hand.map 的 ??0 分支（line 160）
+      const unknownValueCard: import('../../src/game/HandEvaluator').Card = {
+        value: 'JOKER', suit: 'spade', point: 0,
+      };
+      const handBWithUnknown = [
+        unknownValueCard,
+        card('3','spade'),
+        card('K','spade'),
+      ];
+      const resultA = evaluator.evaluate(hand(card('3','spade'), card('K','spade'), card('Q','spade')));
+      const resultB = evaluator.evaluate(handBWithUnknown);
+      // A: maxSuit=spade(4), maxValue=max(13,13,12)=13(K)
+      // B: maxSuit=spade(4), maxValue=max(0,3,13)=13(K) via ??0 for JOKER → 平手
+      expect(evaluator.compare(resultA, resultB)).toBe(0);
+    });
   });
 });
