@@ -3,3 +3,13 @@ node_modules/
 dist/
 coverage/
 *.js.map
+
+# Secrets (NEVER commit)
+/secrets/
+*.pem
+*.p12
+*.pfx
+.env
+.env.local
+.env.*.local
+!.env.example
