@@ -393,7 +393,7 @@ export class SamGongState extends Schema {
   @type('number') banker_bet_amount: number = 0;    // 莊家本局底注（閒家 Call 用）
   @type('number') min_bet: number = 0;               // 來自 TierConfig
   @type('number') max_bet: number = 0;               // 來自 TierConfig
-  @type('number') current_pot: number = 0;           // 即時底池（輸家下注額加總）
+  @type('number') current_pot: number = 0;           // 即時底池（閒家跟注加總；莊家下注屬 escrow 不入池；BUG-20260422-002）
 
   // ── 計時器 ──
   @type('number') action_deadline_timestamp: number = 0; // Server Unix ms（Client 以此計算剩餘時間）
@@ -2319,6 +2319,15 @@ APM：
 ---
 
 ## 變更追蹤
+
+### BUG-20260422-002：current_pot 實作違反 Schema 註解語意 — 修正為僅含閒家跟注
+- **狀態**：⏳ PENDING
+- **分類**：BUG / 工程
+- **日期**：2026-04-22
+- **描述**：`SamGongState.current_pot` Schema 註解寫「輸家下注額加總」，但實作於 `handleBankerBet` / `handleAutoMinBet` 先把莊家下注加入 `current_pot`，造成 UI 顯示包含莊家投注，與三公規則及 PRD §5.3 不一致。修正：莊家下注只扣莊家籌碼（escrow），不進 current_pot；僅閒家 call 累加進池；結算後由 SettlementEngine 計算實際 losers_pot 作抽水底數。
+- **影響範圍**：§3.2 `SamGongState.current_pot` 語意說明（改為「閒家跟注加總」）；§3.3 `handleBankerBet` / `handleAutoMinBet` 不再寫入 current_pot；Client 端動畫邏輯配合調整
+- **修正/實作內容**：（待完成後填入）
+- **commit**：—
 
 ### BUG-20260422-001：SamGongRoom 不再於 startNewRound 鎖房 + PlayerState 新增 is_waiting_next_round
 - **狀態**：✅ DONE
