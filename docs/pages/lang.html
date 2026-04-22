@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>語言選型 — sam-gong-game</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+  <header class="top-nav">
+    <a href="index.html" class="nav-brand">sam-gong-game</a>
+    <div class="nav-controls">
+      <div class="search-wrap">
+        <input class="search-input" type="search" placeholder="搜尋文件...">
+        <div class="search-results"></div>
+      </div>
+      <a class="nav-gh-link" href="https://github.com/ibalasite/sam-gong-game-test" target="_blank" rel="noopener">⌥ GitHub</a>
+      <button class="sidebar-toggle" id="sidebarToggle" title="收合/展開側欄">☰</button>
+    </div>
+  </header>
+  <div class="doc-page-banner">
+    <p class="banner-breadcrumb"><a href="index.html">sam-gong-game</a> › 語言選型</p>
+    <h1 class="banner-title">語言選型</h1>
+  </div>
+  <div class="page-wrapper">
+    <aside class="sidebar" aria-label="文件導覽">
+      <div class="sidebar__section">
+        <div class="sidebar__label">文件</div>
+        <a class="sidebar__link" href="index.html">🏠 首頁</a>
+<a class="sidebar__link" href="idea.html">💡 構想文件 (IDEA)</a>
+<a class="sidebar__link" href="brd.html">📋 商業需求文件 (BRD)</a>
+<a class="sidebar__link" href="prd.html">📝 產品需求文件 (PRD)</a>
+<a class="sidebar__link" href="pdd.html">🎨 產品設計文件 (PDD)</a>
+<a class="sidebar__link" href="edd.html">🏗️ 工程設計文件 (EDD)</a>
+<a class="sidebar__link" href="arch.html">🧩 架構設計</a>
+<a class="sidebar__link" href="api.html">🔌 API 文件</a>
+<a class="sidebar__link" href="schema.html">🗄️ Schema 文件</a>
+<a class="sidebar__link" href="test-plan.html">✅ 測試計畫</a>
+<a class="sidebar__link" href="diagrams.html">📊 系統圖表</a>
+<a class="sidebar__link" href="alignment-report.html">📄 Alignment Report</a>
+<a class="sidebar__link" href="smoke-test-report.html">📄 Smoke Test Report</a>
+<a class="sidebar__link" href="local-deploy.html">📄 Local Deploy</a>
+<a class="sidebar__link active" href="lang.html">🔧 語言選型</a>
+      </div>
+    </aside>
+    <div class="sidebar-resizer" id="sidebarResizer"></div>
+    <main class="doc-content"><h1>技術選型文件（Language &amp; Framework Selection）</h1>
+<p>&lt;!-- SDLC Requirements Engineering — STEP 02 Output --&gt;</p>
+<p><strong>專案</strong>: 三公遊戲（Sam Gong 3-Card Poker）即時多人線上平台</p>
+<p><strong>版本</strong>: v1.0</p>
+<p><strong>日期</strong>: 2026-04-21</p>
+<p><strong>作者</strong>: /devsop-autodev STEP-02（全自動選型）</p>
+<hr>
+<h2>選型決策</h2>
+<p>本專案技術選型已於 BRD §8.1 及 §13 中確認，STEP-02 執行正式選型文件化。</p>
+<h3>Server 端</h3>
+<table>
+<tr><th>技術</th><th>版本</th><th>選型理由</th></tr>
+<tr><td>Node.js</td><td>22.x（Active LTS）</td><td>Colyseus 官方支援；2026-08-21 GA 時仍在 Active 維護期</td></tr>
+<tr><td>TypeScript</td><td>5.4.x（minor locked）</td><td>型別安全；Colyseus Schema 強型別支援</td></tr>
+<tr><td>Colyseus</td><td>~0.15.0（locked）</td><td>即時多人房間管理；Server-authoritative 架構官方框架</td></tr>
+<tr><td>PostgreSQL</td><td>16.x</td><td>牌局紀錄、帳號、籌碼流水；JSONB 支援複雜查詢</td></tr>
+<tr><td>Redis</td><td>7.x</td><td>Presence/Matchmaking Queue/Session Cache；ACL 安全控制</td></tr>
+</table>
+<h3>Client 端</h3>
+<table>
+<tr><th>技術</th><th>版本</th><th>選型理由</th></tr>
+<tr><td>Cocos Creator</td><td>3.8.x（minor locked）</td><td>跨平台（Web/iOS/Android）；官方 Colyseus SDK；TypeScript 原生</td></tr>
+<tr><td>TypeScript</td><td>5.4.x（minor locked）</td><td>與 Server 共用型別定義（shared schema）</td></tr>
+</table>
+<h3>架構決策</h3>
+<table>
+<tr><th>決策</th><th>內容</th></tr>
+<tr><td>架構模式</td><td>Server-authoritative：Client 僅顯示/輸入，零遊戲邏輯</td></tr>
+<tr><td>通訊協定</td><td>WebSocket（wss://）via Colyseus；Colyseus Schema 增量 State Sync</td></tr>
+<tr><td>部署目標</td><td>Docker + k8s 或 Colyseus Cloud（待 Q5 決策，截止 2026-05-15）</td></tr>
+<tr><td>共用型別</td><td>@colyseus/schema 定義 Room State；Client/Server 共享 TypeScript 型別</td></tr>
+<tr><td>測試框架</td><td>Jest（Server Unit/Integration）；Playwright（Client E2E）；k6（Performance）</td></tr>
+</table>
+<h3>版本鎖定策略</h3>
+<table>
+<tr><th>套件</th><th>鎖定版本</th><th>升級政策</th></tr>
+<tr><td>Colyseus</td><td>~0.15.0</td><td>minor 升級須全團隊同步審查</td></tr>
+<tr><td>Cocos Creator</td><td>3.8.x</td><td>patch 自動更新，minor 升級須測試</td></tr>
+<tr><td>Node.js</td><td>22.x</td><td>LTS 週期內安全補丁自動更新</td></tr>
+<tr><td>TypeScript</td><td>5.4.x</td><td>minor 升級須全團隊同步</td></tr>
+<tr><td>PostgreSQL</td><td>16.x</td><td>patch 自動更新</td></tr>
+<tr><td>Redis</td><td>7.x</td><td>patch 自動更新</td></tr>
+</table>
+<h3>排除選項（Not Selected）</h3>
+<table>
+<tr><th>技術</th><th>排除理由</th></tr>
+<tr><td>Unity</td><td>非 Web 優先；授權費；無 Colyseus 官方深度整合</td></tr>
+<tr><td>Socket.io</td><td>無 Server-authoritative State Machine 框架；需自建</td></tr>
+<tr><td>MySQL</td><td>BRD 指定 PostgreSQL；JSONB 需求</td></tr>
+<tr><td>MongoDB</td><td>帳號/籌碼流水需 ACID 事務，NoSQL 不適合</td></tr>
+<tr><td>Next.js/React</td><td>非遊戲引擎，不支援 Canvas/WebGL 動畫需求</td></tr>
+</table></main>
+  </div>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({startOnLoad:true,theme:'default',
+      flowchart:{curve:'basis',nodeSpacing:60,rankSpacing:80},
+      er:{layoutDirection:'TD',minEntityWidth:100,fontSize:12},
+      sequence:{actorMargin:60,messageMargin:30}});
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-yaml.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-json.min.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

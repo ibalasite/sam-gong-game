@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API 文件 — sam-gong-game</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+  <header class="top-nav">
+    <a href="index.html" class="nav-brand">sam-gong-game</a>
+    <div class="nav-controls">
+      <div class="search-wrap">
+        <input class="search-input" type="search" placeholder="搜尋文件...">
+        <div class="search-results"></div>
+      </div>
+      <a class="nav-gh-link" href="https://github.com/ibalasite/sam-gong-game-test" target="_blank" rel="noopener">⌥ GitHub</a>
+      <button class="sidebar-toggle" id="sidebarToggle" title="收合/展開側欄">☰</button>
+    </div>
+  </header>
+  <div class="doc-page-banner">
+    <p class="banner-breadcrumb"><a href="index.html">sam-gong-game</a> › API 文件</p>
+    <h1 class="banner-title">API 文件</h1>
+  </div>
+  <div class="page-wrapper">
+    <aside class="sidebar" aria-label="文件導覽">
+      <div class="sidebar__section">
+        <div class="sidebar__label">文件</div>
+        <a class="sidebar__link" href="index.html">🏠 首頁</a>
+<a class="sidebar__link" href="idea.html">💡 構想文件 (IDEA)</a>
+<a class="sidebar__link" href="brd.html">📋 商業需求文件 (BRD)</a>
+<a class="sidebar__link" href="prd.html">📝 產品需求文件 (PRD)</a>
+<a class="sidebar__link" href="pdd.html">🎨 產品設計文件 (PDD)</a>
+<a class="sidebar__link" href="edd.html">🏗️ 工程設計文件 (EDD)</a>
+<a class="sidebar__link" href="arch.html">🧩 架構設計</a>
+<a class="sidebar__link active" href="api.html">🔌 API 文件</a>
+<a class="sidebar__link" href="schema.html">🗄️ Schema 文件</a>
+<a class="sidebar__link" href="test-plan.html">✅ 測試計畫</a>
+<a class="sidebar__link" href="diagrams.html">📊 系統圖表</a>
+<a class="sidebar__link" href="alignment-report.html">📄 Alignment Report</a>
+<a class="sidebar__link" href="smoke-test-report.html">📄 Smoke Test Report</a>
+<a class="sidebar__link" href="local-deploy.html">📄 Local Deploy</a>
+<a class="sidebar__link" href="lang.html">🔧 語言選型</a>
+      </div>
+    </aside>
+    <div class="sidebar-resizer" id="sidebarResizer"></div>
+    <main class="doc-content"><h1>API — API 規格文件</h1>
+<p>&lt;!-- SDLC API Specification — Layer 3：API Design Document --&gt;</p>
+<hr>
+<h2>Document Control</h2>
+<table>
+<tr><th>欄位</th><th>內容</th></tr>
+<tr><td><strong>DOC-ID</strong></td><td>API-SAM-GONG-GAME-20260422</td></tr>
+<tr><td><strong>專案名稱</strong></td><td>三公遊戲（Sam Gong 3-Card Poker）即時多人線上平台</td></tr>
+<tr><td><strong>文件版本</strong></td><td>v1.1</td></tr>
+<tr><td><strong>狀態</strong></td><td>DRAFT（STEP-11 Review 完成，12 findings 修復；依 EDD v1.4-draft）</td></tr>
+<tr><td><strong>作者</strong></td><td>Evans Tseng（由 STEP-09 自動生成）</td></tr>
+<tr><td><strong>日期</strong></td><td>2026-04-22</td></tr>
+<tr><td><strong>來源 EDD</strong></td><td>EDD-SAM-GONG-GAME-20260422 v1.4-draft §4</td></tr>
+</table>
+<hr>
+<h2>Change Log</h2>
+<table>
+<tr><th>版本</th><th>日期</th><th>作者</th><th>變更摘要</th></tr>
+<tr><td>v1.0</td><td>2026-04-22</td><td>STEP-09</td><td>初稿；依 EDD v1.4-draft §4 生成；涵蓋所有 REST API 端點、WebSocket 協議、錯誤碼、速率限制</td></tr>
+<tr><td>v1.1</td><td>2026-04-22</td><td>STEP-11 Review</td><td>修復 12 findings：F1 rescue_chip 錯誤碼區分（400=rescue_unavailable/403=rescue_chip_claimed）；F2 KYC submit 改 201；F3 rate limit table 補 L2b rescue-chip 與 L1b otp/send；F4 CORS 設定 §1.6；F5 audit-log 分頁完整化；F6 error code enum 補 rescue_unavailable；F7 nullable JSON schema 表示法修正；F8 KYC content-type 說明補充；F9 audit-log query param 正式表格；F10 my_rank null 說明；F11 banned_until nullable 說明；F12 otp/send rate limit 改 per-IP；F13 rescue_chips/rescue_not_available WS 描述補充</td></tr>
+</table>
+<hr>
+<h2>1. API Overview</h2>
+<h3>1.1 基礎資訊</h3>
+<table>
+<tr><th>項目</th><th>值</th></tr>
+<tr><td>Base URL（REST）</td><td><code>https://api.samgong.io/api/v1</code></td></tr>
+<tr><td>Base URL（WebSocket）</td><td><code>wss://ws.samgong.io</code></td></tr>
+<tr><td>協議</td><td>HTTPS（TLS 1.2+）/ WSS（WebSocket Secure）</td></tr>
+<tr><td>內容類型</td><td><code>application/json</code>（REST）/ Colyseus Binary Protocol（WS）</td></tr>
+<tr><td>OpenAPI Spec</td><td><code>https://api.samgong.io/api/docs</code>（Swagger UI）</td></tr>
+<tr><td>版本策略</td><td>URL Path 版本控制（<code>/api/v1/</code>）</td></tr>
+</table>
+<h3>1.2 API 版本策略</h3>
+<ul><li><strong>當前版本</strong>：v1（穩定）</li><li><strong>v2 引入條件</strong>：Breaking Changes（欄位移除/重命名、語義變更）</li><li><strong>v1 Deprecation 通知</strong>：至少 6 個月；Response Header 加入 <code>Deprecation: date</code> 和 <code>Sunset: date</code></li><li><strong>OpenAPI</strong>：<code>express-openapi-validator</code> 自動驗證；規格發佈至 <code>/api/docs</code></li></ul>
+<h3>1.3 認證方式</h3>
+<p>所有需要認證的端點使用 <strong>Bearer JWT（RS256）</strong>：</p>
+<pre><code class="">Authorization: Bearer {access_token}</code></pre>
+<ul><li>Access Token TTL：≤ 1 小時（NFR-17）</li><li>封號後 60s 內 Token 失效（Redis 黑名單機制）</li><li>不使用 Cookie 認證（CSRF 防護，Bearer Token 瀏覽器端不可被跨站讀取）</li></ul>
+<h3>1.4 共用 Request Headers</h3>
+<table>
+<tr><th>Header</th><th>必填</th><th>說明</th></tr>
+<tr><td><code>Authorization</code></td><td>視端點</td><td><code>Bearer {access_token}</code></td></tr>
+<tr><td><code>Content-Type</code></td><td>是（POST/PUT）</td><td><code>application/json</code></td></tr>
+<tr><td><code>X-Request-ID</code></td><td>否</td><td>分散式追蹤 ID（UUID v4）</td></tr>
+</table>
+<h3>1.5 共用 Response Headers</h3>
+<table>
+<tr><th>Header</th><th>說明</th></tr>
+<tr><td><code>X-Request-ID</code></td><td>回傳請求 ID（來自 request 或自動生成）</td></tr>
+<tr><td><code>Retry-After</code></td><td>429 回應時，剩餘秒數</td></tr>
+<tr><td><code>Deprecation</code></td><td>API 廢棄日期（若已廢棄）</td></tr>
+<tr><td><code>Sunset</code></td><td>API 下線日期（若已廢棄）</td></tr>
+</table>
+<h3>1.6 CORS 設定</h3>
+<p>REST API 端點採用嚴格 CORS 策略（Express <code>cors</code> 套件）：</p>
+<table>
+<tr><th>設定項目</th><th>值</th></tr>
+<tr><td><code>Access-Control-Allow-Origin</code></td><td>白名單（<code>https://samgong.io</code>, <code>https://www.samgong.io</code>）；非白名單 Origin 回傳 CORS 錯誤</td></tr>
+<tr><td><code>Access-Control-Allow-Methods</code></td><td><code>GET, POST, PUT, DELETE, OPTIONS</code></td></tr>
+<tr><td><code>Access-Control-Allow-Headers</code></td><td><code>Authorization, Content-Type, X-Request-ID</code></td></tr>
+<tr><td><code>Access-Control-Allow-Credentials</code></td><td><code>false</code>（Bearer Token 模式不需要 Credentials）</td></tr>
+<tr><td><code>Access-Control-Max-Age</code></td><td><code>86400</code>（Preflight Cache 24h）</td></tr>
+</table>
+<ul><li>Preflight OPTIONS 請求直接回傳 <code>204 No Content</code></li><li>Admin API（內網 VPN Only）不設 CORS（僅 VPN 內網存取，無跨域需求）</li><li>WebSocket（WSS）不受 CORS 限制，由 JWT Bearer Token 驗證</li></ul>
+<hr>
+<h2>2. Authentication</h2>
+<h3>2.1 JWT RS256 認證流程</h3>
+<div class="diagram-container"><pre class="mermaid">sequenceDiagram
+    participant C as Client
+    participant A as Auth Service
+    participant DB as PostgreSQL
+    participant R as Redis
+
+    C->>A: POST /auth/login { credential }
+    A->>DB: 查詢帳號 + 驗證密碼/OAuth
+    DB-->>A: 帳號資料（age_verified, is_banned）
+    alt 帳號封禁
+        A-->>C: 401 { error: 'account_banned' }
+    else 驗證成功
+        A->>A: 簽發 Access Token（RS256, TTL=1h）
+        A->>DB: 儲存 Refresh Token hash（TTL=7d）
+        A-->>C: { access_token, refresh_token, expires_in: 3600 }
+    end
+
+    C->>A: 一般 API 請求（Authorization: Bearer {access_token}）
+    A->>A: 驗證 RS256 簽名 + TTL
+    A->>R: EXISTS block:{player_id}（封號黑名單，60s TTL）
+    alt Token 在黑名單
+        A-->>C: 401 { error: 'token_revoked' }
+    else 正常
+        A-->>C: API 回應
+    end
+
+    C->>A: POST /auth/refresh { refresh_token }
+    A->>DB: 查詢 Refresh Token（one-time use）
+    A->>DB: 廢棄舊 Refresh Token
+    A->>A: 簽發新 Access Token + 新 Refresh Token
+    A->>DB: 儲存新 Refresh Token hash
+    A-->>C: { access_token, refresh_token }</pre></div>
+<h3>2.2 封號後 60s 失效機制（NFR-17）</h3>
+<pre><code class="">封號時：
+  1. UPDATE users SET is_banned = true WHERE id = {player_id}
+  2. SETEX block:{player_id} 60 &quot;1&quot;        ← Redis 60s TTL
+  3. DEL session:{player_id}                ← 強制 Session Cache 失效
+  4. PUBLISH sam-gong:admin:force_disconnect &quot;{player_id}&quot;
+
+Token 驗證時：
+  1. 驗證 JWT RS256 簽名 + TTL
+  2. EXISTS block:{player_id} → 命中 → HTTP 401（token_revoked）</code></pre>
+<h3>2.3 Refresh Token Rotation</h3>
+<ul><li>Refresh Token 一次性使用（one-time use）</li><li>每次 <code>/auth/refresh</code> 廢棄舊 Token，簽發新 Access Token + 新 Refresh Token</li><li>Refresh Token hash 存於 PostgreSQL <code>refresh_tokens</code> 表</li><li>TTL 7 天；已撤銷 Token 7 日後定時清理</li></ul>
+<hr>
+<h2>3. REST API Endpoints</h2>
+<h3>3.1 Auth（認證）</h3>
+<hr>
+<h4>POST /api/v1/auth/register</h4>
+<p><strong>描述</strong>：新帳號註冊（Guest / OAuth）</p>
+<p><strong>Auth</strong>：不需要</p>
+<p><strong>Rate Limit</strong>：30 次/min/IP</p>
+<p><strong>Request Body</strong>：</p>
+<pre><code class="language-json">{
+  &quot;username&quot;: &quot;string&quot;,       // 可選（Guest 模式省略）
+  &quot;password&quot;: &quot;string&quot;,       // 可選（OAuth 模式省略）
+  &quot;oauth_provider&quot;: &quot;google|facebook&quot;,  // 可選
+  &quot;oauth_token&quot;: &quot;string&quot;     // OAuth Access Token
+}</code></pre>
+<p><strong>Response 201</strong>：</p>
+<pre><code class="language-json">{
+  &quot;player_id&quot;: &quot;uuid&quot;,
+  &quot;display_name&quot;: &quot;string&quot;,
+  &quot;access_token&quot;: &quot;string&quot;,
+  &quot;refresh_token&quot;: &quot;string&quot;,
+  &quot;expires_in&quot;: 3600
+}</code></pre>
+<p><strong>Response Codes</strong>：<code>201</code> 成功 / <code>400</code> 格式錯誤 / <code>409</code> 帳號已存在</p>
+<hr>
+<h4>POST /api/v1/auth/login</h4>
+<p><strong>描述</strong>：登入，取得 Access Token + Refresh Token</p>
+<p><strong>Auth</strong>：不需要</p>
+<p><strong>Rate Limit</strong>：30 次/min/IP</p>
+<p><strong>Request Body</strong>：</p>
+<pre><code class="language-json">{
+  &quot;username&quot;: &quot;string&quot;,
+  &quot;password&quot;: &quot;string&quot;
+}</code></pre>
+<p><strong>Response 200</strong>：</p>
+<pre><code class="language-json">{
+  &quot;access_token&quot;: &quot;string&quot;,
+  &quot;refresh_token&quot;: &quot;string&quot;,
+  &quot;expires_in&quot;: 3600,
+  &quot;player_id&quot;: &quot;uuid&quot;
+}</code></pre>
+<p><strong>Response Codes</strong>：<code>200</code> / <code>400</code> 格式錯誤 / <code>401</code> 帳號或密碼錯誤 / <code>429</code> Rate Limit</p>
+<hr>
+<h4>POST /api/v1/auth/refresh</h4>
+<p><strong>描述</strong>：Refresh Token Rotation，取得新 Access Token</p>
+<p><strong>Auth</strong>：Refresh Token（Bearer）</p>
+<p><strong>Rate Limit</strong>：30 次/min/IP</p>
+<p><strong>Request Body</strong>：</p>
+<pre><code class="language-json">{
+  &quot;refresh_token&quot;: &quot;string&quot;
+}</code></pre>
+<p><strong>Response 200</strong>：</p>
+<pre><code class="language-json">{
+  &quot;access_token&quot;: &quot;string&quot;,
+  &quot;refresh_token&quot;: &quot;string&quot;,
+  &quot;expires_in&quot;: 3600
+}</code></pre>
+<p><strong>Response Codes</strong>：<code>200</code> / <code>401</code> Token 無效或已撤銷 / <code>429</code> Rate Limit</p>
+<hr>
+<h4>POST /api/v1/auth/logout</h4>
+<p><strong>描述</strong>：登出，撤銷 Refresh Token</p>
+<p><strong>Auth</strong>：JWT Bearer</p>
+<p><strong>Rate Limit</strong>：60 次/min/user</p>
+<p><strong>Request Body</strong>：</p>
+<pre><code class="language-json">{
+  &quot;refresh_token&quot;: &quot;string&quot;
+}</code></pre>
+<p><strong>Response 200</strong>：</p>
+<pre><code class="language-json">{
+  &quot;message&quot;: &quot;Logged out successfully&quot;
+}</code></pre>
+<p><strong>Response Codes</strong>：<code>200</code> / <code>401</code> Token 無效</p>
+<hr>
+<h4>POST /api/v1/auth/otp/send</h4>
+<p><strong>描述</strong>：發送 OTP 簡訊（年齡驗證 REQ-014）</p>
+<p><strong>Auth</strong>：不需要</p>
+<p><strong>Rate Limit</strong>：5 次/min/IP（未登入端點以 IP 計量）；每手機號每日 ≤ 5 次（Redis <code>otp:daily:{phone_hash}:{date}</code>）</p>
+<p><strong>Request Body</strong>：</p>
+<pre><code class="language-json">{
+  &quot;phone_number&quot;: &quot;string&quot;,   // 台灣格式 09xxxxxxxx
+  &quot;birth_year&quot;: 2000          // 出生年份（整數）
+}</code></pre>
+<p><strong>Response 200</strong>：</p>
+<pre><code class="language-json">{
+  &quot;message&quot;: &quot;OTP sent&quot;,
+  &quot;expires_in_seconds&quot;: 300   // OTP 有效期 5 分鐘
+}</code></pre>
+<p><strong>Response Codes</strong>：<code>200</code> / <code>400</code> 手機格式錯誤 / <code>429</code> Rate Limit</p>
+<hr>
+<h4>POST /api/v1/auth/otp/verify</h4>
+<p><strong>描述</strong>：驗證 OTP + 啟用帳號年齡驗證</p>
+<p><strong>Auth</strong>：不需要</p>
+<p><strong>Rate Limit</strong>：30 次/min/IP；3 次錯誤 OTP 失效</p>
+<p><strong>Request Body</strong>：</p>
+<pre><code class="language-json">{
+  &quot;phone_number&quot;: &quot;string&quot;,
+  &quot;otp_code&quot;: &quot;123456&quot;,       // 6 碼 OTP
+  &quot;birth_year&quot;: 2000
+}</code></pre>
+<p><strong>Response 200</strong>：</p>
+<pre><code class="language-json">{
+  &quot;age_verified&quot;: true,
+  &quot;is_minor&quot;: false,
+  &quot;message&quot;: &quot;Age verification successful&quot;
+}</code></pre>
+<p><strong>Response Codes</strong>：<code>200</code> / <code>400</code> OTP 格式錯誤 / <code>401</code> OTP 無效或過期 / <code>429</code> Rate Limit</p>
+<hr>
+<h3>3.2 Player（玩家）</h3>
+<hr>
+<h4>GET /api/v1/player/me</h4>
+<p><strong>描述</strong>：取得玩家個人資料 + 籌碼餘額</p>
+<p><strong>Auth</strong>：JWT Bearer（必填）</p>
+<p><strong>Rate Limit</strong>：60 次/min/user</p>
+<p><strong>讀取來源</strong>：Read Replica（排行榜過濾後）</p>
+<p><strong>Response 200</strong>：</p>
+<pre><code class="language-json">{
+  &quot;player_id&quot;: &quot;uuid&quot;,
+  &quot;display_name&quot;: &quot;string&quot;,
+  &quot;avatar_url&quot;: &quot;string | null&quot;,
+  &quot;chip_balance&quot;: 100000,
+  &quot;age_verified&quot;: true,
+  &quot;is_minor&quot;: false,
+  &quot;tutorial_completed&quot;: false,
+  &quot;show_in_leaderboard&quot;: true,
+  &quot;music_volume&quot;: 70,
+  &quot;sfx_volume&quot;: 80,
+  &quot;vibration&quot;: true,
+  &quot;daily_chip_claimed_at&quot;: &quot;2026-04-22 | null&quot;,
+  &quot;created_at&quot;: &quot;2026-04-22T00:00:00Z&quot;,
+  &quot;last_login_at&quot;: &quot;2026-04-22T10:00:00Z&quot;
+}</code></pre>
+<blockquote><p><strong>Schema 說明</strong>：<code>avatar_url</code> 和 <code>daily_chip_claimed_at</code> 為 nullable（<code>string | null</code>）；未設定時為 <code>null</code>。</p></blockquote>
+<p><strong>Response Codes</strong>：<code>200</code> / <code>401</code> Token 無效</p>
+<hr>
+<h4>PUT /api/v1/player/settings</h4>
+<p><strong>描述</strong>：更新玩家設定（音量、動畫、排行榜顯示、Cookie 同意）</p>
+<p><strong>Auth</strong>：JWT Bearer（必填）</p>
+<p><strong>Rate Limit</strong>：60 次/min/user</p>
+<p><strong>Request Body</strong>（所有欄位可選，只更新傳入的欄位）：</p>
+<pre><code class="language-json">{
+  &quot;display_name&quot;: &quot;string&quot;,        // 最長 24 字元（可選）
+  &quot;avatar_url&quot;: &quot;string&quot;,          // URL（可選）
+  &quot;music_volume&quot;: 70,              // 0-100（可選）
+  &quot;sfx_volume&quot;: 80,                // 0-100（可選）
+  &quot;vibration&quot;: true,               // boolean（可選）
+  &quot;show_in_leaderboard&quot;: true      // 關閉後同步 ZREM（可選）
+}</code></pre>
+<p><strong>Response 200</strong>：</p>
+<pre><code class="language-json">{
+  &quot;message&quot;: &quot;Settings updated&quot;,
+  &quot;updated_fields&quot;: [&quot;music_volume&quot;, &quot;show_in_leaderboard&quot;]
+}</code></pre>
+<p><strong>Response Codes</strong>：<code>200</code> / <code>400</code> 格式錯誤 / <code>401</code> Token 無效</p>
+<hr>
+<h4>DELETE /api/v1/player/me</h4>
+<p><strong>描述</strong>：申請帳號刪除（7 工作日內完成；個資刪除，財務記錄匿名化保留 7 年）</p>
+<p><strong>Auth</strong>：JWT Bearer（必填）</p>
+<p><strong>Rate Limit</strong>：60 次/min/user</p>
+<p><strong>Response 202</strong>：</p>
+<pre><code class="language-json">{
+  &quot;message&quot;: &quot;Account deletion requested&quot;,
+  &quot;deletion_scheduled_at&quot;: &quot;2026-04-29T00:00:00Z&quot;,
+  &quot;note&quot;: &quot;Financial records will be anonymized and retained for 7 years per regulation&quot;
+}</code></pre>
+<p><strong>Response Codes</strong>：<code>202</code> 已接受（非同步刪除）/ <code>401</code> Token 無效</p>
+<hr>
+<h4>POST /api/v1/player/daily-chip</h4>
+<p><strong>描述</strong>：每日籌碼領取（冪等；每日重置依 UTC+8）</p>
+<p><strong>Auth</strong>：JWT Bearer（必填）</p>
+<p><strong>Rate Limit</strong>：5 次/min/user</p>
+<p><strong>Response 200</strong>：</p>
+<pre><code class="language-json">{
+  &quot;chips_awarded&quot;: 1000,
+  &quot;new_balance&quot;: 101000,
+  &quot;next_claim_available_at&quot;: &quot;2026-04-23T00:00:00+08:00&quot;
+}</code></pre>
+<p><strong>Response 400（已領取）</strong>：</p>
+<pre><code class="language-json">{
+  &quot;error&quot;: &quot;daily_task_limit&quot;,
+  &quot;message&quot;: &quot;Daily chips already claimed today&quot;,
+  &quot;next_claim_available_at&quot;: &quot;2026-04-23T00:00:00+08:00&quot;
+}</code></pre>
+<p><strong>Response Codes</strong>：<code>200</code> 成功 / <code>400</code> 今日已領取 / <code>401</code> Token 無效 / <code>429</code> Rate Limit</p>
+<hr>
+<h4>POST /api/v1/player/rescue-chip</h4>
+<p><strong>描述</strong>：申請救援籌碼（chip_balance &lt; 500 時可申請，每日 1 次，冪等）</p>
+<p><strong>Auth</strong>：JWT Bearer（必填）</p>
+<p><strong>Rate Limit</strong>：≤ 1 次/day/user</p>
+<p><strong>業務規則</strong>：</p>
+<ul><li><code>chip_balance &lt; 500</code> 才可申請</li><li>每日（UTC+8）只能申請 1 次</li><li>冪等 DB 原子操作：<code>UPDATE users SET chip_balance = chip_balance + 1000, daily_rescue_claimed_at = NOW() WHERE id = $1 AND chip_balance &lt; 500 AND (daily_rescue_claimed_at IS NULL OR DATE(daily_rescue_claimed_at AT TIME ZONE &#x27;Asia/Taipei&#x27;) &lt; CURRENT_DATE AT TIME ZONE &#x27;Asia/Taipei&#x27;) RETURNING id, chip_balance</code></li></ul>
+<p><strong>Response 200</strong>：</p>
+<pre><code class="language-json">{
+  &quot;chips_awarded&quot;: 1000,
+  &quot;new_balance&quot;: 1000
+}</code></pre>
+<p><strong>Response 400（餘額不符條件：chip_balance ≥ 500）</strong>：</p>
+<pre><code class="language-json">{
+  &quot;error&quot;: &quot;rescue_unavailable&quot;,
+  &quot;message&quot;: &quot;Chip balance is sufficient; rescue chip threshold not met (balance &gt;= 500)&quot;
+}</code></pre>
+<p><strong>Response 403（今日已領取）</strong>：</p>
+<pre><code class="language-json">{
+  &quot;error&quot;: &quot;rescue_chip_claimed&quot;,
+  &quot;message&quot;: &quot;Rescue chip already claimed today&quot;,
+  &quot;next_claim_available_at&quot;: &quot;2026-04-23T00:00:00+08:00&quot;
+}</code></pre>
+<p><strong>Response Codes</strong>：<code>200</code> / <code>400</code> 餘額 ≥ 500 不符申請條件 / <code>401</code> Token 無效 / <code>403</code> 今日已領取（<code>rescue_chip_claimed</code>）/ <code>429</code> Rate Limit</p>
+<hr>
+<h4>GET /api/v1/player/chip-transactions</h4>
+<p><strong>描述</strong>：籌碼交易記錄查詢（分頁）</p>
+<p><strong>Auth</strong>：JWT Bearer（必填）</p>
+<p><strong>Rate Limit</strong>：60 次/min/user</p>
+<p><strong>讀取來源</strong>：Read Replica</p>
+<p><strong>Query Parameters</strong>：</p>
+<table>
+<tr><th>參數</th><th>類型</th><th>必填</th><th>說明</th></tr>
+<tr><td><code>page</code></td><td>int</td><td>否</td><td>頁碼（預設 1）</td></tr>
+<tr><td><code>limit</code></td><td>int</td><td>否</td><td>每頁筆數（預設 20，最大 100）</td></tr>
+<tr><td><code>tx_type</code></td><td>string</td><td>否</td><td>篩選類型（game_win\</td><td>game_lose\</td><td>daily_gift 等）</td></tr>
+<tr><td><code>from</code></td><td>date</td><td>否</td><td>起始日期（ISO 8601）</td></tr>
+<tr><td><code>to</code></td><td>date</td><td>否</td><td>結束日期（ISO 8601）</td></tr>
+</table>
+<p><strong>Response 200</strong>：</p>
+<pre><code class="language-json">{
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: &quot;uuid&quot;,
+      &quot;tx_type&quot;: &quot;game_win&quot;,
+      &quot;amount&quot;: 500,
+      &quot;balance_before&quot;: 99500,
+      &quot;balance_after&quot;: 100000,
+      &quot;created_at&quot;: &quot;2026-04-22T10:00:00Z&quot;,
+      &quot;game_session_id&quot;: &quot;uuid | null&quot;,
+      &quot;metadata&quot;: {}
+    }
+  ],
+  &quot;pagination&quot;: {
+    &quot;page&quot;: 1,
+    &quot;limit&quot;: 20,
+    &quot;total&quot;: 150,
+    &quot;total_pages&quot;: 8
+  }
+}</code></pre>
+<p><strong>Response Codes</strong>：<code>200</code> / <code>401</code> Token 無效</p>
+<hr>
+<h4>POST /api/v1/player/ad-reward</h4>
+<p><strong>描述</strong>：AdMob 廣告觀看獎勵（REQ-020a），冪等 by ad_view_token</p>
+<p><strong>Auth</strong>：JWT Bearer（必填）</p>
+<p><strong>Rate Limit</strong>：≤ 5 次/min/user</p>
+<p><strong>Request Body</strong>：</p>
+<pre><code class="language-json">{
+  &quot;ad_view_token&quot;: &quot;string&quot;   // AdMob 廣告觀看憑證（唯一）
+}</code></pre>
+<p><strong>Response 200</strong>：</p>
+<pre><code class="language-json">{
+  &quot;chips_awarded&quot;: 100,
+  &quot;new_balance&quot;: 100100
+}</code></pre>
+<p><strong>Response Codes</strong>：</p>
+<ul><li><code>200</code> 獎勵發放成功</li><li><code>400</code> ad_view_token 格式無效或已使用</li><li><code>401</code> JWT 缺失或失效</li><li><code>429</code> Rate Limit（超過 5 次/min）</li></ul>
+<hr>
+<h4>POST /api/v1/player/cookie-consent</h4>
+<p><strong>描述</strong>：提交 Cookie 同意記錄（REQ-016 GDPR/個資法）</p>
+<p><strong>Auth</strong>：JWT 可選（未登入前也可提交）</p>
+<p><strong>Rate Limit</strong>：無限制</p>
+<p><strong>Request Body</strong>：</p>
+<pre><code class="language-json">{
+  &quot;analytics_consent&quot;: true,
+  &quot;marketing_consent&quot;: false,
+  &quot;consent_version&quot;: &quot;1.0.0&quot;,
+  &quot;session_id&quot;: &quot;string&quot;     // 未登入時的會話識別
+}</code></pre>
+<p><strong>Response 200</strong>：</p>
+<pre><code class="language-json">{
+  &quot;consent_id&quot;: &quot;uuid&quot;,
+  &quot;consented_at&quot;: &quot;2026-04-22T10:00:00Z&quot;
+}</code></pre>
+<p><strong>Response Codes</strong>：<code>200</code> / <code>400</code> 格式錯誤</p>
+<hr>
+<h3>3.3 Leaderboard（排行榜）</h3>
+<hr>
+<h4>GET /api/v1/leaderboard</h4>
+<p><strong>描述</strong>：取得週排行榜（weekly / chip type）</p>
+<p><strong>Auth</strong>：JWT Bearer（可選）</p>
+<p><strong>Rate Limit</strong>：60 次/min/user</p>
+<p><strong>讀取來源</strong>：Redis ZREVRANGE（<code>lb:weekly:{week_key}</code>）+ DB 過濾 <code>show_in_leaderboard</code></p>
+<p><strong>Query Parameters</strong>：</p>
+<table>
+<tr><th>參數</th><th>類型</th><th>必填</th><th>說明</th></tr>
+<tr><td><code>type</code></td><td>string</td><td>否</td><td><code>weekly</code>（預設）</td></tr>
+<tr><td><code>week</code></td><td>string</td><td>否</td><td>ISO 週格式如 <code>2026-W17</code>（預設當週）</td></tr>
+<tr><td><code>limit</code></td><td>int</td><td>否</td><td>排名數量（預設 100，最大 200）</td></tr>
+</table>
+<p><strong>Response 200</strong>：</p>
+<pre><code class="language-json">{
+  &quot;week_key&quot;: &quot;2026-W17&quot;,
+  &quot;updated_at&quot;: &quot;2026-04-22T10:00:00Z&quot;,
+  &quot;data&quot;: [
+    {
+      &quot;rank&quot;: 1,
+      &quot;player_id&quot;: &quot;uuid&quot;,
+      &quot;display_name&quot;: &quot;string&quot;,
+      &quot;avatar_url&quot;: &quot;string | null&quot;,
+      &quot;net_chips&quot;: 50000,
+      &quot;first_win_at&quot;: &quot;2026-04-22T08:00:00Z&quot;
+    }
+  ],
+  &quot;my_rank&quot;: {
+    &quot;rank&quot;: 42,
+    &quot;net_chips&quot;: 1200
+  }
+}</code></pre>
+<blockquote><p><strong>Schema 說明</strong>：<code>my_rank</code> 未登入時為 <code>null</code>；已登入但未上榜時，<code>rank</code> 仍回傳實際名次（排行榜過濾後）。</p></blockquote>
+<p><strong>Response Codes</strong>：<code>200</code> / <code>400</code> week 格式錯誤</p>
+<hr>
+<h3>3.4 Tasks（每日任務）</h3>
+<hr>
+<h4>GET /api/v1/tasks</h4>
+<p><strong>描述</strong>：取得今日每日任務列表</p>
+<p><strong>Auth</strong>：JWT Bearer（必填）</p>
+<p><strong>Rate Limit</strong>：60 次/min/user</p>
+<p><strong>Response 200</strong>：</p>
+<pre><code class="language-json">{
+  &quot;date&quot;: &quot;2026-04-22&quot;,
+  &quot;tasks&quot;: [
+    {
+      &quot;task_id&quot;: &quot;complete_3_games&quot;,
+      &quot;name&quot;: &quot;完成 3 場遊戲&quot;,
+      &quot;reward_chips&quot;: 500,
+      &quot;completed&quot;: false,
+      &quot;completed_at&quot;: null
+    }
+  ]
+}</code></pre>
+<p><strong>Response Codes</strong>：<code>200</code> / <code>401</code> Token 無效</p>
+<hr>
+<h4>POST /api/v1/tasks/:id/complete</h4>
+<p><strong>描述</strong>：完成任務 + 發放獎勵（冪等）</p>
+<p><strong>Auth</strong>：JWT Bearer（必填）</p>
+<p><strong>Rate Limit</strong>：5 次/min/user</p>
+<p><strong>Path Parameters</strong>：<code>id</code> = task_id（如 <code>complete_3_games</code>）</p>
+<p><strong>Response 200</strong>：</p>
+<pre><code class="language-json">{
+  &quot;task_id&quot;: &quot;complete_3_games&quot;,
+  &quot;reward_chips&quot;: 500,
+  &quot;new_balance&quot;: 100500,
+  &quot;completed_at&quot;: &quot;2026-04-22T10:00:00Z&quot;
+}</code></pre>
+<p><strong>Response Codes</strong>：<code>200</code> / <code>400</code> 任務條件未達成 / <code>401</code> Token 無效 / <code>404</code> 任務不存在 / <code>429</code> Rate Limit</p>
+<hr>
+<h3>3.5 KYC（身份驗證）</h3>
+<hr>
+<h4>POST /api/v1/kyc/submit</h4>
+<p><strong>描述</strong>：提交 KYC 身份文件（REQ-018；文件加密存儲）</p>
+<p><strong>Auth</strong>：JWT Bearer（必填）</p>
+<p><strong>Rate Limit</strong>：60 次/min/user</p>
+<p><strong>Request Headers</strong>：<code>Content-Type: application/json</code>（文件 URL 預先上傳至 S3，此端點僅接收 URL 參照）</p>
+<p><strong>Request Body</strong>：</p>
+<pre><code class="language-json">{
+  &quot;kyc_type&quot;: &quot;full_kyc&quot;,
+  &quot;document_type&quot;: &quot;national_id|passport&quot;,
+  &quot;document_front_url&quot;: &quot;string&quot;,   // 預先加密上傳至 S3 後的 URL
+  &quot;document_back_url&quot;: &quot;string&quot;     // 預先加密上傳至 S3 後的 URL
+}</code></pre>
+<p><strong>Response 201</strong>：</p>
+<pre><code class="language-json">{
+  &quot;kyc_id&quot;: &quot;uuid&quot;,
+  &quot;status&quot;: &quot;pending&quot;,
+  &quot;submitted_at&quot;: &quot;2026-04-22T10:00:00Z&quot;,
+  &quot;estimated_review_time&quot;: &quot;1-3 business days&quot;
+}</code></pre>
+<p><strong>Response Codes</strong>：<code>201</code> 提交成功（資源已建立）/ <code>400</code> 格式錯誤 / <code>401</code> Token 無效</p>
+<hr>
+<h4>GET /api/v1/kyc/status</h4>
+<p><strong>描述</strong>：查詢 KYC 審核狀態</p>
+<p><strong>Auth</strong>：JWT Bearer（必填）</p>
+<p><strong>Rate Limit</strong>：60 次/min/user</p>
+<p><strong>Response 200</strong>：</p>
+<pre><code class="language-json">{
+  &quot;kyc_type&quot;: &quot;full_kyc&quot;,
+  &quot;status&quot;: &quot;pending | approved | rejected&quot;,
+  &quot;submitted_at&quot;: &quot;2026-04-22T10:00:00Z&quot;,
+  &quot;reviewed_at&quot;: &quot;2026-04-23T10:00:00Z | null&quot;
+}</code></pre>
+<blockquote><p><strong>Schema 說明</strong>：<code>status</code> 枚舉值為 <code>pending</code>、<code>approved</code>、<code>rejected</code>；<code>reviewed_at</code> 為 nullable，未審核時為 <code>null</code>。</p></blockquote>
+<p><strong>Response Codes</strong>：<code>200</code> / <code>401</code> Token 無效</p>
+<hr>
+<h3>3.6 Rooms（私人房間）</h3>
+<hr>
+<h4>POST /api/v1/rooms/private</h4>
+<p><strong>描述</strong>：建立私人房間（返回 room_code 供其他玩家加入）</p>
+<p><strong>Auth</strong>：JWT Bearer（必填）</p>
+<p><strong>Rate Limit</strong>：一般 API（60 次/min/user）</p>
+<p><strong>Request Body</strong>：</p>
+<pre><code class="language-json">{
+  &quot;tier&quot;: &quot;青銅廳|白銀廳|黃金廳|鉑金廳|鑽石廳&quot;
+}</code></pre>
+<p><strong>Response 201</strong>：</p>
+<pre><code class="language-json">{
+  &quot;room_code&quot;: &quot;ABC123&quot;,
+  &quot;colyseus_room_id&quot;: &quot;string&quot;,
+  &quot;tier&quot;: &quot;青銅廳&quot;,
+  &quot;expires_at&quot;: &quot;2026-04-22T11:00:00Z&quot;
+}</code></pre>
+<p><strong>Response Codes</strong>：<code>201</code> 成功 / <code>400</code> tier 無效或餘額不足</p>
+<hr>
+<h4>GET /api/v1/rooms/private/{room_code}</h4>
+<p><strong>描述</strong>：查詢私人房間資訊（給 Colyseus joinById 使用）</p>
+<p><strong>Auth</strong>：JWT Bearer（必填）</p>
+<p><strong>Rate Limit</strong>：一般 API</p>
+<p><strong>Path Parameters</strong>：<code>room_code</code> = 6 位大寫英數字</p>
+<p><strong>Response 200</strong>：</p>
+<pre><code class="language-json">{
+  &quot;room_code&quot;: &quot;ABC123&quot;,
+  &quot;colyseus_room_id&quot;: &quot;string&quot;,
+  &quot;tier&quot;: &quot;青銅廳&quot;,
+  &quot;current_players&quot;: 3,
+  &quot;max_players&quot;: 6,
+  &quot;status&quot;: &quot;active&quot;
+}</code></pre>
+<p><strong>Response Codes</strong>：<code>200</code> / <code>404</code> 房間不存在或已關閉</p>
+<hr>
+<h3>3.7 Admin API（內部 VPN Only）</h3>
+<hr>
+<h4>POST /api/v1/admin/player/:id/ban</h4>
+<p><strong>描述</strong>：封鎖帳號（Admin Only；內網 VPN 存取）</p>
+<p><strong>Auth</strong>：Admin JWT（role=admin，獨立私鑰）</p>
+<p><strong>Rate Limit</strong>：內網 VPN Only</p>
+<p><strong>Path Parameters</strong>：<code>id</code> = player_id（UUID）</p>
+<p><strong>Request Body</strong>：</p>
+<pre><code class="language-json">{
+  &quot;reason&quot;: &quot;string&quot;,          // 封號原因
+  &quot;duration_days&quot;: 7           // null = 永久封號
+}</code></pre>
+<p><strong>Response 200</strong>：</p>
+<pre><code class="language-json">{
+  &quot;player_id&quot;: &quot;uuid&quot;,
+  &quot;banned&quot;: true,
+  &quot;ban_reason&quot;: &quot;string&quot;,
+  &quot;banned_at&quot;: &quot;2026-04-22T10:00:00Z&quot;,
+  &quot;banned_until&quot;: &quot;2026-04-29T10:00:00Z | null&quot;
+}</code></pre>
+<blockquote><p><strong>Schema 說明</strong>：<code>banned_until</code> 為 nullable；<code>null</code> 代表永久封號（<code>duration_days: null</code>）。</p></blockquote>
+<p><strong>封號附帶效果</strong>（Server 端）：</p>
+<pre><code class="">1. UPDATE users SET is_banned = true
+2. SETEX block:{player_id} 60 &quot;1&quot;
+3. DEL session:{player_id}
+4. PUBLISH sam-gong:admin:force_disconnect &quot;{player_id}&quot; → client.leave(4001)</code></pre>
+<p><strong>Response Codes</strong>：<code>200</code> / <code>400</code> 格式錯誤 / <code>401</code> Admin JWT 無效 / <code>403</code> 非 Admin 角色</p>
+<hr>
+<h4>GET /api/v1/admin/audit-log</h4>
+<p><strong>描述</strong>：稽核日誌查詢（Admin Only）</p>
+<p><strong>Auth</strong>：Admin JWT（role=admin）</p>
+<p><strong>Rate Limit</strong>：內網 VPN Only</p>
+<p><strong>Query Parameters</strong>：</p>
+<table>
+<tr><th>參數</th><th>類型</th><th>必填</th><th>說明</th></tr>
+<tr><td><code>from</code></td><td>date</td><td>否</td><td>起始日期（ISO 8601，如 <code>2026-04-01</code>）</td></tr>
+<tr><td><code>to</code></td><td>date</td><td>否</td><td>結束日期（ISO 8601，如 <code>2026-04-30</code>）</td></tr>
+<tr><td><code>player_id</code></td><td>uuid</td><td>否</td><td>篩選特定玩家的稽核記錄</td></tr>
+<tr><td><code>action</code></td><td>string</td><td>否</td><td>篩選操作類型（如 `ban_player\</td><td>adjust_chips`）</td></tr>
+<tr><td><code>page</code></td><td>int</td><td>否</td><td>頁碼（預設 1）</td></tr>
+<tr><td><code>limit</code></td><td>int</td><td>否</td><td>每頁筆數（預設 20，最大 100）</td></tr>
+</table>
+<p><strong>Response 200</strong>：</p>
+<pre><code class="language-json">{
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: &quot;uuid&quot;,
+      &quot;admin_id&quot;: &quot;uuid&quot;,
+      &quot;action&quot;: &quot;ban_player|adjust_chips|...&quot;,
+      &quot;target_player_id&quot;: &quot;uuid&quot;,
+      &quot;payload&quot;: {},
+      &quot;created_at&quot;: &quot;2026-04-22T10:00:00Z&quot;
+    }
+  ],
+  &quot;pagination&quot;: { &quot;page&quot;: 1, &quot;limit&quot;: 20, &quot;total&quot;: 50, &quot;total_pages&quot;: 3 }
+}</code></pre>
+<p><strong>Response Codes</strong>：<code>200</code> / <code>401</code> Token 無效 / <code>403</code> 非 Admin 角色</p>
+<hr>
+<h3>3.8 System（系統）</h3>
+<hr>
+<h4>GET /api/v1/health</h4>
+<p><strong>描述</strong>：健康檢查（k8s liveness probe）</p>
+<p><strong>Auth</strong>：不需要</p>
+<p><strong>Rate Limit</strong>：無限制</p>
+<p><strong>Response 200</strong>：</p>
+<pre><code class="language-json">{
+  &quot;status&quot;: &quot;ok&quot;,
+  &quot;timestamp&quot;: &quot;2026-04-22T10:00:00Z&quot;
+}</code></pre>
+<hr>
+<h4>GET /api/v1/health/ready</h4>
+<p><strong>描述</strong>：就緒探針（DB + Redis 連線確認；k8s readiness probe）</p>
+<p><strong>Auth</strong>：不需要</p>
+<p><strong>Rate Limit</strong>：無限制</p>
+<p><strong>Response 200</strong>：</p>
+<pre><code class="language-json">{
+  &quot;status&quot;: &quot;ready&quot;,
+  &quot;checks&quot;: {
+    &quot;postgresql&quot;: &quot;ok&quot;,
+    &quot;redis&quot;: &quot;ok&quot;
+  }
+}</code></pre>
+<p><strong>Response 503（任一依賴不健康）</strong>：</p>
+<pre><code class="language-json">{
+  &quot;status&quot;: &quot;not_ready&quot;,
+  &quot;checks&quot;: {
+    &quot;postgresql&quot;: &quot;ok&quot;,
+    &quot;redis&quot;: &quot;error: connection timeout&quot;
+  }
+}</code></pre>
+<hr>
+<h4>GET /api/v1/config</h4>
+<p><strong>描述</strong>：用戶端設定（伺服器域名、廳別設定、Feature Flags）</p>
+<p><strong>Auth</strong>：不需要</p>
+<p><strong>Rate Limit</strong>：300 次/min/IP</p>
+<p><strong>Response 200</strong>：</p>
+<pre><code class="language-json">{
+  &quot;ws_server_url&quot;: &quot;wss://ws.samgong.io&quot;,
+  &quot;tiers&quot;: [
+    {
+      &quot;tier_name&quot;: &quot;青銅廳&quot;,
+      &quot;entry_chips&quot;: 1000,
+      &quot;min_bet&quot;: 100,
+      &quot;max_bet&quot;: 500,
+      &quot;quick_bet_amounts&quot;: [100, 200, 300, 500]
+    },
+    {
+      &quot;tier_name&quot;: &quot;白銀廳&quot;,
+      &quot;entry_chips&quot;: 10000,
+      &quot;min_bet&quot;: 1000,
+      &quot;max_bet&quot;: 5000,
+      &quot;quick_bet_amounts&quot;: [1000, 2000, 3000, 5000]
+    },
+    {
+      &quot;tier_name&quot;: &quot;黃金廳&quot;,
+      &quot;entry_chips&quot;: 100000,
+      &quot;min_bet&quot;: 10000,
+      &quot;max_bet&quot;: 50000,
+      &quot;quick_bet_amounts&quot;: [10000, 20000, 30000, 50000]
+    },
+    {
+      &quot;tier_name&quot;: &quot;鉑金廳&quot;,
+      &quot;entry_chips&quot;: 1000000,
+      &quot;min_bet&quot;: 100000,
+      &quot;max_bet&quot;: 500000,
+      &quot;quick_bet_amounts&quot;: [100000, 200000, 300000, 500000]
+    },
+    {
+      &quot;tier_name&quot;: &quot;鑽石廳&quot;,
+      &quot;entry_chips&quot;: 10000000,
+      &quot;min_bet&quot;: 1000000,
+      &quot;max_bet&quot;: 5000000,
+      &quot;quick_bet_amounts&quot;: [1000000, 2000000, 3000000, 5000000]
+    }
+  ],
+  &quot;feature_flags&quot;: {
+    &quot;iap_enabled&quot;: false,
+    &quot;tutorial_enabled&quot;: true
+  },
+  &quot;server_version&quot;: &quot;1.0.0&quot;
+}</code></pre>
+<hr>
+<h2>4. WebSocket Protocol</h2>
+<h3>4.1 Colyseus 連線建立</h3>
+<p><strong>連線端點</strong>：<code>wss://ws.samgong.io</code></p>
+<p><strong>Colyseus Room 名稱</strong>：<code>sam_gong</code>（正式）/ <code>sam_gong_tutorial</code>（教學）</p>
+<p><strong>Client SDK（Cocos Creator）：</strong></p>
+<pre><code class="language-typescript">import { Client } from &#x27;colyseus.js&#x27;;
+
+const client = new Client(&#x27;wss://ws.samgong.io&#x27;);
+
+// 配對加入
+const room = await client.joinOrCreate(&#x27;sam_gong&#x27;, {
+  tier: &#x27;青銅廳&#x27;,
+  token: access_token    // JWT Access Token（Bearer）
+});
+
+// 加入私人房間
+const room = await client.joinById(colyseus_room_id, {
+  token: access_token
+});
+
+// 連線成功後儲存重連憑證
+const reconnectInfo = { roomId: room.id, sessionId: room.sessionId };</code></pre>
+<h3>4.2 Client → Server 訊息</h3>
+<table>
+<tr><th>訊息類型</th><th>Payload</th><th>驗證規則</th><th>說明</th></tr>
+<tr><td><code>banker_bet</code></td><td><code>{ amount: number }</code></td><td>phase === &#x27;banker-bet&#x27;；is_banker；min_bet ≤ amount ≤ max_bet；amount ≤ chip_balance</td><td>莊家下注</td></tr>
+<tr><td><code>call</code></td><td><code>{}</code></td><td>phase === &#x27;player-bet&#x27;；本人輪次；chip_balance ≥ banker_bet_amount</td><td>閒家跟注（Call）</td></tr>
+<tr><td><code>fold</code></td><td><code>{}</code></td><td>phase === &#x27;player-bet&#x27;；本人輪次</td><td>閒家棄牌</td></tr>
+<tr><td><code>see_cards</code></td><td><code>{}</code></td><td>phase === &#x27;banker-bet&#x27;；is_banker</td><td>莊家查看手牌</td></tr>
+<tr><td><code>send_chat</code></td><td><code>{ text: string }</code></td><td>text.length ≤ 200；rate limit ≤ 2/s</td><td>房間內聊天</td></tr>
+<tr><td><code>report_player</code></td><td><code>{ target_id: string, message_id: string, reason: string }</code></td><td>target_id 存在房間；reason 合法枚舉</td><td>舉報玩家</td></tr>
+<tr><td><code>confirm_anti_addiction</code></td><td><code>{ type: &quot;adult&quot; }</code></td><td>is_adult；type=adult</td><td>成人確認防沉迷 2h 提醒</td></tr>
+</table>
+<p><strong>Client → Server 訊息速率限制</strong>：每連線每秒 ≤ 10 條訊息（NFR-15）</p>
+<h3>4.3 Server → Client 訊息</h3>
+<table>
+<tr><th>訊息類型</th><th>Payload</th><th>說明</th></tr>
+<tr><td>Room State Sync</td><td>Schema diff（自動）</td><td>Colyseus 自動推送 SamGongState diff</td></tr>
+<tr><td><code>my_session_info</code></td><td><code>{ session_id: string, player_id: string }</code></td><td>玩家加入後 Server 推送（sendTo client），Client 識別自身 session</td></tr>
+<tr><td><code>myHand</code></td><td><code>{ cards: Card[] }</code></td><td>推送玩家手牌（私人訊息，dealing phase 後）</td></tr>
+<tr><td><code>showdown_reveal</code></td><td><code>{ hands: { [seat_index]: Card[] } }</code></td><td>所有未 Fold 玩家手牌（廣播，showdown phase）</td></tr>
+<tr><td><code>anti_addiction_warning</code></td><td><code>{ type: &quot;adult&quot;, session_minutes: number }</code></td><td>成人 2h 連續遊玩提醒（需確認）</td></tr>
+<tr><td><code>anti_addiction_signal</code></td><td><code>{ type: &quot;underage&quot;, daily_minutes_remaining: number, midnight_timestamp: number }</code></td><td>未成年每日 2h 硬停訊號</td></tr>
+<tr><td><code>rescue_chips</code></td><td><code>{ amount: 1000, new_balance: number }</code></td><td>結算後偵測 chip_balance &lt; 500 且今日未領取時自動觸發補發（DB 原子 UPDATE 防 Race Condition）</td></tr>
+<tr><td><code>rescue_not_available</code></td><td>`{ reason: &quot;already_claimed&quot; \</td><td>&quot;balance_sufficient&quot; }`</td><td>結算後偵測餘額 &lt; 500 但今日已領取（<code>already_claimed</code>）或餘額 ≥ 500（<code>balance_sufficient</code>）時推送；Client 顯示對應提示</td></tr>
+<tr><td><code>rate_limit</code></td><td><code>{ error: &quot;rate_limit&quot;, retry_after_ms: number }</code></td><td>訊息速率超限回應</td></tr>
+<tr><td><code>error</code></td><td><code>{ code: string, message: string }</code></td><td>一般錯誤回應（非法操作、驗證失敗）</td></tr>
+<tr><td><code>matchmaking_expanded</code></td><td><code>{ expanded_tiers: string[] }</code></td><td>配對擴展至相鄰廳別（30s 後）</td></tr>
+<tr><td><code>send_message_rejected</code></td><td>`{ reason: &quot;content_filter&quot; \</td><td>&quot;rate_limit&quot; }`</td><td>聊天訊息被拒絕</td></tr>
+</table>
+<h3>4.4 Room State Schema（公開欄位）</h3>
+<p><code>SamGongState</code>（Colyseus Schema，自動同步至所有 Client）：</p>
+<pre><code class="language-typescript">// 公開欄位（所有 Client 可見）
+{
+  players: MapSchema&lt;PlayerState&gt;,  // key = seat_index.toString()
+  phase: string,                    // &#x27;waiting&#x27;|&#x27;dealing&#x27;|&#x27;banker-bet&#x27;|&#x27;player-bet&#x27;|&#x27;showdown&#x27;|&#x27;settled&#x27;
+  banker_seat_index: number,
+  banker_bet_amount: number,
+  min_bet: number,
+  max_bet: number,
+  current_pot: number,
+  action_deadline_timestamp: number, // Server Unix ms（Client 計算倒計時）
+  round_number: number,
+  current_player_turn_seat: number,
+  settlement: SettlementState,
+  tier_config: TierConfig,
+  is_tutorial: boolean,
+  room_id: string,                  // 私人房間 room_code
+  room_type: string,                // &#x27;matchmaking&#x27;|&#x27;private&#x27;
+  matchmaking_status: MatchmakingStatus
+}
+
+// PlayerState（每個玩家的公開狀態）
+{
+  player_id: string,
+  seat_index: number,
+  chip_balance: number,      // 開放籌碼設計（所有玩家可見）
+  bet_amount: number,
+  is_connected: boolean,
+  is_folded: boolean,
+  has_acted: boolean,
+  is_banker: boolean,
+  display_name: string,
+  avatar_url: string
+  // 手牌不在此 Schema（僅透過私人訊息 myHand 推送）
+}</code></pre>
+<h3>4.5 斷線重連流程</h3>
+<p><strong>Client 端（Cocos Creator）：</strong></p>
+<pre><code class="language-typescript">room.onLeave(async (code) =&gt; {
+  if (code === 4000) return; // 被踢出，不重連
+  const stored = { roomId: room.id, sessionId: room.sessionId };
+  cc.sys.localStorage.setItem(&#x27;reconnect_info&#x27;, JSON.stringify(stored));
+  try {
+    const reconnInfo = JSON.parse(cc.sys.localStorage.getItem(&#x27;reconnect_info&#x27;));
+    room = await client.reconnect(reconnInfo.roomId, reconnInfo.sessionId);
+    // 重連成功後 Server 重新推送 myHand
+  } catch (e) {
+    cc.sys.localStorage.removeItem(&#x27;reconnect_info&#x27;);
+    UIManager.navigateTo(&#x27;LobbyScene&#x27;);
+  }
+});</code></pre>
+<p><strong>Server 端（onLeave）</strong>：</p>
+<ul><li><code>consented=false</code> → <code>allowReconnection(client, 30)</code>（30s 重連視窗）</li><li>重連成功 → Server 重新推送 <code>myHand</code>（private message）</li><li>30s 超時 → 玩家自動 Fold（遊戲進行中）或退出（waiting phase）</li></ul>
+<hr>
+<h2>5. Error Codes Reference</h2>
+<h3>5.1 REST API 統一錯誤格式</h3>
+<pre><code class="language-typescript">interface ErrorResponse {
+  error: string;        // Error code（機器可讀）
+  message: string;      // 人類可讀說明（英文，用於 debug）
+  detail?: object;      // 額外上下文（可選）
+  request_id?: string;  // X-Request-ID
+}</code></pre>
+<p><strong>範例</strong>：</p>
+<pre><code class="language-json">{
+  &quot;error&quot;: &quot;insufficient_chips&quot;,
+  &quot;message&quot;: &quot;Player chip balance is below the required amount for this tier&quot;,
+  &quot;detail&quot;: {
+    &quot;required&quot;: 10000,
+    &quot;current_balance&quot;: 5000
+  },
+  &quot;request_id&quot;: &quot;550e8400-e29b-41d4-a716-446655440000&quot;
+}</code></pre>
+<h3>5.2 WebSocket 錯誤格式</h3>
+<pre><code class="language-typescript">interface WsErrorMessage {
+  code: string;
+  message: string;
+}</code></pre>
+<h3>5.3 完整 Error Code 枚舉</h3>
+<p><strong>認證/授權</strong>：</p>
+<table>
+<tr><th>Code</th><th>HTTP Status</th><th>說明</th></tr>
+<tr><td><code>token_expired</code></td><td>401</td><td>Access Token 已過期</td></tr>
+<tr><td><code>token_invalid</code></td><td>401</td><td>Token 格式錯誤或簽名無效</td></tr>
+<tr><td><code>token_revoked</code></td><td>401</td><td>Token 已撤銷（封號黑名單）</td></tr>
+<tr><td><code>account_banned</code></td><td>401</td><td>帳號已封禁</td></tr>
+<tr><td><code>account_not_found</code></td><td>401</td><td>帳號不存在</td></tr>
+</table>
+<p><strong>遊戲邏輯</strong>：</p>
+<table>
+<tr><th>Code</th><th>說明</th></tr>
+<tr><td><code>invalid_phase</code></td><td>操作不符當前 phase</td></tr>
+<tr><td><code>insufficient_chips</code></td><td>籌碼不足</td></tr>
+<tr><td><code>invalid_bet_amount</code></td><td>下注金額無效</td></tr>
+<tr><td><code>bet_out_of_range</code></td><td>下注金額超出廳別限制</td></tr>
+<tr><td><code>already_called</code></td><td>玩家已 Call</td></tr>
+<tr><td><code>already_folded</code></td><td>玩家已 Fold</td></tr>
+<tr><td><code>banker_insolvent</code></td><td>莊家破產</td></tr>
+<tr><td><code>room_full</code></td><td>房間已滿</td></tr>
+<tr><td><code>room_not_found</code></td><td>房間不存在</td></tr>
+</table>
+<p><strong>速率限制</strong>：</p>
+<table>
+<tr><th>Code</th><th>HTTP Status</th><th>說明</th></tr>
+<tr><td><code>rate_limit_exceeded</code></td><td>429</td><td>超過速率限制</td></tr>
+<tr><td><code>daily_task_limit</code></td><td>400</td><td>每日任務已完成</td></tr>
+<tr><td><code>rescue_unavailable</code></td><td>400</td><td>救援籌碼不符申請條件（chip_balance ≥ 500）</td></tr>
+<tr><td><code>rescue_chip_claimed</code></td><td>403</td><td>今日已領取救援籌碼（每日 1 次上限）</td></tr>
+</table>
+<p><strong>KYC/合規</strong>：</p>
+<table>
+<tr><th>Code</th><th>說明</th></tr>
+<tr><td><code>age_verification_required</code></td><td>需要年齡驗證</td></tr>
+<tr><td><code>underage_session_expired</code></td><td>未成年每日遊戲時間已達上限</td></tr>
+<tr><td><code>otp_invalid</code></td><td>OTP 代碼無效</td></tr>
+<tr><td><code>otp_expired</code></td><td>OTP 已過期</td></tr>
+</table>
+<p><strong>系統</strong>：</p>
+<table>
+<tr><th>Code</th><th>HTTP Status</th><th>說明</th></tr>
+<tr><td><code>server_maintenance</code></td><td>503</td><td>伺服器維護中</td></tr>
+<tr><td><code>internal_error</code></td><td>500</td><td>內部伺服器錯誤</td></tr>
+<tr><td><code>request_timeout</code></td><td>504</td><td>請求超時</td></tr>
+</table>
+<p>Client 端根據 <code>code</code>（即 i18n key <code>error.{code}</code>）本地化顯示。</p>
+<hr>
+<h2>6. Rate Limiting</h2>
+<h3>6.1 四層速率限制（NFR-19）</h3>
+<table>
+<tr><th>層次</th><th>適用端點</th><th>Redis Key</th><th>限制</th><th>超限回應</th></tr>
+<tr><td>L1 認證</td><td><code>/auth/*</code>（除 OTP）</td><td><code>rl:auth:{ip}</code></td><td>30 次/min/IP</td><td>HTTP 429</td></tr>
+<tr><td>L1b OTP 發送</td><td><code>POST /auth/otp/send</code></td><td><code>rl:otp_send:{ip}</code></td><td>5 次/min/IP</td><td>HTTP 429</td></tr>
+<tr><td>L2 高敏感</td><td><code>POST /player/daily-chip</code>, <code>POST /tasks/:id/complete</code></td><td><code>rl:sensitive:{player_id}</code></td><td>5 次/min/user</td><td>HTTP 429</td></tr>
+<tr><td>L2b 每日唯一</td><td><code>POST /player/rescue-chip</code></td><td><code>rl:rescue:{player_id}:{date}</code></td><td>≤ 1 次/day/user（UTC+8 日期 key）</td><td>HTTP 429</td></tr>
+<tr><td>L3 一般</td><td>所有其他 <code>/api/v1/*</code></td><td><code>rl:general:{player_id}</code></td><td>60 次/min/user</td><td>HTTP 429</td></tr>
+<tr><td>L4 IP 全局</td><td>所有端點</td><td><code>rl:global:{ip}</code></td><td>300 次/min/IP</td><td>HTTP 429</td></tr>
+</table>
+<h3>6.2 超限回應格式</h3>
+<pre><code class="language-json">{
+  &quot;error&quot;: &quot;rate_limit_exceeded&quot;,
+  &quot;message&quot;: &quot;Too many requests&quot;,
+  &quot;retry_after_seconds&quot;: 30,
+  &quot;limit&quot;: 30,
+  &quot;window_seconds&quot;: 60
+}</code></pre>
+<p>Response Headers：</p>
+<pre><code class="">HTTP/1.1 429 Too Many Requests
+Retry-After: 30
+X-RateLimit-Limit: 30
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 1714000000</code></pre>
+<h3>6.3 Redis Lua Script（原子性計數）</h3>
+<pre><code class="language-lua">-- rate_limit.lua（原子 GET + INCR + EXPIRE）
+local key = KEYS[1]
+local limit = tonumber(ARGV[1])
+local window = tonumber(ARGV[2])
+local current = redis.call(&#x27;INCR&#x27;, key)
+if current == 1 then
+  redis.call(&#x27;EXPIRE&#x27;, key, window)
+end
+if current &gt; limit then
+  return redis.call(&#x27;TTL&#x27;, key)  -- 返回剩餘秒數
+else
+  return 0  -- 0 = 未超限
+end</code></pre>
+<h3>6.4 WebSocket 訊息速率限制</h3>
+<p>每連線每秒 ≤ 10 條訊息（NFR-15）：</p>
+<ul><li>超限回應：Server 推送 <code>{ type: &#x27;rate_limit&#x27;, retry_after_ms: 1000 }</code></li><li>不斷線，讓 Client 有機會重試</li></ul>
+<hr>
+<h2>7. WebSocket Close Codes</h2>
+<table>
+<tr><th>Code</th><th>含義</th><th>觸發條件</th><th>Client 處理</th></tr>
+<tr><td><code>4000</code></td><td>被系統踢出（禁止重連）</td><td>帳號封禁且 Redis Pub/Sub 觸發踢出</td><td>顯示封號訊息，清除 token，不重連</td></tr>
+<tr><td><code>4001</code></td><td>Token 失效或帳號封禁</td><td>JWT 驗證失敗或封號黑名單命中</td><td>清除 token，跳轉登入頁</td></tr>
+<tr><td><code>4002</code></td><td>伺服器維護</td><td>Server 計劃性維護</td><td>顯示維護中訊息，5 分鐘後重試</td></tr>
+<tr><td><code>4003</code></td><td>未成年每日遊戲時間上限</td><td>AntiAddictionManager 達 2h 每日上限</td><td>顯示下線提示，次日台灣午夜後可重連</td></tr>
+<tr><td><code>4004</code></td><td>重連逾時（reconnect window 過期）</td><td>30s 重連視窗過期</td><td>清除 reconnect_info，返回大廳</td></tr>
+<tr><td><code>4005</code></td><td>重複登入（同帳號其他裝置已登入）</td><td>Redis Pub/Sub force_disconnect_device</td><td>顯示「其他裝置已登入」，清除本地 token</td></tr>
+<tr><td><code>1001</code></td><td>伺服器正常關閉（Going Away）</td><td>Pod 優雅關閉（preStop 30s）</td><td>嘗試重連，最多 3 次</td></tr>
+</table>
+<hr>
+<h2>Appendix A：廳別設定速查</h2>
+<table>
+<tr><th>廳別</th><th>Entry 籌碼</th><th>min_bet</th><th>max_bet</th><th>quick_bet_amounts</th></tr>
+<tr><td>青銅廳</td><td>1,000</td><td>100</td><td>500</td><td>[100, 200, 300, 500]</td></tr>
+<tr><td>白銀廳</td><td>10,000</td><td>1,000</td><td>5,000</td><td>[1000, 2000, 3000, 5000]</td></tr>
+<tr><td>黃金廳</td><td>100,000</td><td>10,000</td><td>50,000</td><td>[10000, 20000, 30000, 50000]</td></tr>
+<tr><td>鉑金廳</td><td>1,000,000</td><td>100,000</td><td>500,000</td><td>[100000, 200000, 300000, 500000]</td></tr>
+<tr><td>鑽石廳</td><td>10,000,000</td><td>1,000,000</td><td>5,000,000</td><td>[1000000, 2000000, 3000000, 5000000]</td></tr>
+</table>
+<h2>Appendix B：賠率表（PRD §5.4）</h2>
+<table>
+<tr><th>閒家牌型</th><th>賠率（N）</th><th>閒家勝 net_chips</th><th>說明</th></tr>
+<tr><td>三公</td><td>3x</td><td>+3 × banker_bet</td><td>3 張 10 點牌</td></tr>
+<tr><td>9 點</td><td>2x</td><td>+2 × banker_bet</td><td>sum mod 10 = 9</td></tr>
+<tr><td>1-8 點（非三公）</td><td>1x</td><td>+1 × banker_bet</td><td>一般比點</td></tr>
+<tr><td>平手</td><td>0x</td><td>0（退注）</td><td>D8 比牌後仍平手</td></tr>
+<tr><td>輸</td><td>-1x</td><td>-called_bet</td><td>閒家點數低於莊家</td></tr>
+<tr><td>Fold</td><td>-</td><td>0</td><td>不扣款</td></tr>
+<tr><td>Insolvent Win</td><td>-</td><td>-called_bet</td><td>莊家破產後排隊中的贏家</td></tr>
+</table>
+<hr>
+<p><em>文件版本 v1.1 — 依 EDD v1.4-draft §4 生成 — 2026-04-22 — STEP-11 Review 完成</em></p></main>
+  </div>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({startOnLoad:true,theme:'default',
+      flowchart:{curve:'basis',nodeSpacing:60,rankSpacing:80},
+      er:{layoutDirection:'TD',minEntityWidth:100,fontSize:12},
+      sequence:{actorMargin:60,messageMargin:30}});
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-yaml.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-json.min.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

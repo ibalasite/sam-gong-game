@@ -1,0 +1,77 @@
+{
+  "index.html": {
+    "url": "index.html",
+    "title": "首頁",
+    "excerpt": "三公 Sam Gong — Multiplayer Card Game\n即時多人三公牌局 · Colyseus 0.15 · Node.js · Kubernetes\n\n🎴 線上文件\n📖 https://ibalasite.github.io/sam-gong-game-test/\n技術架構\n\n層級"
+  },
+  "idea.html": {
+    "url": "idea.html",
+    "title": "構想文件 (IDEA)",
+    "excerpt": "IDEA — 三公遊戲（Sam Gong 3-Card Poker）即時多人線上平台\n&lt;!-- SDLC Requirements Engineering — Layer 0：Idea Capture --&gt;\n&lt;!-- 由 /devsop-idea 自動填寫；未來需求變更時，此文件"
+  },
+  "brd.html": {
+    "url": "brd.html",
+    "title": "商業需求文件 (BRD)",
+    "excerpt": "BRD — 三公遊戲（Sam Gong 3-Card Poker）即時多人線上平台\n&lt;!-- SDLC Requirements Engineering — Layer 1：Business Requirements --&gt;\n\nDocument Control\n\n欄位內容\nDOC-IDB"
+  },
+  "prd.html": {
+    "url": "prd.html",
+    "title": "產品需求文件 (PRD)",
+    "excerpt": "PRD — 三公遊戲（Sam Gong 3-Card Poker）即時多人線上平台\n&lt;!-- SDLC Requirements Engineering — Layer 2：Product Requirements --&gt;\n\nDocument Control\n\n欄位內容\nDOC-IDPR"
+  },
+  "pdd.html": {
+    "url": "pdd.html",
+    "title": "產品設計文件 (PDD)",
+    "excerpt": "PDD — 三公遊戲（Sam Gong 3-Card Poker）Client Design Document\n&lt;!-- SDLC Design Layer 4：Product Design Document (PDD) — Cocos Creator 3.8.x Frontend --&gt"
+  },
+  "edd.html": {
+    "url": "edd.html",
+    "title": "工程設計文件 (EDD)",
+    "excerpt": "EDD — Sam Gong 三公 多人紙牌遊戲\n&lt;!-- SDLC Engineering Design — Layer 3：Engineering Design Document --&gt;\n\nDocument Control\n\n欄位內容\nDOC-IDEDD-SAM-GONG-GAME-"
+  },
+  "arch.html": {
+    "url": "arch.html",
+    "title": "架構設計",
+    "excerpt": "ARCH — 系統架構文件\n&lt;!-- SDLC Architecture Document — Layer 3：Architecture Design --&gt;\n\nDocument Control\n\n欄位內容\nDOC-IDARCH-SAM-GONG-GAME-20260422\n專案名稱三公"
+  },
+  "api.html": {
+    "url": "api.html",
+    "title": "API 文件",
+    "excerpt": "API — API 規格文件\n&lt;!-- SDLC API Specification — Layer 3：API Design Document --&gt;\n\nDocument Control\n\n欄位內容\nDOC-IDAPI-SAM-GONG-GAME-20260422\n專案名稱三公遊戲（S"
+  },
+  "schema.html": {
+    "url": "schema.html",
+    "title": "Schema 文件",
+    "excerpt": "SCHEMA — 資料庫 Schema 文件\n&lt;!-- SDLC Database Schema Document — Layer 3：Database Design --&gt;\n\nDocument Control\n\n欄位內容\nDOC-IDSCHEMA-SAM-GONG-GAME-20260"
+  },
+  "test-plan.html": {
+    "url": "test-plan.html",
+    "title": "測試計畫",
+    "excerpt": "TEST_PLAN — 測試計畫\n&lt;!-- SDLC QA — Layer 4：Test Plan Document --&gt;\n\nDocument Control\n\n欄位內容\nDOC-IDTEST-PLAN-SAM-GONG-GAME-20260422\n專案名稱三公遊戲（Sam Gong "
+  },
+  "diagrams.html": {
+    "url": "diagrams.html",
+    "title": "系統圖表",
+    "excerpt": "DIAGRAMS — 系統流程圖文件\n&lt;!-- SDLC Diagrams Document — Layer 3：Architecture Visualization --&gt;\n\nDocument Control\n\n欄位內容\nDOC-IDDIAGRAMS-SAM-GONG-GAME-202"
+  },
+  "alignment-report.html": {
+    "url": "alignment-report.html",
+    "title": "Alignment Report",
+    "excerpt": "Alignment Report\n&lt;!-- STEP-22: Alignment Scan — REQ→EDD→Code→Test alignment report --&gt;\nDocument Control\n\n欄位內容\nDOC-IDALIGN-SAM-GONG-GAME-20260422"
+  },
+  "smoke-test-report.html": {
+    "url": "smoke-test-report.html",
+    "title": "Smoke Test Report",
+    "excerpt": "Smoke Test Gate Report\n執行時間：2026-04-22\n整體結果：PASS ✅（含條件說明）\n\nGate 1：核心遊戲邏輯 — PASS ✅\n所有 6 個核心遊戲模組均已存在，且各有對應 unit test 文件：\n\n模組原始碼測試文件狀態\nHandEvaluator.tssr"
+  },
+  "local-deploy.html": {
+    "url": "local-deploy.html",
+    "title": "Local Deploy",
+    "excerpt": "Sam Gong (三公) — Local Deployment Manual\nThis guide walks you through setting up and running the Sam Gong multiplayer card game locally, from bare prer"
+  },
+  "lang.html": {
+    "url": "lang.html",
+    "title": "語言選型",
+    "excerpt": "技術選型文件（Language &amp; Framework Selection）\n&lt;!-- SDLC Requirements Engineering — STEP 02 Output --&gt;\n專案: 三公遊戲（Sam Gong 3-Card Poker）即時多人線上平台\n版本: v"
+  }
+}

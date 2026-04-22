@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Local Deploy — sam-gong-game</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+  <header class="top-nav">
+    <a href="index.html" class="nav-brand">sam-gong-game</a>
+    <div class="nav-controls">
+      <div class="search-wrap">
+        <input class="search-input" type="search" placeholder="搜尋文件...">
+        <div class="search-results"></div>
+      </div>
+      <a class="nav-gh-link" href="https://github.com/ibalasite/sam-gong-game-test" target="_blank" rel="noopener">⌥ GitHub</a>
+      <button class="sidebar-toggle" id="sidebarToggle" title="收合/展開側欄">☰</button>
+    </div>
+  </header>
+  <div class="doc-page-banner">
+    <p class="banner-breadcrumb"><a href="index.html">sam-gong-game</a> › Local Deploy</p>
+    <h1 class="banner-title">Local Deploy</h1>
+  </div>
+  <div class="page-wrapper">
+    <aside class="sidebar" aria-label="文件導覽">
+      <div class="sidebar__section">
+        <div class="sidebar__label">文件</div>
+        <a class="sidebar__link" href="index.html">🏠 首頁</a>
+<a class="sidebar__link" href="idea.html">💡 構想文件 (IDEA)</a>
+<a class="sidebar__link" href="brd.html">📋 商業需求文件 (BRD)</a>
+<a class="sidebar__link" href="prd.html">📝 產品需求文件 (PRD)</a>
+<a class="sidebar__link" href="pdd.html">🎨 產品設計文件 (PDD)</a>
+<a class="sidebar__link" href="edd.html">🏗️ 工程設計文件 (EDD)</a>
+<a class="sidebar__link" href="arch.html">🧩 架構設計</a>
+<a class="sidebar__link" href="api.html">🔌 API 文件</a>
+<a class="sidebar__link" href="schema.html">🗄️ Schema 文件</a>
+<a class="sidebar__link" href="test-plan.html">✅ 測試計畫</a>
+<a class="sidebar__link" href="diagrams.html">📊 系統圖表</a>
+<a class="sidebar__link" href="alignment-report.html">📄 Alignment Report</a>
+<a class="sidebar__link" href="smoke-test-report.html">📄 Smoke Test Report</a>
+<a class="sidebar__link active" href="local-deploy.html">📄 Local Deploy</a>
+<a class="sidebar__link" href="lang.html">🔧 語言選型</a>
+      </div>
+    </aside>
+    <div class="sidebar-resizer" id="sidebarResizer"></div>
+    <main class="doc-content"><h1>Sam Gong (三公) — Local Deployment Manual</h1>
+<p>This guide walks you through setting up and running the Sam Gong multiplayer card game locally, from bare prerequisites to a fully functional Minikube deployment.</p>
+<hr>
+<h2>Table of Contents</h2>
+<ol><li><a href="#1-prerequisites" target="_blank" rel="noopener">Prerequisites</a></li><li><a href="#2-clone-and-setup" target="_blank" rel="noopener">Clone and Setup</a></li><li><a href="#3-install-dependencies" target="_blank" rel="noopener">Install Dependencies</a></li><li><a href="#4-environment-configuration" target="_blank" rel="noopener">Environment Configuration</a></li><li><a href="#5-local-dev-docker-compose" target="_blank" rel="noopener">Local Dev: Docker Compose (Postgres + Redis)</a></li><li><a href="#6-run-database-migrations" target="_blank" rel="noopener">Run Database Migrations</a></li><li><a href="#7-start-development-servers" target="_blank" rel="noopener">Start Development Servers</a></li><li><a href="#8-run-tests" target="_blank" rel="noopener">Run Tests</a></li><li><a href="#9-minikube-kubernetes-deployment" target="_blank" rel="noopener">Minikube Kubernetes Deployment</a></li><li><a href="#10-verify-health-and-game-flow" target="_blank" rel="noopener">Verify Health and Game Flow</a></li><li><a href="#11-troubleshooting" target="_blank" rel="noopener">Troubleshooting</a></li></ol>
+<hr>
+<h2>1. Prerequisites</h2>
+<p>Install the following tools before proceeding.</p>
+<table>
+<tr><th>Tool</th><th>Version</th><th>Install</th></tr>
+<tr><td>Node.js</td><td>20 LTS</td><td>https://nodejs.org or <code>nvm install 20</code></td></tr>
+<tr><td>Docker Desktop</td><td>Latest</td><td>https://www.docker.com/products/docker-desktop</td></tr>
+<tr><td>kubectl</td><td>1.28+</td><td>https://kubernetes.io/docs/tasks/tools/</td></tr>
+<tr><td>minikube</td><td>1.32+</td><td>https://minikube.sigs.k8s.io/docs/start/</td></tr>
+<tr><td>git</td><td>Any</td><td>https://git-scm.com</td></tr>
+</table>
+<p>Verify installations:</p>
+<pre><code class="language-bash">node --version     # v20.x.x
+docker --version   # Docker version 24.x.x
+kubectl version    # v1.28+
+minikube version   # v1.32+</code></pre>
+<hr>
+<h2>2. Clone and Setup</h2>
+<pre><code class="language-bash">git clone https://github.com/your-org/sam-gong-game.git
+cd sam-gong-game</code></pre>
+<p>Generate RSA keys for JWT authentication:</p>
+<pre><code class="language-bash">mkdir -p keys
+openssl genrsa -out keys/private.pem 4096
+openssl rsa -in keys/private.pem -pubout -out keys/public.pem
+chmod 600 keys/private.pem</code></pre>
+<blockquote><p><strong>Security</strong>: Never commit the <code>keys/</code> directory to git. It is already listed in <code>.gitignore</code>.</p></blockquote>
+<hr>
+<h2>3. Install Dependencies</h2>
+<pre><code class="language-bash">npm install</code></pre>
+<p>This installs all backend and tooling dependencies. Frontend dependencies are managed separately in <code>client/</code>:</p>
+<pre><code class="language-bash">cd client &amp;&amp; npm install &amp;&amp; cd ..</code></pre>
+<hr>
+<h2>4. Environment Configuration</h2>
+<p>Copy the template and fill in values:</p>
+<pre><code class="language-bash">cp .env.example .env</code></pre>
+<p>Edit <code>.env</code> with your local values. Key fields to update:</p>
+<table>
+<tr><th>Variable</th><th>Description</th><th>Default (dev)</th></tr>
+<tr><td><code>DB_PASSWORD</code></td><td>PostgreSQL password</td><td><code>dev_password_change_me</code></td></tr>
+<tr><td><code>REDIS_PASSWORD</code></td><td>Redis password</td><td><code>dev_redis_password</code></td></tr>
+<tr><td><code>JWT_PRIVATE_KEY_PATH</code></td><td>Path to RS256 private key</td><td><code>./keys/private.pem</code></td></tr>
+<tr><td><code>JWT_PUBLIC_KEY_PATH</code></td><td>Path to RS256 public key</td><td><code>./keys/public.pem</code></td></tr>
+<tr><td><code>OTP_API_KEY</code></td><td>OTP provider API key</td><td>(required for registration)</td></tr>
+<tr><td><code>ANTI_ADDICTION_ENABLED</code></td><td>Taiwan regulation enforcement</td><td><code>true</code></td></tr>
+</table>
+<p>For local development, all other defaults in <code>.env.example</code> are suitable.</p>
+<hr>
+<h2>5. Local Dev: Docker Compose</h2>
+<p>Start PostgreSQL 15 and Redis 7 using Docker Compose:</p>
+<pre><code class="language-bash">docker compose -f infra/docker-compose.yml up -d</code></pre>
+<p>Verify services are healthy:</p>
+<pre><code class="language-bash">docker compose -f infra/docker-compose.yml ps</code></pre>
+<p>Both <code>postgres</code> and <code>redis</code> should show status <code>healthy</code>.</p>
+<p>To also start pgAdmin (database web UI at http://localhost:5050):</p>
+<pre><code class="language-bash">docker compose -f infra/docker-compose.yml --profile tools up -d</code></pre>
+<p>Stop services when done:</p>
+<pre><code class="language-bash">docker compose -f infra/docker-compose.yml down</code></pre>
+<p>To remove all data volumes (full reset):</p>
+<pre><code class="language-bash">docker compose -f infra/docker-compose.yml down -v</code></pre>
+<hr>
+<h2>6. Run Database Migrations</h2>
+<p>Run schema migrations after the database is healthy:</p>
+<pre><code class="language-bash">npm run migrate</code></pre>
+<p>Verify the migration completed:</p>
+<pre><code class="language-bash">npm run migrate:status</code></pre>
+<p>To roll back the last migration:</p>
+<pre><code class="language-bash">npm run migrate:rollback</code></pre>
+<hr>
+<h2>7. Start Development Servers</h2>
+<p>Open three terminal windows and run each server:</p>
+<p><strong>Terminal 1 — Colyseus Game Server (WebSocket, port 2567):</strong></p>
+<pre><code class="language-bash">npm run dev:server</code></pre>
+<p><strong>Terminal 2 — REST API Server (port 3000):</strong></p>
+<pre><code class="language-bash">npm run dev:api</code></pre>
+<p><strong>Terminal 3 — Frontend Client (port 3001 or Vite default):</strong></p>
+<pre><code class="language-bash">npm run dev:client</code></pre>
+<p>Or, if your <code>package.json</code> has a combined dev script:</p>
+<pre><code class="language-bash">npm run dev</code></pre>
+<p>Access the application:</p>
+<ul><li>Frontend: http://localhost:3001</li><li>API health: http://localhost:3000/health</li><li>Game server health: http://localhost:2567/health</li><li>Colyseus monitor (dev only): http://localhost:2567/colyseus</li></ul>
+<hr>
+<h2>8. Run Tests</h2>
+<p><strong>Unit tests (Jest):</strong></p>
+<pre><code class="language-bash">npm test</code></pre>
+<p><strong>Tests with coverage:</strong></p>
+<pre><code class="language-bash">npm run test:coverage</code></pre>
+<p><strong>End-to-end tests (Playwright):</strong></p>
+<p>Ensure all three dev servers are running, then:</p>
+<pre><code class="language-bash">npm run test:e2e</code></pre>
+<p><strong>Watch mode (for TDD):</strong></p>
+<pre><code class="language-bash">npm run test:watch</code></pre>
+<hr>
+<h2>9. Minikube Kubernetes Deployment</h2>
+<h3>9.1 Start Minikube</h3>
+<pre><code class="language-bash">minikube start --cpus=4 --memory=8192 --disk-size=30g</code></pre>
+<p>Enable required addons:</p>
+<pre><code class="language-bash">minikube addons enable ingress
+minikube addons enable metrics-server</code></pre>
+<h3>9.2 Point Docker to Minikube&#x27;s Docker Daemon</h3>
+<p>This allows you to build images directly into Minikube without pushing to a registry:</p>
+<pre><code class="language-bash">eval $(minikube docker-env)</code></pre>
+<blockquote><p>On Windows (PowerShell): <code>&amp; minikube -p minikube docker-env | Invoke-Expression</code></p></blockquote>
+<h3>9.3 Build Docker Images</h3>
+<p>Build all three images into Minikube&#x27;s Docker:</p>
+<pre><code class="language-bash">docker build -f infra/Dockerfile.server -t sam-gong-server:latest .
+docker build -f infra/Dockerfile.api -t sam-gong-api:latest .
+docker build -f infra/Dockerfile.client -t sam-gong-client:latest client/</code></pre>
+<h3>9.4 Create Namespace and Apply Secrets</h3>
+<pre><code class="language-bash">kubectl apply -f infra/k8s/namespace.yaml</code></pre>
+<p>Create the secret with real values (do NOT commit this):</p>
+<pre><code class="language-bash">kubectl create secret generic sam-gong-secrets \
+  --namespace=sam-gong \
+  --from-literal=DB_PASSWORD=&#x27;your_db_password&#x27; \
+  --from-literal=JWT_PRIVATE_KEY=&quot;$(cat keys/private.pem)&quot; \
+  --from-literal=JWT_PUBLIC_KEY=&quot;$(cat keys/public.pem)&quot; \
+  --from-literal=REDIS_PASSWORD=&#x27;your_redis_password&#x27; \
+  --from-literal=OTP_API_KEY=&#x27;your_otp_key&#x27;</code></pre>
+<blockquote><p><strong>Production</strong>: Use Sealed Secrets or External Secrets Operator instead. See <code>infra/k8s/secret.yaml</code> for instructions.</p></blockquote>
+<h3>9.5 Apply All Kubernetes Manifests</h3>
+<p>Apply manifests in order:</p>
+<pre><code class="language-bash">kubectl apply -f infra/k8s/configmap.yaml
+kubectl apply -f infra/k8s/postgres-statefulset.yaml
+kubectl apply -f infra/k8s/redis-statefulset.yaml</code></pre>
+<p>Wait for databases to be ready:</p>
+<pre><code class="language-bash">kubectl wait --namespace=sam-gong \
+  --for=condition=ready pod \
+  --selector=app=postgres \
+  --timeout=120s
+
+kubectl wait --namespace=sam-gong \
+  --for=condition=ready pod \
+  --selector=app=redis \
+  --timeout=60s</code></pre>
+<p>Apply application manifests:</p>
+<pre><code class="language-bash">kubectl apply -f infra/k8s/deployment-server.yaml
+kubectl apply -f infra/k8s/deployment-api.yaml
+kubectl apply -f infra/k8s/deployment-client.yaml
+kubectl apply -f infra/k8s/service-server.yaml
+kubectl apply -f infra/k8s/service-api.yaml
+kubectl apply -f infra/k8s/service-client.yaml
+kubectl apply -f infra/k8s/ingress.yaml
+kubectl apply -f infra/k8s/hpa.yaml
+kubectl apply -f infra/k8s/pdb.yaml
+kubectl apply -f infra/k8s/networkpolicy.yaml</code></pre>
+<p>Or apply the entire directory at once:</p>
+<pre><code class="language-bash">kubectl apply -f infra/k8s/</code></pre>
+<h3>9.6 Run Database Migrations in Cluster</h3>
+<pre><code class="language-bash">kubectl run migrate --rm -it \
+  --namespace=sam-gong \
+  --image=sam-gong-api:latest \
+  --restart=Never \
+  --env-from=configmap/sam-gong-config \
+  --env-from=secret/sam-gong-secrets \
+  -- node dist/migrate.js</code></pre>
+<h3>9.7 Get the Minikube IP</h3>
+<pre><code class="language-bash">minikube ip</code></pre>
+<p>Add the IP to your <code>/etc/hosts</code> (or <code>C:\Windows\System32\drivers\etc\hosts</code>):</p>
+<pre><code class="">&lt;minikube-ip&gt;  sam-gong.local</code></pre>
+<p>Access the app at: http://sam-gong.local</p>
+<hr>
+<h2>10. Verify Health and Game Flow</h2>
+<h3>10.1 Check Pod Status</h3>
+<pre><code class="language-bash">kubectl get pods -n sam-gong</code></pre>
+<p>All pods should show <code>Running</code> with <code>READY 1/1</code> (or higher for multi-replica).</p>
+<h3>10.2 Health Checks</h3>
+<pre><code class="language-bash"># API health
+curl http://sam-gong.local/api/health
+
+# Game server health (via port-forward if ingress not set up)
+kubectl port-forward -n sam-gong svc/sam-gong-server-service 2567:2567 &amp;
+curl http://localhost:2567/health</code></pre>
+<p>Expected response:</p>
+<pre><code class="language-json">{&quot;status&quot;: &quot;ok&quot;, &quot;timestamp&quot;: &quot;...&quot;}</code></pre>
+<h3>10.3 Game Flow Smoke Test</h3>
+<ol><li>Open http://sam-gong.local in your browser</li><li>Register a new account (OTP verification required if <code>ANTI_ADDICTION_ENABLED=true</code>)</li><li>Log in and navigate to the lobby</li><li>Create a new game room</li><li>Open a second browser tab, log in with a different account, and join the room</li><li>Verify cards are dealt and game progresses</li></ol>
+<h3>10.4 WebSocket Connectivity Test</h3>
+<pre><code class="language-bash"># Using wscat (install: npm install -g wscat)
+wscat -c ws://sam-gong.local/colyseus</code></pre>
+<h3>10.5 View Logs</h3>
+<pre><code class="language-bash"># Game server logs
+kubectl logs -n sam-gong -l app=sam-gong-server --tail=100 -f
+
+# API logs
+kubectl logs -n sam-gong -l app=sam-gong-api --tail=100 -f
+
+# Database logs
+kubectl logs -n sam-gong postgres-0 --tail=50</code></pre>
+<hr>
+<h2>11. Troubleshooting</h2>
+<h3>Pods stuck in <code>Pending</code></h3>
+<pre><code class="language-bash">kubectl describe pod &lt;pod-name&gt; -n sam-gong</code></pre>
+<p>Common causes:</p>
+<ul><li><strong>Insufficient resources</strong>: Increase minikube CPU/memory (<code>minikube start --cpus=4 --memory=8192</code>)</li><li><strong>PVC not bound</strong>: Check <code>storageClass: fast-ssd</code> exists or change to <code>standard</code> for local dev</li><li><strong>Image not found</strong>: Ensure you ran <code>eval $(minikube docker-env)</code> before building</li></ul>
+<p>For local dev, patch StatefulSet storage class:</p>
+<pre><code class="language-bash"># Edit postgres-statefulset.yaml: change storageClassName: fast-ssd → standard
+kubectl apply -f infra/k8s/postgres-statefulset.yaml</code></pre>
+<h3><code>CrashLoopBackOff</code></h3>
+<pre><code class="language-bash">kubectl logs -n sam-gong &lt;pod-name&gt; --previous</code></pre>
+<p>Common causes:</p>
+<ul><li>Missing environment variables — verify secret was created correctly</li><li>Database not ready — check postgres pod health before deploying app</li><li>Port conflict — ensure no local process is using ports 2567 or 3000</li></ul>
+<h3>Database connection refused</h3>
+<pre><code class="language-bash"># Test connectivity from inside the cluster
+kubectl run pg-test --rm -it \
+  --namespace=sam-gong \
+  --image=postgres:15-alpine \
+  --restart=Never \
+  -- psql -h postgres-service -U sam_gong_app -d sam_gong</code></pre>
+<h3>Redis authentication failure</h3>
+<pre><code class="language-bash">kubectl run redis-test --rm -it \
+  --namespace=sam-gong \
+  --image=redis:7-alpine \
+  --restart=Never \
+  -- redis-cli -h redis-service -a &lt;your_redis_password&gt; ping</code></pre>
+<h3>WebSocket 101 upgrade not working</h3>
+<p>Ensure the ingress addon is enabled and the upgrade annotations are applied:</p>
+<pre><code class="language-bash">kubectl get ingress -n sam-gong -o yaml | grep -A5 &quot;proxy-read-timeout&quot;</code></pre>
+<p>If annotations are missing, re-apply the ingress manifest:</p>
+<pre><code class="language-bash">kubectl apply -f infra/k8s/ingress.yaml</code></pre>
+<h3>Minikube reset</h3>
+<p>To completely reset the Minikube cluster and start fresh:</p>
+<pre><code class="language-bash">minikube delete
+minikube start --cpus=4 --memory=8192</code></pre>
+<h3>Check resource quota usage</h3>
+<pre><code class="language-bash">kubectl describe resourcequota sam-gong-quota -n sam-gong</code></pre>
+<h3>HPA not scaling</h3>
+<pre><code class="language-bash">kubectl describe hpa -n sam-gong</code></pre>
+<p>If metrics are unavailable, ensure <code>metrics-server</code> is enabled:</p>
+<pre><code class="language-bash">minikube addons enable metrics-server</code></pre>
+<hr>
+<h2>Quick Reference</h2>
+<table>
+<tr><th>Command</th><th>Description</th></tr>
+<tr><td><code>docker compose -f infra/docker-compose.yml up -d</code></td><td>Start local databases</td></tr>
+<tr><td><code>npm run dev</code></td><td>Start all dev servers</td></tr>
+<tr><td><code>npm test</code></td><td>Run unit tests</td></tr>
+<tr><td><code>npm run test:e2e</code></td><td>Run e2e tests</td></tr>
+<tr><td><code>minikube start</code></td><td>Start local k8s cluster</td></tr>
+<tr><td><code>eval $(minikube docker-env)</code></td><td>Point Docker to Minikube</td></tr>
+<tr><td><code>kubectl apply -f infra/k8s/</code></td><td>Deploy to Minikube</td></tr>
+<tr><td><code>kubectl get pods -n sam-gong</code></td><td>Check pod status</td></tr>
+<tr><td><code>minikube tunnel</code></td><td>Expose LoadBalancer services locally</td></tr>
+<tr><td><code>minikube dashboard</code></td><td>Open k8s dashboard in browser</td></tr>
+</table></main>
+  </div>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({startOnLoad:true,theme:'default',
+      flowchart:{curve:'basis',nodeSpacing:60,rankSpacing:80},
+      er:{layoutDirection:'TD',minEntityWidth:100,fontSize:12},
+      sequence:{actorMargin:60,messageMargin:30}});
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-yaml.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-json.min.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

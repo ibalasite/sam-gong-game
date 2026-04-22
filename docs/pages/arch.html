@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>架構設計 — sam-gong-game</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+  <header class="top-nav">
+    <a href="index.html" class="nav-brand">sam-gong-game</a>
+    <div class="nav-controls">
+      <div class="search-wrap">
+        <input class="search-input" type="search" placeholder="搜尋文件...">
+        <div class="search-results"></div>
+      </div>
+      <a class="nav-gh-link" href="https://github.com/ibalasite/sam-gong-game-test" target="_blank" rel="noopener">⌥ GitHub</a>
+      <button class="sidebar-toggle" id="sidebarToggle" title="收合/展開側欄">☰</button>
+    </div>
+  </header>
+  <div class="doc-page-banner">
+    <p class="banner-breadcrumb"><a href="index.html">sam-gong-game</a> › 架構設計</p>
+    <h1 class="banner-title">架構設計</h1>
+  </div>
+  <div class="page-wrapper">
+    <aside class="sidebar" aria-label="文件導覽">
+      <div class="sidebar__section">
+        <div class="sidebar__label">文件</div>
+        <a class="sidebar__link" href="index.html">🏠 首頁</a>
+<a class="sidebar__link" href="idea.html">💡 構想文件 (IDEA)</a>
+<a class="sidebar__link" href="brd.html">📋 商業需求文件 (BRD)</a>
+<a class="sidebar__link" href="prd.html">📝 產品需求文件 (PRD)</a>
+<a class="sidebar__link" href="pdd.html">🎨 產品設計文件 (PDD)</a>
+<a class="sidebar__link" href="edd.html">🏗️ 工程設計文件 (EDD)</a>
+<a class="sidebar__link active" href="arch.html">🧩 架構設計</a>
+<a class="sidebar__link" href="api.html">🔌 API 文件</a>
+<a class="sidebar__link" href="schema.html">🗄️ Schema 文件</a>
+<a class="sidebar__link" href="test-plan.html">✅ 測試計畫</a>
+<a class="sidebar__link" href="diagrams.html">📊 系統圖表</a>
+<a class="sidebar__link" href="alignment-report.html">📄 Alignment Report</a>
+<a class="sidebar__link" href="smoke-test-report.html">📄 Smoke Test Report</a>
+<a class="sidebar__link" href="local-deploy.html">📄 Local Deploy</a>
+<a class="sidebar__link" href="lang.html">🔧 語言選型</a>
+      </div>
+    </aside>
+    <div class="sidebar-resizer" id="sidebarResizer"></div>
+    <main class="doc-content"><h1>ARCH — 系統架構文件</h1>
+<p>&lt;!-- SDLC Architecture Document — Layer 3：Architecture Design --&gt;</p>
+<hr>
+<h2>Document Control</h2>
+<table>
+<tr><th>欄位</th><th>內容</th></tr>
+<tr><td><strong>DOC-ID</strong></td><td>ARCH-SAM-GONG-GAME-20260422</td></tr>
+<tr><td><strong>專案名稱</strong></td><td>三公遊戲（Sam Gong 3-Card Poker）即時多人線上平台</td></tr>
+<tr><td><strong>文件版本</strong></td><td>v1.1</td></tr>
+<tr><td><strong>狀態</strong></td><td>DRAFT（STEP-10 Review 完成，依 EDD v1.4-draft）</td></tr>
+<tr><td><strong>作者</strong></td><td>Evans Tseng（由 STEP-09 自動生成）</td></tr>
+<tr><td><strong>日期</strong></td><td>2026-04-22</td></tr>
+<tr><td><strong>來源 EDD</strong></td><td>EDD-SAM-GONG-GAME-20260422 v1.4-draft</td></tr>
+</table>
+<hr>
+<h2>Change Log</h2>
+<table>
+<tr><th>版本</th><th>日期</th><th>作者</th><th>變更摘要</th></tr>
+<tr><td>v1.0</td><td>2026-04-22</td><td>STEP-09</td><td>初稿；依 EDD v1.4-draft 生成；涵蓋系統架構、組件設計、部署拓樸、安全架構、可觀測性、TDR</td></tr>
+<tr><td>v1.1</td><td>2026-04-22</td><td>STEP-10 Round 1</td><td>修復 8 個 findings：F1 readiness probe 說明補齊（DB+Redis+Room state init）；F2 Redis Key Pattern 補充 active_device（多裝置登入偵測）；F3 staging 環境描述補充 Beta 測試；F4 監控表補充 rake_exceeds_theoretical_max 指標；F5 CCU 告警說明強調非 HPA 觸發；F6 Alertmanager 規則補充路由說明（critical→PagerDuty/warning→Slack 5min 匯聚）；F7 Colyseus Monitor 矛盾說明修正（Production 預設禁用）；F8 settled phase 補充 rescue_chips 觸發機制及結算步驟描述精確化</td></tr>
+<tr><td>v1.1</td><td>2026-04-22</td><td>STEP-10 Round 2</td><td>修復 4 個 findings：F1 Document Control 版本號更新為 v1.1；F2 SettlementEngine 模組描述修正（多步驟原子性結算）；F3 §6.1 Pub/Sub 補充 force_disconnect_device 頻道；F4 頁腳版本號更新</td></tr>
+<tr><td>v1.1</td><td>2026-04-22</td><td>STEP-10 Round 3</td><td>修復 1 個 finding：F1 §5.4 補充結算賠率規格（N×banker_bet_amount）、底池定義（losers&#x27; called_bets）、Rake 計算公式，確保與關鍵規格完全一致</td></tr>
+</table>
+<hr>
+<h2>1. Architecture Overview</h2>
+<p>三公遊戲採用 <strong>Server-Authoritative</strong> 架構，所有遊戲邏輯（洗牌、發牌、比牌、結算）完全由 Server 執行，Client（Cocos Creator 3.8.x）為「啞渲染器（dumb renderer）」，僅負責狀態渲染與使用者互動收集。</p>
+<h3>1.1 核心架構原則</h3>
+<ol><li><strong>Server-Authoritative</strong>：遊戲邏輯 100% 在 Server，Client 不含任何遊戲邏輯（TypeScript project references CI 強制邊界）</li><li><strong>無狀態水平擴展</strong>：REST API 無狀態；Colyseus 透過 <code>@colyseus/redis-presence</code> 跨節點協調</li><li><strong>事務一致性優先</strong>：PostgreSQL ACID + SERIALIZABLE 隔離保證籌碼守恆（誤差容忍 = 0）</li><li><strong>多層防禦</strong>：CloudFlare DDoS → NGINX Ingress Rate Limit → Redis Token Bucket → Colyseus 訊息驗證</li><li><strong>高可用設計</strong>：Redis Sentinel 3 節點 + PostgreSQL Primary/Replica，SLA ≥ 99.5%（NFR-03）</li></ol>
+<h3>1.2 高層次架構圖（Mermaid）</h3>
+<div class="diagram-container"><pre class="mermaid">graph TB
+    subgraph Clients["Client Layer"]
+        CC["Cocos Creator 3.8.x<br/>(Web / Android / iOS)"]
+    end
+
+    subgraph Edge["Edge Layer"]
+        LB["Load Balancer<br/>(NGINX Ingress / k8s Service)"]
+        CF["CloudFlare<br/>(DDoS / GeoIP / TLS Termination)"]
+    end
+
+    subgraph AppLayer["Application Layer (k8s Pods)"]
+        CS1["Colyseus Node 1<br/>(Game Server)"]
+        CS2["Colyseus Node 2<br/>(Game Server)"]
+        CS3["Colyseus Node N<br/>(Game Server)"]
+        REST["REST API Service<br/>(Express / Node.js 22.x)"]
+        AUTH["Auth Service<br/>(JWT RS256/ES256)"]
+        ADMIN["Admin API<br/>(Internal Only)"]
+    end
+
+    subgraph DataLayer["Data Layer"]
+        PG_PRIMARY["PostgreSQL 16.x<br/>(Primary)"]
+        PG_REPLICA["PostgreSQL 16.x<br/>(Read Replica)"]
+        REDIS["Redis 7.x Sentinel<br/>(Cache / Session / Pub-Sub)"]
+    end
+
+    subgraph Observability["Observability"]
+        GRAFANA["Grafana + Prometheus"]
+        PAGERDUTY["PagerDuty Alerts"]
+        LOKI["Loki (Log Aggregation)"]
+    end
+
+    CC -->|"HTTPS / WSS"| CF
+    CF --> LB
+    LB -->|"Sticky Session (WebSocket)"| CS1
+    LB -->|"Sticky Session (WebSocket)"| CS2
+    LB -->|"Sticky Session (WebSocket)"| CS3
+    LB -->|"REST API"| REST
+    REST --> AUTH
+    CS1 <-->|"Redis Presence / Pub-Sub"| REDIS
+    CS2 <-->|"Redis Presence / Pub-Sub"| REDIS
+    CS3 <-->|"Redis Presence / Pub-Sub"| REDIS
+    REST <--> REDIS
+    CS1 --> PG_PRIMARY
+    CS2 --> PG_PRIMARY
+    CS3 --> PG_PRIMARY
+    REST --> PG_PRIMARY
+    REST --> PG_REPLICA
+    PG_PRIMARY -->|"Streaming Replication"| PG_REPLICA
+    ADMIN --> PG_PRIMARY
+    ADMIN --> REDIS
+    AppLayer --> GRAFANA
+    DataLayer --> GRAFANA
+    GRAFANA --> PAGERDUTY
+    AppLayer --> LOKI</pre></div>
+<hr>
+<h2>2. System Components</h2>
+<h3>2.1 Component Overview Table</h3>
+<table>
+<tr><th>元件名稱</th><th>技術</th><th>角色</th><th>可擴展性策略</th></tr>
+<tr><td>Colyseus Game Server</td><td>Colyseus 0.15.x / Node.js 22.x / TypeScript 5.4.x</td><td>WebSocket 連線管理、Room 生命週期、遊戲狀態同步</td><td>k8s HPA 水平擴展；<code>@colyseus/redis-presence</code> 跨節點協調；Sticky Session</td></tr>
+<tr><td>REST API Service</td><td>Express.js / Node.js 22.x / TypeScript 5.4.x</td><td>非即時操作：帳號、排行榜、每日任務、籌碼領取、個資刪除</td><td>k8s HPA 無狀態水平擴展</td></tr>
+<tr><td>Auth Service</td><td>JWT RS256/ES256 / Node.js</td><td>Token 簽發、驗證、Refresh Token Rotation；帳號封鎖後 60s 失效</td><td>無狀態；可隨 REST API 部署或獨立 Pod</td></tr>
+<tr><td>PostgreSQL 16.x Primary</td><td>PostgreSQL</td><td>主要持久化：users、chip_transactions、game_sessions、kyc_records</td><td>Streaming Replication；pgBouncer Transaction Mode 連線池</td></tr>
+<tr><td>PostgreSQL 16.x Read Replica</td><td>PostgreSQL</td><td>讀取分流：排行榜、玩家資料、交易記錄查詢</td><td>獨立 pgBouncer 實例（replica-pgbouncer:5432）</td></tr>
+<tr><td>Redis 7.x Sentinel</td><td>Redis Sentinel 模式（3 節點）</td><td>Session Cache、Rate Limit 計數器、Leaderboard Sorted Set、Matchmaking Queue、Colyseus Room Presence</td><td>Sentinel 自動 Failover；3 節點（1 master + 2 replicas，quorum=2）</td></tr>
+<tr><td>NGINX Ingress</td><td>k8s NGINX Ingress Controller</td><td>負載均衡、TLS Termination、Sticky Session（WebSocket）、Rate Limit 第一層</td><td>k8s Ingress 擴展</td></tr>
+<tr><td>CloudFlare</td><td>CDN / DDoS 防護</td><td>TLS、GeoIP 偵測（REQ-016 EU GDPR）、DDoS 緩解</td><td>CloudFlare 彈性擴展</td></tr>
+<tr><td>Admin API</td><td>Internal Node.js Service</td><td>SRE 操作工具：查詢帳號狀態、封號、籌碼審計；僅限內網 VPN</td><td>單一 Pod（非關鍵路徑）</td></tr>
+<tr><td>Grafana + Prometheus</td><td>Monitoring Stack</td><td>CCU、延遲 P95/P99、錯誤率、籌碼異常監控</td><td>Prometheus 抓取所有 Pod metrics</td></tr>
+<tr><td>Loki</td><td>Log Aggregation</td><td>結構化日誌（JSON）彙整，支援 Grafana Dashboard</td><td>Loki 水平擴展</td></tr>
+</table>
+<h3>2.2 Colyseus Game Server</h3>
+<p><strong>角色</strong>：核心遊戲邏輯執行環境，管理 SamGongRoom 生命週期。</p>
+<p><strong>關鍵模組（server-only TypeScript package）：</strong></p>
+<pre><code class="">server/src/game/
+├── DeckManager.ts          — 洗牌（Fisher-Yates + crypto.randomInt）、發牌
+├── HandEvaluator.ts        — 點數計算（mod 10）、D8 比牌（花色/點數排名）
+├── SettlementEngine.ts     — 多步驟原子性結算（比牌→破產檢查→籌碼分配→Rake→守恆驗證）、莊家破產（D13 先到先得）
+├── AntiAddictionManager.ts — 防沉迷計時器（成人 2h 提醒 / 未成年 2h 硬停）
+├── BankerRotation.ts       — 輪莊邏輯（順時鐘、跳過破產莊家）
+└── TutorialScriptEngine.ts — 教學固定劇本（R1/R2/R3）</code></pre>
+<p><strong>單節點容量</strong>：~500 CCU（~83 個 6 人房間）</p>
+<p><strong>Health Server</strong>：Port 3001 獨立 HTTP server（獨立 Express HTTP server，與 Colyseus WS port 2567 分離）</p>
+<ul><li><code>GET /health</code> → liveness probe（HTTP 200）</li><li><code>GET /ready</code> → readiness probe（DB + Redis 連線確認且 Room state 初始化完成後回應 200）</li></ul>
+<h3>2.3 REST API Service</h3>
+<p><strong>基礎 URL</strong>：<code>https://api.samgong.io/api/v1</code></p>
+<p><strong>功能分組</strong>：</p>
+<ul><li>Auth：登入、登出、Refresh Token Rotation、OTP 年齡驗證</li><li>Player：個人資料、設定、每日籌碼、救援籌碼、廣告獎勵</li><li>Game：排行榜、每日任務、私人房間管理</li><li>KYC：KYC 提交/查詢</li><li>Admin：封號、稽核日誌（VPN Only）</li><li>System：健康檢查、設定讀取</li></ul>
+<p><strong>OpenAPI Spec</strong>：<code>express-openapi-validator</code> 自動生成，發佈於 <code>/api/docs</code></p>
+<h3>2.4 PostgreSQL Primary + Read Replica</h3>
+<p><strong>連線池架構（pgBouncer）：</strong></p>
+<table>
+<tr><th>節點</th><th>模式</th><th>max_client_conn</th><th>pool_size</th><th>說明</th></tr>
+<tr><td>Primary</td><td>Transaction</td><td>200</td><td>50</td><td>寫入操作（結算事務 SERIALIZABLE）</td></tr>
+<tr><td>Read Replica</td><td>Transaction</td><td>100</td><td>30</td><td>讀取分流（排行榜、玩家資料）</td></tr>
+</table>
+<p><strong>Failover</strong>：PostgreSQL Streaming Replication；Failover ≤ 5 分鐘（NFR-18）</p>
+<h3>2.5 Redis 7.x Sentinel</h3>
+<p><strong>Sentinel 架構</strong>：3 節點（1 master + 2 replicas），quorum=2，自動 Failover</p>
+<p><strong>用途映射</strong>：</p>
+<table>
+<tr><th>用途</th><th>Key Pattern</th><th>TTL</th></tr>
+<tr><td>JWT 黑名單（封號）</td><td><code>block:{player_id}</code></td><td>60s</td></tr>
+<tr><td>Session Cache</td><td><code>session:{player_id}</code></td><td>1h</td></tr>
+<tr><td>Rate Limit（認證）</td><td><code>rl:auth:{ip}</code></td><td>60s</td></tr>
+<tr><td>Rate Limit（敏感）</td><td><code>rl:sensitive:{player_id}</code></td><td>60s</td></tr>
+<tr><td>Rate Limit（一般）</td><td><code>rl:general:{player_id}</code></td><td>60s</td></tr>
+<tr><td>Rate Limit（IP 全局）</td><td><code>rl:global:{ip}</code></td><td>60s</td></tr>
+<tr><td>Leaderboard ZSET</td><td><code>lb:weekly:{week_key}</code></td><td>8 天</td></tr>
+<tr><td>Matchmaking Queue</td><td><code>mm:queue:{tier_name}</code></td><td>90s</td></tr>
+<tr><td>Colyseus Presence</td><td><code>colyseus:presence:{room_id}</code></td><td>由 Colyseus 管理</td></tr>
+<tr><td>Anti-Addiction</td><td><code>aa:session:{player_id}</code></td><td>距次日 UTC+8 00:00</td></tr>
+<tr><td>OTP 每日計數</td><td><code>otp:daily:{phone_hash}:{date}</code></td><td>24h</td></tr>
+<tr><td>多裝置登入偵測</td><td><code>active_device:{player_id}</code></td><td>Refresh Token 有效期（≤ 7d）</td></tr>
+</table>
+<hr>
+<h2>3. Deployment Architecture</h2>
+<h3>3.1 Kubernetes 叢集規劃</h3>
+<pre><code class="language-yaml"># 命名空間
+namespaces:
+  - sam-gong-prod       # 生產環境
+  - sam-gong-staging    # 測試環境
+  - sam-gong-dev        # 開發環境（docker-compose 為主）
+  - monitoring          # Prometheus + Grafana + Loki</code></pre>
+<h3>3.2 Colyseus Server Deployment</h3>
+<pre><code class="language-yaml">kind: Deployment
+metadata:
+  name: colyseus-server
+  namespace: sam-gong-prod
+spec:
+  replicas: 2  # 初始；HPA 自動擴展
+  template:
+    spec:
+      containers:
+        - name: colyseus-server
+          image: sam-gong/colyseus-server:${VERSION}
+          ports:
+            - containerPort: 2567  # WebSocket
+            - containerPort: 3001  # Health HTTP
+          resources:
+            requests:
+              cpu: &quot;500m&quot;
+              memory: &quot;512Mi&quot;
+            limits:
+              cpu: &quot;2000m&quot;
+              memory: &quot;2Gi&quot;
+          lifecycle:
+            preStop:
+              exec:
+                command: [&quot;/bin/sh&quot;, &quot;-c&quot;, &quot;sleep 30&quot;]  # 優雅排空連線 30s
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 3001
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3</code></pre>
+<h3>3.3 HPA 設定</h3>
+<table>
+<tr><th>服務</th><th>minReplicas</th><th>maxReplicas</th><th>觸發條件</th><th>scaleDown 策略</th></tr>
+<tr><td>colyseus-server</td><td>2</td><td>10</td><td>CPU &gt; 70%（持續 5min）</td><td>stabilizationWindow 300s；每分鐘最多縮 25%</td></tr>
+<tr><td>rest-api</td><td>2</td><td>8</td><td>CPU &gt; 70%</td><td>預設</td></tr>
+</table>
+<p><strong>CCU 監控</strong>（&gt; 450 單節點）為輔助告警（PagerDuty Warning），不觸發 HPA 自動擴容。</p>
+<h3>3.4 StatefulSet 服務</h3>
+<table>
+<tr><th>服務</th><th>Replicas</th><th>Storage</th><th>備注</th></tr>
+<tr><td>postgres-primary</td><td>1</td><td>50Gi SSD PVC</td><td>主要寫入節點</td></tr>
+<tr><td>postgres-replica</td><td>1</td><td>50Gi SSD PVC</td><td>Streaming Replication 接收</td></tr>
+<tr><td>redis-sentinel</td><td>3</td><td>10Gi SSD PVC</td><td>各節點同時運行 redis-server + sentinel</td></tr>
+</table>
+<h3>3.5 環境策略</h3>
+<table>
+<tr><th>環境</th><th>用途</th><th>資源規格</th><th>部署觸發</th></tr>
+<tr><td>dev</td><td>功能開發、本地測試</td><td>單節點（docker-compose）</td><td>push to feature/*</td></tr>
+<tr><td>staging</td><td>Integration Test、性能測試、Beta 測試</td><td>2 Colyseus + 1 PG + 1 Redis</td><td>push to develop</td></tr>
+<tr><td>prod</td><td>正式服務</td><td>完整 k8s 叢集（HPA）</td><td>push to main（需 Review + Approval）</td></tr>
+</table>
+<h3>3.6 CI/CD Pipeline（GitHub Actions）</h3>
+<pre><code class="">on: push to [main, develop]
+
+jobs:
+  test:
+    - npm audit（高危阻擋）
+    - ESLint（含 client bundle 關鍵字掃描）
+    - TypeScript project references 邊界驗證
+    - Unit Tests（HandEvaluator ≥ 200 vectors）
+    - Integration Tests（Settlement 並發）
+    - Semgrep SAST（rules/sql-injection.yaml）
+    - Coverage ≥ 80%（lines/branches/functions）
+
+  build:
+    - Docker multi-stage build
+    - Trivy 容器漏洞掃描
+    - OSS License 檢查
+    - Push to ECR（tagged with commit SHA）
+
+  deploy-staging → deploy-prod（需手動 Approval）</code></pre>
+<p><strong>Auto-rollback 觸發（Blue-Green 切換後 5min）：</strong></p>
+<ul><li><code>api_error_rate_5xx &gt; 1%</code>（持續 2min）</li><li><code>websocket_latency_p95 &gt; 200ms</code>（持續 2min）</li><li>health check 失敗率 &gt; 30%</li></ul>
+<hr>
+<h2>4. Network Architecture</h2>
+<h3>4.1 域名與 Ingress 路由</h3>
+<table>
+<tr><th>域名</th><th>路徑</th><th>目標服務</th><th>協議</th></tr>
+<tr><td><code>api.samgong.io</code></td><td><code>/api</code></td><td>rest-api:3000</td><td>HTTPS</td></tr>
+<tr><td><code>ws.samgong.io</code></td><td><code>/</code></td><td>colyseus-server:2567</td><td>WSS（WebSocket Upgrade）</td></tr>
+<tr><td><code>api.samgong.io</code></td><td><code>/api/docs</code></td><td>rest-api:3000（OpenAPI UI）</td><td>HTTPS</td></tr>
+</table>
+<h3>4.2 NGINX Ingress 關鍵 Annotations</h3>
+<pre><code class="language-yaml">annotations:
+  nginx.ingress.kubernetes.io/proxy-read-timeout: &quot;3600&quot;   # WebSocket 長連線
+  nginx.ingress.kubernetes.io/affinity: &quot;cookie&quot;            # Sticky Session
+  nginx.ingress.kubernetes.io/proxy-body-size: &quot;10m&quot;        # 上傳限制
+  nginx.ingress.kubernetes.io/ssl-redirect: &quot;true&quot;          # 強制 HTTPS</code></pre>
+<h3>4.3 TLS / Security Layer</h3>
+<table>
+<tr><th>層次</th><th>元件</th><th>功能</th></tr>
+<tr><td>L1</td><td>CloudFlare</td><td>DDoS 緩解、GeoIP、TLS Termination（TLS 1.2+）</td></tr>
+<tr><td>L2</td><td>NGINX Ingress</td><td>SSL 終止（或 CloudFlare Proxy Mode）、Sticky Session</td></tr>
+<tr><td>L3</td><td>Application</td><td>JWT RS256/ES256 驗證；WebSocket over wss://</td></tr>
+</table>
+<p><strong>CORS 設定（Production）：</strong></p>
+<pre><code class="">Access-Control-Allow-Origin: https://samgong.io, https://app.samgong.io
+Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+Access-Control-Allow-Headers: Authorization, Content-Type, X-Request-ID
+Access-Control-Max-Age: 86400
+Access-Control-Allow-Credentials: false
+禁止: Access-Control-Allow-Origin: *</code></pre>
+<h3>4.4 WebSocket Sticky Session</h3>
+<p>Colyseus WebSocket 連線必須保持 Sticky Session（同一玩家的 WS 連線固定路由至同一 Pod）：</p>
+<pre><code class="">NGINX: upstream hash $cookie_colyseus_session
+k8s Service: sessionAffinity: ClientIP（備選）</code></pre>
+<p>跨節點重連由 <code>@colyseus/redis-presence</code> 協調，玩家可在不同 Pod 間重連。</p>
+<hr>
+<h2>5. Data Flow</h2>
+<h3>5.1 玩家登入流程</h3>
+<pre><code class="">1. Client → CloudFlare → NGINX → POST /api/v1/auth/login
+2. Auth Service → PostgreSQL：查詢帳號 + 驗證密碼/OAuth
+3. Auth Service → Redis：DEL session:{player_id}（清除舊 Session Cache）
+4. Auth Service → PostgreSQL：儲存 Refresh Token hash
+5. Auth Service → Client：{ access_token（RS256, TTL=1h）, refresh_token（TTL=7d） }</code></pre>
+<h3>5.2 玩家進房（配對）流程</h3>
+<pre><code class="">1. Client → GET /api/v1/config（獲取廳別設定、WS Server 域名）
+2. Client → Colyseus WS：client.joinOrCreate(&#x27;sam_gong&#x27;, { tier, token })
+3. Colyseus onJoin：
+   a. 驗證 JWT RS256 簽名 + TTL
+   b. 檢查 Redis block:{player_id}（封號黑名單）
+   c. 驗證 chip_balance ≥ tier entry_chips
+   d. 分配 seat_index；初始化 PlayerState
+   e. 年齡路由（is_minor → trackUnderageDaily / trackAdultSession）
+   f. 推送 my_session_info（私人訊息）
+4. Colyseus → Redis：更新 Room Presence
+5. State Sync → Client：SamGongState diff（Colyseus 自動）</code></pre>
+<h3>5.3 遊戲局流程（dealing → settled）</h3>
+<pre><code class="">dealing phase（≤ 1s）：
+1. DeckManager.buildDeck() + Fisher-Yates shuffle（crypto.randomInt）
+2. 發 3 張牌給每位玩家
+3. 各玩家手牌透過私人訊息推送（client.send(&#x27;myHand&#x27;, cards)）
+4. State: phase → &#x27;banker-bet&#x27;
+
+banker-bet phase（30s）：
+1. 莊家收到 banker_bet 訊息
+2. Server 驗證：phase, is_banker, min_bet ≤ amount ≤ max_bet, amount ≤ chip_balance
+3. 扣除 escrow（banker chip_balance -= bet）
+4. 廣播 banker_bet_amount；State: phase → &#x27;player-bet&#x27;
+
+player-bet phase（每人 30s）：
+1. 閒家逐一收到 call / fold 訊息
+2. call：chip_balance -= banker_bet_amount（escrow）
+3. fold：bet_amount = 0，無扣款
+4. 所有閒家行動完成或超時 → phase → &#x27;showdown&#x27;
+
+showdown phase（≤ 1s）：
+1. HandEvaluator 計算每位玩家點數（sum mod 10，三公=3張10點牌）
+2. D8 比牌（花色排名 &gt; 點數排名）
+3. SettlementEngine.settle()：多步驟原子性結算（比牌 → 莊家破產檢查 D13 → 籌碼分配 → Rake 計算 → 籌碼守恆驗證）
+
+settled phase（≈ 5s）：
+1. 廣播 showdown_reveal（所有未 Fold 手牌）
+2. 廣播 SettlementState（結算結果）
+3. PostgreSQL（SERIALIZABLE 事務）：
+   a. UPDATE users SET chip_balance 每位玩家
+   b. INSERT INTO chip_transactions（每人一筆 + rake 一筆，rake user_id = SYSTEM_ACCOUNT_UUID）
+   c. INSERT INTO game_sessions（結算快照）
+   d. Redis ZADD lb:weekly（排行榜更新，跳過 show_in_leaderboard=false 玩家）
+4. AntiAddictionManager.persistTimers()
+5. 偵測 chip_balance &lt; 500 → 觸發救援籌碼檢查（rescue_chips 私人訊息或 rescue_not_available 通知）
+6. 5s 後 resetForNextRound()，若 players.size ≥ 2 → &#x27;dealing&#x27;；否則 → &#x27;waiting&#x27;</code></pre>
+<h3>5.4 結算引擎籌碼守恆驗證</h3>
+<pre><code class="">賠率規格（PRD §5.4）：
+  三公（is_sam_gong）  N = 3
+  9點                  N = 2
+  1-8點（非三公）      N = 1
+  平手                  N = 0（退回 called_bet，net_chips = 0）
+
+贏家淨利：Winner net_chips = N × banker_bet_amount（純利潤）
+底池定義：pot_amount = 所有輸家（losers）的 called_bet 加總
+Rake 計算：rake = pot_amount &gt; 0 ? Math.max(Math.floor(pot_amount × 0.05), 1) : 0
+
+籌碼守恆驗證（結算完成後必須滿足）：
+  sum(all participants&#x27; net_chips) + rake_amount === 0
+
+若驗證失敗：
+  1. 回滾 PostgreSQL 事務
+  2. 記錄 CRITICAL 日誌（含完整 settlement_payload）
+  3. PagerDuty 立即告警（SRE ≤ 15min 響應）</code></pre>
+<hr>
+<h2>6. Scalability Strategy</h2>
+<h3>6.1 Colyseus 水平擴展</h3>
+<table>
+<tr><th>指標</th><th>值</th></tr>
+<tr><td>單節點容量</td><td>~500 CCU（~83 個 6 人房間）</td></tr>
+<tr><td>GA 目標</td><td>500 CCU（2 Colyseus Pods）</td></tr>
+<tr><td>+6M 目標</td><td>2,000 CCU（4+ Colyseus Pods，HPA 自動擴展）</td></tr>
+</table>
+<p><strong>跨節點協調機制：</strong></p>
+<ul><li><code>@colyseus/redis-presence</code>：Room Presence 資訊存於 Redis，所有 Pod 共享</li><li>Matchmaking Queue：Redis List/Sorted Set 集中管理（<code>mm:queue:{tier_name}</code>）</li><li>Pub/Sub：封號踢出廣播（<code>sam-gong:admin:force_disconnect</code>）；多裝置重複登入踢出（<code>sam-gong:admin:force_disconnect_device</code>）</li></ul>
+<h3>6.2 PostgreSQL 讀寫分離</h3>
+<pre><code class="">Write（INSERT/UPDATE）→ Primary
+Read（SELECT）→ Read Replica：
+  - GET /leaderboard（排行榜查詢）
+  - GET /player/me（玩家資料）
+  - GET /player/chip-transactions（交易記錄）
+
+Primary pgBouncer：Transaction Mode；max_client_conn=200，pool_size=50
+Replica pgBouncer：Transaction Mode；max_client_conn=100，pool_size=30
+Circuit Breaker：連線池耗盡後 30s 返回 HTTP 503 + Retry-After:30</code></pre>
+<p><strong>pgBouncer Transaction Mode + SERIALIZABLE 相容性</strong>：結算事務使用 BEGIN/COMMIT 顯式事務包裹，Transaction Mode 可正常運作。禁止使用 advisory lock 或 PREPARE TRANSACTION。</p>
+<h3>6.3 Redis Leaderboard 策略</h3>
+<pre><code class="">排行榜維護：
+- PUT /api/v1/player/settings（show_in_leaderboard=false）→ ZREM lb:weekly:{week_key} {player_id}
+- 結算後（game_win/game_lose）→ ZADD lb:weekly:{week_key} score player_id
+- GET /api/v1/leaderboard → ZREVRANGE + 應用層過濾 show_in_leaderboard
+- 每週歸檔排程 → leaderboard_weekly 表聚合</code></pre>
+<h3>6.4 Load Estimation</h3>
+<table>
+<tr><th>指標</th><th>GA（500 CCU）</th><th>+6M（2,000 CCU）</th></tr>
+<tr><td>同時遊戲房間數</td><td>83</td><td>333</td></tr>
+<tr><td>每秒 WS 訊息（Peak）</td><td>~330 msg/s</td><td>~1,320 msg/s</td></tr>
+<tr><td>PostgreSQL 結算 TPS</td><td>~3 TPS</td><td>~12 TPS</td></tr>
+<tr><td>Redis 操作（Peak）</td><td>~1,000 ops/s</td><td>~4,000 ops/s</td></tr>
+</table>
+<hr>
+<h2>7. High Availability &amp; Disaster Recovery</h2>
+<h3>7.1 Redis Sentinel HA</h3>
+<pre><code class="">架構：3 節點（1 master + 2 replicas，各節點同時運行 redis-server + sentinel）
+Quorum：2（多數決自動選主）
+Failover 時間：&lt; 30s（Sentinel 檢測 + 選主）
+RPO：≤ 15 分鐘（RDB 快照）
+Failback：舊 master 恢復後自動降為 replica
+Anti-Addiction 計時：Write-Through 策略，Redis 重啟後從 PostgreSQL 回填</code></pre>
+<h3>7.2 PostgreSQL Failover</h3>
+<pre><code class="">架構：Primary + Read Replica（Streaming Replication）
+Failover 觸發：Primary 不可達（pg_primary_unavailable == 1）
+Failover 時間：≤ 5 分鐘（NFR-18）
+工具：Patroni 或手動提升（kubectl exec pgctl promote）
+季度演練：每季度執行 1 次 Failover 演練（NFR-18）
+DB Lag 監控：postgres_replication_lag_bytes &gt; 10MB → PagerDuty Warning</code></pre>
+<h3>7.3 Blue-Green Deployment</h3>
+<pre><code class="">部署流程：
+1. 部署新版本至 Green 環境（保持 Blue 繼續服務）
+2. Smoke Test + Health Check 通過
+3. NGINX Ingress 流量 Blue → Green（30s 內完成）
+4. 監控 5 分鐘（Error Rate、Latency P95）
+5. 無異常：下線 Blue；有問題：Rollback ≤ 30s</code></pre>
+<h3>7.4 SLA 設計</h3>
+<pre><code class="">各組件獨立可用性：≥ 99.9%
+串聯可用性（4 組件）：0.999^4 ≈ 99.6%
+整體服務 SLA 目標：≥ 99.5%/月（NFR-03）
+Error Budget：每月 3.65 小時
+
+Error Budget 消耗策略：
+- 50%：凍結非緊急上線，集中修復
+- 100%：立即凍結所有發布直到下月</code></pre>
+<hr>
+<h2>8. Security Architecture</h2>
+<h3>8.1 JWT RS256 認證</h3>
+<pre><code class="">算法：RS256（RSA 2048-bit）或 ES256（ECDSA P-256）
+禁止：HS256（對稱密鑰洩漏風險）
+
+Token 規格：
+  Access Token TTL：≤ 1 小時（NFR-17）
+  Refresh Token TTL：≤ 7 天，一次性使用（Rotation）
+
+封號後失效機制（60s Block-to-Expire）：
+  1. UPDATE DB is_banned = true
+  2. SETEX block:{player_id} 60 &quot;1&quot;（Redis TTL 60s）
+  3. DEL session:{player_id}（強制 Session Cache 失效）
+  4. PUBLISH sam-gong:admin:force_disconnect &quot;{player_id}&quot;
+  5. Colyseus Pod 收到後 client.leave(4001)
+
+私鑰管理：AWS KMS（或等效 HSM）
+金鑰輪換：每 90 天（NFR-05）</code></pre>
+<h3>8.2 四層速率限制（NFR-19）</h3>
+<table>
+<tr><th>層次</th><th>適用範圍</th><th>Key</th><th>限制</th></tr>
+<tr><td>L1</td><td>認證端點（/auth/*）</td><td><code>rl:auth:{ip}</code></td><td>30 次/min/IP</td></tr>
+<tr><td>L2</td><td>高敏感端點（daily-chip, tasks）</td><td><code>rl:sensitive:{player_id}</code></td><td>5 次/min/user</td></tr>
+<tr><td>L3</td><td>一般 API</td><td><code>rl:general:{player_id}</code></td><td>60 次/min/user</td></tr>
+<tr><td>L4</td><td>IP 全局</td><td><code>rl:global:{ip}</code></td><td>300 次/min/IP</td></tr>
+</table>
+<p>超限回應：HTTP 429 + <code>Retry-After</code> header</p>
+<p><strong>Redis Lua Script（原子性計數）</strong>：</p>
+<pre><code class="language-lua">local current = redis.call(&#x27;INCR&#x27;, KEYS[1])
+if current == 1 then redis.call(&#x27;EXPIRE&#x27;, KEYS[1], ARGV[2]) end
+if current &gt; tonumber(ARGV[1]) then return redis.call(&#x27;TTL&#x27;, KEYS[1]) else return 0 end</code></pre>
+<h3>8.3 SQL Injection 防護</h3>
+<p>所有 PostgreSQL 查詢使用 node-postgres parameterized queries（<code>$1</code>, <code>$2</code> 佔位符），嚴禁字串拼接 SQL。CI pipeline Semgrep SAST 規則包含 SQL injection 偵測（<code>rules/sql-injection.yaml</code>）。</p>
+<h3>8.4 反作弊架構</h3>
+<table>
+<tr><th>層次</th><th>機制</th></tr>
+<tr><td>架構隔離</td><td>TypeScript project references；CI Client bundle 關鍵字掃描</td></tr>
+<tr><td>靜態分析</td><td>ESLint 自定義規則；禁止關鍵字清單（20+ 詞）；0 命中才 Pass</td></tr>
+<tr><td>Server 驗證</td><td>每條 WS 訊息：phase 驗證、金額驗證、身份驗證</td></tr>
+<tr><td>行為偵測</td><td>滾動 10 局累計 ≥ 5 次標記 → 臨時封號 24h</td></tr>
+<tr><td>封包測試</td><td>Alpha 前 Wireshark 抓包（REQ-002 AC-5）；6 人房間 0 次手牌洩漏</td></tr>
+</table>
+<h3>8.5 Admin API 安全</h3>
+<pre><code class="">存取限制：內網 VPN Only
+認證：獨立 Admin JWT（claims: role=admin，不同私鑰）
+稽核：所有 Admin 操作記入 audit_log
+高風險操作：封號（POST /api/v1/admin/player/:id/ban）
+TOTP 2FA：OQ-3（待決策，預計 2026-05-15）
+Colyseus Monitor：Production 預設禁用（`NODE_ENV=production` 時不掛載 monitor middleware）；Staging 可用；若 Production 環境需啟用，須使用 k8s NetworkPolicy 限制僅 VPN/Bastion IP 可存取，並加入 BasicAuth</code></pre>
+<hr>
+<h2>9. Monitoring &amp; Alerting</h2>
+<h3>9.1 Grafana Dashboard 指標</h3>
+<table>
+<tr><th>指標類別</th><th>指標名稱</th><th>告警閾值</th><th>動作</th></tr>
+<tr><td>CCU</td><td><code>colyseus_room_clients_total</code></td><td>&gt; 450（單節點）</td><td>PagerDuty Warning（輔助告警，HPA 仍僅由 CPU &gt; 70% 觸發）</td></tr>
+<tr><td>延遲</td><td><code>websocket_latency_p95_ms</code></td><td>&gt; 100ms</td><td>PagerDuty Warning</td></tr>
+<tr><td>延遲</td><td><code>websocket_latency_p99_ms</code></td><td>&gt; 500ms</td><td>PagerDuty Critical</td></tr>
+<tr><td>錯誤率</td><td><code>api_error_rate_5xx</code></td><td>&gt; 1%</td><td>PagerDuty</td></tr>
+<tr><td>房間數</td><td><code>colyseus_rooms_total</code></td><td>&gt; 350（單節點）</td><td>PagerDuty Warning</td></tr>
+<tr><td>籌碼守恆</td><td><code>chip_conservation_violation</code></td><td>&gt; 0</td><td>PagerDuty Critical（SRE ≤ 15min）</td></tr>
+<tr><td>負值餘額</td><td><code>chip_balance_negative_count</code></td><td>&gt; 0</td><td>PagerDuty Critical</td></tr>
+<tr><td>異常抽水</td><td><code>rake_exceeds_theoretical_max</code></td><td>&gt; 0</td><td>PagerDuty Critical</td></tr>
+<tr><td>DB Lag</td><td><code>postgres_replication_lag_bytes</code></td><td>&gt; 10MB</td><td>PagerDuty Warning</td></tr>
+<tr><td>Redis 記憶體</td><td><code>redis_memory_usage_percent</code></td><td>&gt; 80%</td><td>PagerDuty Warning</td></tr>
+<tr><td>SLA</td><td><code>service_availability_percent</code></td><td>&lt; 99.9%</td><td>PagerDuty Critical</td></tr>
+</table>
+<h3>9.2 Alertmanager 規則</h3>
+<table>
+<tr><th>規則名稱</th><th>表達式</th><th>持續時間</th><th>Severity</th><th>路由</th></tr>
+<tr><td><code>ChipConservationViolation</code></td><td><code>chip_conservation_violation &gt; 0</code></td><td>0m（立即）</td><td>critical</td><td>PagerDuty（立即）</td></tr>
+<tr><td><code>HighErrorRate</code></td><td><code>api_error_rate_5xx &gt; 0.01</code></td><td>2m</td><td>warning</td><td>Slack #alerts-sam-gong（5 分鐘匯聚）</td></tr>
+<tr><td><code>ColyseusLatencyHigh</code></td><td><code>ws_latency_p95 &gt; 100</code></td><td>3m</td><td>warning</td><td>Slack #alerts-sam-gong（5 分鐘匯聚）</td></tr>
+<tr><td><code>DatabaseFailover</code></td><td><code>pg_primary_unavailable == 1</code></td><td>0m（立即）</td><td>critical</td><td>PagerDuty（立即）</td></tr>
+<tr><td><code>AntiAddictionMiss</code></td><td><code>anti_addiction_session_write_failure &gt; 0</code></td><td>0m（立即）</td><td>critical</td><td>PagerDuty（立即）</td></tr>
+</table>
+<p>告警路由：<code>critical</code> → PagerDuty（立即）；<code>warning</code> → Slack #alerts-sam-gong（5 分鐘匯聚）。</p>
+<p><strong>On-call Escalation</strong>：L1（SRE On-call）→ 5min → L2（Tech Lead）→ 10min → L3（CTO）</p>
+<h3>9.3 Structured Logging</h3>
+<pre><code class="language-json">{
+  &quot;timestamp&quot;: &quot;2026-04-22T10:00:00.000Z&quot;,
+  &quot;level&quot;: &quot;info|warn|error|critical&quot;,
+  &quot;service&quot;: &quot;colyseus-server|rest-api|auth-service&quot;,
+  &quot;room_id&quot;: &quot;...&quot;,
+  &quot;player_id&quot;: &quot;...&quot;,
+  &quot;game_session_id&quot;: &quot;...&quot;,
+  &quot;event&quot;: &quot;settlement_completed|rate_limit_triggered|...&quot;,
+  &quot;payload&quot;: {},
+  &quot;trace_id&quot;: &quot;...&quot;
+}</code></pre>
+<p><strong>CRITICAL 事件（立即 PagerDuty）</strong>：</p>
+<ul><li>籌碼守恆失敗（sum(net_chips) ≠ -rake）</li><li>單玩家 chip_balance 出現負值</li><li>結算事務回滾</li><li>DB 連線池耗盡</li></ul>
+<h3>9.4 可觀測性工具鏈</h3>
+<table>
+<tr><th>工具</th><th>用途</th></tr>
+<tr><td>Prometheus + prometheus-client</td><td>指標收集（Node.js）</td></tr>
+<tr><td>OpenTelemetry</td><td>分散式追蹤（trace_id 跨服務）</td></tr>
+<tr><td>Pino</td><td>結構化 JSON 日誌</td></tr>
+<tr><td>Loki</td><td>日誌收集 + Grafana 查詢</td></tr>
+<tr><td>Grafana</td><td>Dashboard + 告警</td></tr>
+<tr><td>PagerDuty</td><td>On-call 通知（SLA ≤ 15min 響應）</td></tr>
+</table>
+<hr>
+<h2>10. Technology Decision Records (TDR)</h2>
+<h3>TDR-001：Server-Authoritative 架構</h3>
+<ul><li><strong>狀態</strong>：Locked</li><li><strong>決策</strong>：所有遊戲邏輯在 Server TypeScript 執行；Client 為純渲染器</li><li><strong>理由</strong>：防止 Client 端作弊；台灣法規要求可稽核的遊戲公平性；籌碼守恆誤差容忍 = 0</li><li><strong>影響</strong>：Server 計算負載增加；Client 體驗依賴 NFR-02（P95 ≤ 100ms）</li></ul>
+<h3>TDR-002：Colyseus 0.15.x</h3>
+<ul><li><strong>狀態</strong>：Locked（版本鎖定 <code>~0.15.0</code>，minor 禁止跳版）</li><li><strong>決策</strong>：採用 Colyseus 0.15.x</li><li><strong>理由</strong>：官方 Cocos Creator SDK；內建 Room 生命週期、Matchmaking、Presence；Redis Presence 跨節點擴展；社群活躍</li><li><strong>影響</strong>：受 0.15.x API 約束；升級至 0.16+ 需完整回歸測試</li></ul>
+<h3>TDR-003：JWT RS256/ES256</h3>
+<ul><li><strong>狀態</strong>：Locked（NFR-17）</li><li><strong>決策</strong>：RS256 非對稱簽名；禁止 HS256</li><li><strong>理由</strong>：水平擴展不依賴 Session 共享；非對稱簽名防止私鑰洩漏風險</li><li><strong>影響</strong>：需要 AWS KMS 管理私鑰；Refresh Token Rotation 需 PostgreSQL 儲存；封號後 60s 失效窗口為已知接受限制</li></ul>
+<h3>TDR-004：PostgreSQL 16.x（而非 MongoDB）</h3>
+<ul><li><strong>狀態</strong>：Locked</li><li><strong>決策</strong>：PostgreSQL ACID + SERIALIZABLE 隔離</li><li><strong>理由</strong>：籌碼守恆必須 ACID；財務記錄 7 年保留；複雜結算 JOIN 查詢；Streaming Replication 支援 NFR-18</li><li><strong>影響</strong>：Schema 遷移需要 DDL 管理（node-pg-migrate 或 Flyway）</li></ul>
+<h3>TDR-005：Redis 7.x Sentinel（而非 Cluster）</h3>
+<ul><li><strong>狀態</strong>：Locked（v1.0 規模可接受 Sentinel 模式）</li><li><strong>決策</strong>：Sentinel 模式（3 節點，非 Cluster）</li><li><strong>理由</strong>：v1.0 規模（2,000 CCU）Sentinel 足夠；Cluster 增加運維複雜度</li><li><strong>影響</strong>：Redis 是關鍵單點；Failover 期間 Matchmaking Queue 從 PostgreSQL 重建</li></ul>
+<h3>TDR-006：chip_transactions 月分區（pg_partman）</h3>
+<ul><li><strong>狀態</strong>：Locked（財務記錄 7 年保留 + REQ-019）</li><li><strong>決策</strong>：<code>PARTITION BY RANGE (created_at)</code> 按月分區；pg_partman 自動管理</li><li><strong>理由</strong>：7 年記錄量龐大（需 partitioning）；DROP 舊分區比 DELETE 更高效</li><li><strong>影響</strong>：查詢時需包含 <code>created_at</code> 範圍以利用分區裁剪</li></ul>
+<hr>
+<p><em>文件版本 v1.1 — 依 EDD v1.4-draft 生成，STEP-10 Review 完成 — 2026-04-22</em></p></main>
+  </div>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({startOnLoad:true,theme:'default',
+      flowchart:{curve:'basis',nodeSpacing:60,rankSpacing:80},
+      er:{layoutDirection:'TD',minEntityWidth:100,fontSize:12},
+      sequence:{actorMargin:60,messageMargin:30}});
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-yaml.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-json.min.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

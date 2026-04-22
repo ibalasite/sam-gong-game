@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>系統圖表 — sam-gong-game</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+  <header class="top-nav">
+    <a href="index.html" class="nav-brand">sam-gong-game</a>
+    <div class="nav-controls">
+      <div class="search-wrap">
+        <input class="search-input" type="search" placeholder="搜尋文件...">
+        <div class="search-results"></div>
+      </div>
+      <a class="nav-gh-link" href="https://github.com/ibalasite/sam-gong-game-test" target="_blank" rel="noopener">⌥ GitHub</a>
+      <button class="sidebar-toggle" id="sidebarToggle" title="收合/展開側欄">☰</button>
+    </div>
+  </header>
+  <div class="doc-page-banner">
+    <p class="banner-breadcrumb"><a href="index.html">sam-gong-game</a> › 系統圖表</p>
+    <h1 class="banner-title">系統圖表</h1>
+  </div>
+  <div class="page-wrapper">
+    <aside class="sidebar" aria-label="文件導覽">
+      <div class="sidebar__section">
+        <div class="sidebar__label">文件</div>
+        <a class="sidebar__link" href="index.html">🏠 首頁</a>
+<a class="sidebar__link" href="idea.html">💡 構想文件 (IDEA)</a>
+<a class="sidebar__link" href="brd.html">📋 商業需求文件 (BRD)</a>
+<a class="sidebar__link" href="prd.html">📝 產品需求文件 (PRD)</a>
+<a class="sidebar__link" href="pdd.html">🎨 產品設計文件 (PDD)</a>
+<a class="sidebar__link" href="edd.html">🏗️ 工程設計文件 (EDD)</a>
+<a class="sidebar__link" href="arch.html">🧩 架構設計</a>
+<a class="sidebar__link" href="api.html">🔌 API 文件</a>
+<a class="sidebar__link" href="schema.html">🗄️ Schema 文件</a>
+<a class="sidebar__link" href="test-plan.html">✅ 測試計畫</a>
+<a class="sidebar__link active" href="diagrams.html">📊 系統圖表</a>
+<a class="sidebar__link" href="alignment-report.html">📄 Alignment Report</a>
+<a class="sidebar__link" href="smoke-test-report.html">📄 Smoke Test Report</a>
+<a class="sidebar__link" href="local-deploy.html">📄 Local Deploy</a>
+<a class="sidebar__link" href="lang.html">🔧 語言選型</a>
+      </div>
+    </aside>
+    <div class="sidebar-resizer" id="sidebarResizer"></div>
+    <main class="doc-content"><h1>DIAGRAMS — 系統流程圖文件</h1>
+<p>&lt;!-- SDLC Diagrams Document — Layer 3：Architecture Visualization --&gt;</p>
+<hr>
+<h2>Document Control</h2>
+<table>
+<tr><th>欄位</th><th>內容</th></tr>
+<tr><td><strong>DOC-ID</strong></td><td>DIAGRAMS-SAM-GONG-GAME-20260422</td></tr>
+<tr><td><strong>專案名稱</strong></td><td>三公遊戲（Sam Gong 3-Card Poker）即時多人線上平台</td></tr>
+<tr><td><strong>文件版本</strong></td><td>v1.0</td></tr>
+<tr><td><strong>狀態</strong></td><td>DRAFT（STEP-13 自動生成）</td></tr>
+<tr><td><strong>作者</strong></td><td>Evans Tseng（由 STEP-13 自動生成）</td></tr>
+<tr><td><strong>日期</strong></td><td>2026-04-22</td></tr>
+<tr><td><strong>來源文件</strong></td><td>EDD-SAM-GONG-GAME-20260422 v1.4-draft、ARCH-SAM-GONG-GAME-20260422 v1.1</td></tr>
+</table>
+<hr>
+<h2>Change Log</h2>
+<table>
+<tr><th>版本</th><th>日期</th><th>作者</th><th>變更摘要</th></tr>
+<tr><td>v1.0</td><td>2026-04-22</td><td>STEP-13</td><td>初稿；依 EDD v1.4-draft + ARCH v1.1 生成；涵蓋 12 個系統流程圖</td></tr>
+</table>
+<hr>
+<h2>目錄</h2>
+<ol><li><a href="#1-系統架構圖" target="_blank" rel="noopener">系統架構圖（System Architecture）</a></li><li><a href="#2-遊戲狀態機" target="_blank" rel="noopener">遊戲狀態機（Game State Machine）</a></li><li><a href="#3-玩家登入流程" target="_blank" rel="noopener">玩家登入流程（Login Sequence）</a></li><li><a href="#4-遊戲一局完整流程" target="_blank" rel="noopener">遊戲一局完整流程（Game Round Sequence）</a></li><li><a href="#5-結算邏輯流程圖" target="_blank" rel="noopener">結算邏輯流程圖（Settlement Flowchart）</a></li><li><a href="#6-防沉迷流程圖" target="_blank" rel="noopener">防沉迷流程圖（Anti-Addiction Flowchart）</a></li><li><a href="#7-jwt-認證與-refresh-流程" target="_blank" rel="noopener">JWT 認證與 Refresh 流程（JWT Auth Sequence）</a></li><li><a href="#8-封號即時踢出流程" target="_blank" rel="noopener">封號即時踢出流程（Ban &amp; Kick Sequence）</a></li><li><a href="#9-colyseus-水平擴展與房間路由" target="_blank" rel="noopener">Colyseus 水平擴展與房間路由（Horizontal Scaling Flowchart）</a></li><li><a href="#10-資料庫-er-圖" target="_blank" rel="noopener">資料庫 ER 圖（Entity Relationship Diagram）</a></li><li><a href="#11-救援籌碼流程圖" target="_blank" rel="noopener">救援籌碼流程圖（Rescue Chips Flowchart）</a></li><li><a href="#12-cicd-pipeline-流程圖" target="_blank" rel="noopener">CI/CD Pipeline 流程圖（CI/CD Pipeline Flowchart）</a></li></ol>
+<hr>
+<h2>1. 系統架構圖</h2>
+<div class="diagram-container"><pre class="mermaid">graph TB
+    subgraph Clients["Client Layer"]
+        CC["Cocos Creator 3.8.x\n(Web / Android / iOS)"]
+    end
+
+    subgraph Edge["Edge Layer"]
+        CF["CloudFlare\n(DDoS / GeoIP / TLS 1.2+)"]
+        LB["NGINX Ingress\n(Load Balancer / Sticky Session)"]
+    end
+
+    subgraph AppLayer["Application Layer (k8s Pods — sam-gong-prod)"]
+        CS1["Colyseus Node 1\n(Game Server :2567)\nHealth :3001"]
+        CS2["Colyseus Node 2\n(Game Server :2567)\nHealth :3001"]
+        CSN["Colyseus Node N\n(HPA max=10)"]
+        REST["REST API Service\n(Express / Node.js 22.x :3000)\nHPA max=8"]
+        AUTH["Auth Service\n(JWT RS256/ES256)"]
+        ADMIN["Admin API\n(Internal VPN Only)"]
+    end
+
+    subgraph DataLayer["Data Layer (StatefulSet)"]
+        PG_PRIMARY["PostgreSQL 16.x Primary\n(pgBouncer Transaction Mode\nmax_client=200 pool=50)"]
+        PG_REPLICA["PostgreSQL 16.x Read Replica\n(pgBouncer\nmax_client=100 pool=30)"]
+        REDIS["Redis 7.x Sentinel\n(3 nodes: 1 master + 2 replicas\nquorum=2)"]
+    end
+
+    subgraph Observability["Observability (monitoring namespace)"]
+        PROM["Prometheus\n(metrics scrape)"]
+        GRAFANA["Grafana Dashboard\n(CCU / Latency P95/P99 / Error Rate)"]
+        LOKI["Loki\n(Structured JSON Logs)"]
+        PAGERDUTY["PagerDuty\n(On-call Alerts)"]
+    end
+
+    CC -->|"HTTPS / WSS\nTLS 1.2+"| CF
+    CF -->|"Proxy"| LB
+    LB -->|"ws.samgong.io\nSticky Session (cookie)"| CS1
+    LB -->|"ws.samgong.io\nSticky Session (cookie)"| CS2
+    LB -->|"ws.samgong.io\nSticky Session (cookie)"| CSN
+    LB -->|"api.samgong.io/api"| REST
+    REST --> AUTH
+
+    CS1 <-->|"Redis Presence\nPub-Sub\nMatchmaking Queue"| REDIS
+    CS2 <-->|"Redis Presence\nPub-Sub\nMatchmaking Queue"| REDIS
+    CSN <-->|"Redis Presence\nPub-Sub"| REDIS
+    REST <-->|"Session Cache\nRate Limit\nLeaderboard ZSET"| REDIS
+
+    CS1 -->|"SERIALIZABLE\nWrites"| PG_PRIMARY
+    CS2 -->|"SERIALIZABLE\nWrites"| PG_PRIMARY
+    CSN -->|"SERIALIZABLE\nWrites"| PG_PRIMARY
+    REST -->|"Writes"| PG_PRIMARY
+    REST -->|"Reads\n(Leaderboard / Player)"| PG_REPLICA
+    PG_PRIMARY -->|"Streaming\nReplication"| PG_REPLICA
+
+    ADMIN -->|"VPN Only"| PG_PRIMARY
+    ADMIN -->|"VPN Only"| REDIS
+
+    AppLayer -->|"Prometheus\nscrape /metrics"| PROM
+    DataLayer -->|"DB / Redis\nmetrics"| PROM
+    PROM --> GRAFANA
+    AppLayer -->|"Pino JSON logs"| LOKI
+    LOKI --> GRAFANA
+    GRAFANA -->|"critical→PagerDuty\nwarning→Slack"| PAGERDUTY</pre></div>
+<p>三公遊戲採用完整的多層次 k8s 架構，從邊緣的 CloudFlare DDoS 防護，到 NGINX Ingress 的 Sticky Session 路由，再到 Colyseus Game Server Pod 群組。所有 WebSocket 連線透過 Sticky Session（cookie-based affinity）固定路由至同一 Colyseus Pod，確保 Room State 一致性。</p>
+<p>跨 Pod 協調由 <code>@colyseus/redis-presence</code> 實現，Room Presence 資訊、Matchmaking Queue、以及 Admin Pub/Sub 均存於 Redis 7.x Sentinel 叢集（3 節點，quorum=2，Failover &lt; 30s）。PostgreSQL 採用 Primary/Read Replica 架構，寫入（結算事務，SERIALIZABLE 隔離）走 Primary，讀取（排行榜、玩家資料）走 Read Replica，各自由獨立 pgBouncer 連線池管理。</p>
+<p>可觀測性層面，Prometheus 抓取所有 Pod metrics，Loki 彙整結構化 JSON 日誌，Grafana 提供統一 Dashboard。Critical 告警（如籌碼守恆失敗）立即觸發 PagerDuty；Warning 告警（如 P95 延遲 &gt; 100ms）彙聚至 Slack。</p>
+<hr>
+<h2>2. 遊戲狀態機</h2>
+<div class="diagram-container"><pre class="mermaid">stateDiagram-v2
+    [*] --> waiting : onCreate\n（房間建立，phase=waiting）
+
+    waiting --> dealing : players.size ≥ 2\n開始新局
+    waiting --> [*] : 60s 無人加入\n自動解散
+
+    dealing --> banker_bet : 發牌完成（每人 3 張）\n推送 myHand 至各玩家\n（私人訊息，防手牌洩漏）
+    dealing --> waiting : 發牌中玩家數 < 2\n（中途離開）
+
+    banker_bet --> player_bet : 莊家下注確認\n或 30s 超時自動最低下注\n廣播 banker_bet_amount\n啟動閒家計時器
+    banker_bet --> dealing : 莊家籌碼 < min_bet\n跳過當前莊家\nbanker_index += 1 mod N
+
+    player_bet --> showdown : 所有閒家行動完成\n（Call / Fold / 30s 超時 Fold）
+    player_bet --> showdown : 所有閒家均 Fold\n（all_fold 情境）
+
+    showdown --> settled : Server 比牌完成\n廣播 showdown_reveal\n（所有未 Fold 手牌）
+    showdown --> settled : all_fold：直接結算\n莊家底注退回
+
+    settled --> dealing : 結算廣播完成\n籌碼更新持久化\n輪莊至下一位\n5s 後自動開始\nplayers.size ≥ 2
+    settled --> waiting : 玩家不足\nplayers.size < 2\n等待更多玩家
+    settled --> [*] : players.size < 2\n且 60s 無人加入\n或所有玩家主動離開
+
+    note right of waiting
+        room_type: matchmaking / private
+        entry_chips 驗證
+        60s 超時解散計時器
+        TierConfig 載入
+    end note
+
+    note right of dealing
+        DeckManager.buildDeck()
+        Fisher-Yates shuffle
+        crypto.randomInt（禁止 Math.random）
+        各玩家私人訊息推送手牌
+    end note
+
+    note right of banker_bet
+        莊家 30s 計時器
+        see_cards 可選（D12）
+        escrow: banker chip_balance -= bet
+        驗證: min_bet ≤ amount ≤ max_bet
+    end note
+
+    note right of player_bet
+        閒家逐一 30s 計時
+        Call: chip_balance -= banker_bet_amount
+        Fold: bet=0, no chips deducted
+        current_player_turn_seat 追蹤當前輪次
+    end note
+
+    note right of showdown
+        HandEvaluator.calculate() mod 10
+        D8 tiebreak: 花色 > 點數
+        SettlementEngine.settle()
+        籌碼守恆驗證
+        chip_conservation_violation 監控
+    end note
+
+    note right of settled
+        多步驟原子性結算（SERIALIZABLE）
+        rake = floor(pot×0.05) min 1
+        Anti-Addiction 計時累積
+        排行榜 ZADD lb:weekly
+        resetForNextRound() 5s 後
+    end note</pre></div>
+<p>遊戲狀態機定義了六個核心 Phase，每個 Phase 均有明確的轉換條件與超時機制。<code>waiting</code> 為房間初始狀態，等待玩家加入；當玩家數達到 2 人以上時自動觸發 <code>dealing</code> Phase，由 Server 執行 Fisher-Yates 洗牌（使用 <code>crypto.randomInt</code>，禁止 <code>Math.random</code>）並發牌。</p>
+<p><code>banker-bet</code> Phase 給予莊家 30 秒選擇下注金額（須在 <code>[min_bet, max_bet]</code> 範圍內），超時自動選擇 <code>min_bet</code>。<code>player-bet</code> Phase 閒家逐一決策，每人 30 秒，超時自動 Fold。<code>showdown</code> Phase 由 Server 執行 HandEvaluator 比牌，結果進入 <code>settled</code> Phase。</p>
+<p><code>settled</code> Phase 執行多步驟原子性結算，包含莊家破產檢查（D13 先到先得）、Rake 計算（<code>floor(pot×0.05)</code> 最少 1 籌碼）、以及籌碼守恆驗證（<code>sum(net_chips) + rake === 0</code>）。結算完成 5 秒後，若玩家數 ≥ 2 則自動回到 <code>dealing</code>，否則回到 <code>waiting</code>。</p>
+<hr>
+<h2>3. 玩家登入流程</h2>
+<div class="diagram-container"><pre class="mermaid">sequenceDiagram
+    autonumber
+    participant C as Client\n(Cocos Creator)
+    participant CF as CloudFlare\n(DDoS / TLS)
+    participant LB as NGINX Ingress
+    participant API as REST API Service\n(Express)
+    participant AUTH as Auth Service\n(JWT RS256)
+    participant DB as PostgreSQL\n(Primary)
+    participant REDIS as Redis 7.x\n(Sentinel)
+
+    C->>CF: POST /api/v1/auth/login\n{ phone_hash / oauth_token }
+    CF->>LB: TLS Termination\nForward Request
+    LB->>API: Route to rest-api:3000\nRate Limit Check (rl:auth:{ip} ≤ 30/min)
+
+    API->>REDIS: GET rl:auth:{ip}\n（Rate Limit 計數）
+    REDIS-->>API: current count
+    alt 超過 30/min/IP
+        API-->>C: 429 Too Many Requests\n{ error: 'rate_limit_exceeded', retry_after_seconds }
+    end
+
+    API->>AUTH: 轉交認證請求
+    AUTH->>DB: SELECT * FROM users\nWHERE phone_hash=$1 or oauth_id=$1
+    DB-->>AUTH: 帳號資料\n(age_verified, is_minor, is_banned, chip_balance)
+
+    alt 帳號不存在
+        AUTH-->>C: 401 { error: 'account_not_found' }
+    else 帳號已封禁
+        AUTH-->>C: 401 { error: 'account_banned' }
+    else 密碼/OAuth 驗證失敗
+        AUTH-->>C: 401 { error: 'token_invalid' }
+    else 驗證成功
+        AUTH->>AUTH: 簽發 Access Token\n(RS256, TTL=1h)\nPayload: { player_id, is_minor, age_verified }
+        AUTH->>DB: INSERT INTO refresh_tokens\n{ token_hash, expires_at=+7d, revoked=false }
+        DB-->>AUTH: refresh_token record saved
+
+        AUTH->>REDIS: DEL session:{player_id}\n（清除舊 Session Cache）
+        REDIS-->>AUTH: OK
+
+        AUTH-->>C: 200 {\n  access_token,\n  refresh_token,\n  expires_in: 3600\n}
+    end
+
+    Note over C,REDIS: 後續 API 請求攜帶 Authorization: Bearer {access_token}
+
+    C->>API: GET /api/v1/config\n（獲取廳別設定 + WS Server 域名）
+    API->>REDIS: GET session:{player_id}
+    alt Cache Miss
+        REDIS-->>API: null
+        API->>DB: SELECT FROM users WHERE id=$1
+        DB-->>API: 玩家資料
+        API->>REDIS: SETEX session:{player_id} 3600 {data}
+    else Cache Hit
+        REDIS-->>API: 玩家資料（cached）
+    end
+    API-->>C: 200 { ws_url: 'wss://ws.samgong.io', tier_configs, ... }
+
+    C->>CF: WSS 連線至 ws.samgong.io\nclient.joinOrCreate('sam_gong', { tier, token })
+    Note over C,REDIS: WebSocket 連線建立（Sticky Session by cookie）</pre></div>
+<p>玩家登入流程採用四層安全防護：CloudFlare DDoS 過濾、NGINX Rate Limit 第一層、Redis Token Bucket（<code>rl:auth:{ip}</code> ≤ 30/min/IP）以及 PostgreSQL 帳號狀態驗證。登入成功後，Auth Service 以 RS256 非對稱簽名簽發 Access Token（TTL=1 小時）與 Refresh Token（TTL=7 天，儲存 hash 至 PostgreSQL）。</p>
+<p>Session Cache 採用 Write-Through 策略，登入時清除舊 Session Cache（<code>DEL session:{player_id}</code>），確保封號後的 Session 立即失效。Access Token 的 payload 包含 <code>is_minor</code> 旗標，Colyseus Server 在 <code>onJoin</code> 時讀取此旗標進行年齡路由，分別啟動成人或未成年的防沉迷計時器。</p>
+<p>登入完成後，Client 呼叫 <code>GET /api/v1/config</code> 獲取 WebSocket Server 域名（<code>wss://ws.samgong.io</code>）及廳別設定，再透過 Colyseus SDK 建立 WebSocket 連線。NGINX Ingress 透過 Cookie-based Sticky Session 確保同一玩家固定路由至同一 Colyseus Pod。</p>
+<hr>
+<h2>4. 遊戲一局完整流程</h2>
+<div class="diagram-container"><pre class="mermaid">sequenceDiagram
+    autonumber
+    participant C1 as Client 莊家\n(Cocos Creator)
+    participant C2 as Client 閒家\n(Cocos Creator)
+    participant COL as Colyseus\n(SamGongRoom)
+    participant DECK as DeckManager
+    participant EVAL as HandEvaluator
+    participant SETTLE as SettlementEngine
+    participant AA as AntiAddiction\nManager
+    participant DB as PostgreSQL\n(SERIALIZABLE)
+    participant REDIS as Redis 7.x
+
+    Note over C1,REDIS: Phase: waiting → dealing（players.size ≥ 2）
+
+    COL->>DECK: buildDeck() + shuffle()\n(Fisher-Yates, crypto.randomInt)
+    DECK-->>COL: shuffled deck (52 cards)
+    COL->>C1: send('myHand', { cards: [3張] })\n（私人訊息，僅莊家可見）
+    COL->>C2: send('myHand', { cards: [3張] })\n（私人訊息，僅閒家可見）
+    COL->>COL: State: phase → 'banker-bet'\naction_deadline = NOW + 30s
+
+    Note over C1,REDIS: Phase: banker-bet（30s）
+
+    C1->>COL: onMessage('banker_bet', { amount: 1000 })
+    COL->>COL: 驗證：phase=banker-bet, is_banker=true\nmin_bet ≤ 1000 ≤ max_bet, balance ≥ 1000
+    COL->>COL: banker chip_balance -= 1000\n（escrow 預扣）
+    COL->>COL: State: banker_bet_amount=1000\nphase → 'player-bet'
+    COL-->>C1: State Sync (schema diff)
+    COL-->>C2: State Sync (schema diff)\nbroadcast banker_bet_amount
+
+    Note over C1,REDIS: Phase: player-bet（每閒家 30s）
+
+    C2->>COL: onMessage('call', {})
+    COL->>COL: 驗證：phase=player-bet, 本人輪次\nchip_balance ≥ banker_bet_amount
+    COL->>COL: C2 chip_balance -= 1000\n（escrow 預扣）
+    COL->>COL: has_acted=true, bet_amount=1000
+    COL->>COL: 所有閒家行動完成\nphase → 'showdown'
+
+    Note over C1,REDIS: Phase: showdown（≤ 1s）
+
+    COL->>EVAL: calculate(bankerHand)
+    EVAL-->>COL: { points: 5, is_sam_gong: false, hand_type: '5' }
+    COL->>EVAL: calculate(playerHand)
+    EVAL-->>COL: { points: 9, is_sam_gong: false, hand_type: '9' }
+    COL->>EVAL: compare(playerHand, bankerHand)
+    EVAL-->>COL: 'win'（閒家 9pt > 莊家 5pt）
+
+    COL->>SETTLE: settle(input)
+    Note over SETTLE: Step 1-3: 驗證 phase + escrow 確認\nStep 4: HandEvaluator 比牌結果\nStep 5: 莊家破產檢查（D13）\nStep 6a: 支付贏家（N=1）\nStep 6b: Rake = floor(1000×0.05)=50\nStep 6c: 更新 chip_balance\nStep 6d: 準備 chip_transactions records
+    SETTLE-->>COL: SettlementOutput\n{ winners: [C2 net=+1000]\n  losers: [C1 net=-1000]\n  rake: 50, pot: 1000 }
+
+    COL-->>C1: broadcast('showdown_reveal', { hands })\n所有未 Fold 手牌揭示
+    COL-->>C2: broadcast('showdown_reveal', { hands })
+    COL->>COL: State: phase → 'settled'\nSettlementState 更新
+
+    Note over C1,REDIS: Phase: settled（≈ 5s 持久化 + 廣播）
+
+    COL->>DB: BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE\nUPDATE users SET chip_balance=... WHERE id=C1\nUPDATE users SET chip_balance=... WHERE id=C2\nINSERT INTO chip_transactions (C1 game_lose -1000)\nINSERT INTO chip_transactions (C2 game_win +1000)\nINSERT INTO chip_transactions (rake tx_type='rake' amount=50)\nINSERT INTO game_sessions (settlement_payload)\nCOMMIT
+    DB-->>COL: Transaction committed
+
+    COL->>REDIS: ZADD lb:weekly:{week_key} score player_id\n（show_in_leaderboard=true 玩家）
+    REDIS-->>COL: OK
+
+    COL->>AA: persistTimers(playerId)\n（Write-Through 至 PostgreSQL）
+    AA-->>COL: timers persisted
+
+    COL->>COL: chip_balance < 500 偵測\n→ 觸發救援籌碼檢查
+
+    Note over C1,REDIS: 5s 後 resetForNextRound()\nplayers.size ≥ 2 → phase='dealing'</pre></div>
+<p>遊戲一局完整流程涵蓋從 <code>dealing</code> 到 <code>settled</code> 的所有步驟。手牌透過私人訊息（<code>client.send(&#x27;myHand&#x27;, cards)</code>）推送給各玩家，不放入公開 Room State Schema，有效防止手牌洩漏（REQ-003 AC-5）。莊家與閒家的下注均在行動時立即從 <code>chip_balance</code> 扣除（escrow 預扣）。</p>
+<p>SettlementEngine 採用六步驟多步驟原子性結算：Phase 驗證、Callers/Folders 分類、Escrow 確認、HandEvaluator 比牌、莊家破產檢查（D13 先到先得），最後計算 Rake 與籌碼守恆驗證。Rake 計算公式為 <code>Math.floor(pot_amount × 0.05)</code>，<code>pot_amount &gt; 0</code> 時最少 1 籌碼（空底池守衛：<code>pot=0</code> 時 <code>rake=0</code>）。</p>
+<p>結算後，所有籌碼異動在 PostgreSQL SERIALIZABLE 事務中原子性寫入（<code>UPDATE users</code> + <code>INSERT chip_transactions</code> + <code>INSERT game_sessions</code>）。完成後更新 Redis 排行榜（<code>ZADD lb:weekly:{week_key}</code>），Anti-Addiction 計時寫透至 PostgreSQL，並偵測是否觸發救援籌碼條件（<code>chip_balance &lt; 500</code>）。</p>
+<hr>
+<h2>5. 結算邏輯流程圖</h2>
+<div class="diagram-container"><pre class="mermaid">flowchart TD
+    START([開始結算\nSettlementEngine.settle]) --> VALIDATE{Phase === 'showdown'?}
+    VALIDATE -->|否| ERR_PHASE[拋出錯誤\n非法結算時機]
+    VALIDATE -->|是| CHECK_ALL_FOLD{all_fold?\n所有閒家均 Fold}
+
+    CHECK_ALL_FOLD -->|是 all_fold| ALL_FOLD_PATH[所有閒家 Fold\npot = 0, rake = 0\n莊家 escrow 退回\nbanker_chip_balance += banker_bet\n所有玩家 net_chips = 0]
+    ALL_FOLD_PATH --> PERSIST
+
+    CHECK_ALL_FOLD -->|否| COMPARE[HandEvaluator.compare\n計算每位閒家 vs 莊家\npoints = sum mod 10\n三公 = 3張10點牌]
+    COMPARE --> CLASSIFY[分類玩家\nwinners / losers / ties / folders]
+    CLASSIFY --> CALC_POT[計算底池\npot_amount = sum of losers' called_bets\n注意：贏家/Fold 不入底池]
+    CALC_POT --> BANKER_CHECK{莊家籌碼\n足夠支付所有贏家?}
+
+    BANKER_CHECK -->|是 - 莊家正常| NORMAL_WIN[逐一支付贏家\nNet N 倍賠率:\n三公 N=3\n9點 N=2\n1-8點 N=1\n平手 N=0 退注\nnet_chips = N × banker_bet_amount]
+
+    BANKER_CHECK -->|否 - D13 莊家破產| INSOLVENT[莊家破產處理\n順時鐘逐一支付]
+    INSOLVENT --> LOOP_WIN{還有贏家\n且莊家有籌碼?}
+    LOOP_WIN -->|是| PAY_WIN[支付當前贏家\nbanker_chips -= N × bet]
+    PAY_WIN --> LOOP_WIN
+    LOOP_WIN -->|否 莊家破產| INSOLVENT_WIN[後序贏家 → insolvent_winners\nnet_chips = -called_bet\n未獲支付]
+
+    INSOLVENT_WIN --> RAKE_CALC
+    NORMAL_WIN --> RAKE_CALC
+
+    RAKE_CALC{pot_amount > 0?} -->|是| RAKE_FORMULA[Rake = Math.max\nfloor(pot × 0.05), 1\n最少 1 籌碼]
+    RAKE_CALC -->|否 pot=0| RAKE_ZERO[rake = 0\n空底池守衛]
+    RAKE_FORMULA --> CONSERVATION
+    RAKE_ZERO --> CONSERVATION
+
+    CONSERVATION{籌碼守恆驗證\nsum net_chips + rake === 0?} -->|違反| VIOLATION[回滾 PostgreSQL 事務\n記錄 CRITICAL 日誌\nPagerDuty 立即告警\n chip_conservation_violation++]
+    CONSERVATION -->|通過| PERSIST[PostgreSQL SERIALIZABLE 事務\nUPDATE users chip_balance 每位玩家\nINSERT chip_transactions per player\nINSERT chip_transactions rake\nINSERT game_sessions snapshot\nCOMMIT]
+
+    PERSIST --> BROADCAST[廣播 SettlementState\n結算結果至所有 Clients\nphase → 'settled']
+    BROADCAST --> LEADERBOARD[Redis ZADD lb:weekly\n更新排行榜\n跳過 show_in_leaderboard=false]
+    LEADERBOARD --> DONE([結算完成])
+
+    style VIOLATION fill:#ff4444,color:#fff
+    style CONSERVATION fill:#ffcc00
+    style ALL_FOLD_PATH fill:#88cc88
+    style INSOLVENT fill:#ff8800,color:#fff</pre></div>
+<p>結算邏輯流程圖涵蓋四種核心情境：正常勝負結算、莊家破產（D13 先到先得）、全員 Fold、以及籌碼守恆失敗的緊急處理路徑。贏家賠率規格依據 PRD §5.4：三公（<code>is_sam_gong=true</code>）N=3；9 點 N=2；1-8 點（非三公）N=1；平手 N=0（退回 <code>called_bet</code>，<code>net_chips=0</code>）。</p>
+<p>底池定義是關鍵規格：<code>pot_amount</code> 等於所有輸家（losers）的 <code>called_bet</code> 加總，贏家的 <code>called_bet</code> 不進入底池（留在贏家手中）。Rake 計算公式為 <code>Math.floor(pot_amount × 0.05)</code>，<code>pot_amount &gt; 0</code> 時最少 1 籌碼，空底池時 <code>rake=0</code>（不適用最少 1 籌碼規則）。莊家淨利/淨損為：<code>monet_chips = sum(losers&#x27; called_bets) - rake - sum(winners&#x27; N × banker_bet_amount)</code>。</p>
+<p>籌碼守恆驗證（<code>sum(all net_chips) + rake_amount === 0</code>）是防止籌碼憑空產生或消失的最後防線。任何違反均觸發 PostgreSQL 事務回滾、CRITICAL 日誌記錄、以及 PagerDuty 立即告警（SRE ≤ 15 分鐘響應，NFR-21）。</p>
+<hr>
+<h2>6. 防沉迷流程圖</h2>
+<div class="diagram-container"><pre class="mermaid">flowchart TD
+    JOIN([玩家加入房間\nonJoin]) --> CHECK_KYC{KYC 年齡驗證\nage_verified?}
+    CHECK_KYC -->|未驗證| UNVERIFIED[is_minor = false 預設\n允許遊戲\n提示完成 KYC]
+    CHECK_KYC -->|已驗證| CHECK_MINOR{is_minor?\n未成年旗標}
+
+    UNVERIFIED --> ADULT_PATH
+    CHECK_MINOR -->|否 成人| ADULT_PATH[成人路由\nantiAddiction.trackAdultSession\n讀取 Redis aa:session:{player_id}]
+    CHECK_MINOR -->|是 未成年| MINOR_PATH[未成年路由\nantiAddiction.trackUnderageDaily\n讀取 Redis aa:session:{player_id}\n+ daily_play_seconds from DB]
+
+    ADULT_PATH --> ADULT_TIMER{session_play_seconds\n≥ 7200?\n連續遊玩 ≥ 2h}
+    ADULT_TIMER -->|否 < 2h| ADULT_PLAY[正常遊戲\nRedis 累積計時\nTTL: 距次日 UTC+8 00:00]
+    ADULT_TIMER -->|是 ≥ 2h| ADULT_WARN[發送 anti_addiction_warning\n私人訊息至該玩家\n{ type: 'adult', session_minutes: 120 }]
+    ADULT_WARN --> WAIT_CONFIRM{玩家確認?\nconfirm_anti_addiction}
+    WAIT_CONFIRM -->|確認| ADULT_RESET[重置 session_play_seconds\nonAdultWarningConfirmed\n繼續遊戲]
+    WAIT_CONFIRM -->|未確認\n60s 超時| ADULT_WARN2[重複提醒\n不強制下線\n（成人持續提醒）]
+    ADULT_RESET --> ADULT_PLAY
+    ADULT_WARN2 --> ADULT_WARN
+
+    MINOR_PATH --> MINOR_TIMER{daily_play_seconds\n≥ 7200?\n每日累積 ≥ 2h}
+    MINOR_TIMER -->|否 < 2h| MINOR_PLAY[正常遊戲\nRedis 累積計時\nTTL: 距次日 UTC+8 00:00]
+    MINOR_TIMER -->|是 ≥ 2h| MINOR_SIGNAL[發送 anti_addiction_signal\n私人訊息\n{ type: 'underage',\n  daily_minutes_remaining: 0,\n  midnight_timestamp }]
+    MINOR_SIGNAL --> WAIT_ROUND{牌局進行中?}
+    WAIT_ROUND -->|是| WAIT_SETTLE[等待本局結算後\nscheduleUnderageLogout\n(afterSettlement=true)]
+    WAIT_ROUND -->|否| FORCE_CLOSE
+    WAIT_SETTLE --> AFTER_SETTLE[本局 settled\n觸發強制下線]
+    AFTER_SETTLE --> FORCE_CLOSE[client.leave(4003)\nWS Close Code 4003\n未成年每日上限]
+
+    ADULT_PLAY --> PERSIST_TIMER[每局 settled 後\nantiAddiction.persistTimers\nWrite-Through 至 PostgreSQL\nusers.daily_play_seconds\nusers.session_play_seconds]
+    MINOR_PLAY --> PERSIST_TIMER
+
+    PERSIST_TIMER --> REDIS_WRITE[Redis SETEX\naa:session:{player_id}\nTTL: 距次日 UTC+8 00:00]
+    REDIS_WRITE --> DONE([繼續下一局])
+
+    style FORCE_CLOSE fill:#ff4444,color:#fff
+    style ADULT_WARN fill:#ffcc00
+    style MINOR_SIGNAL fill:#ff8800,color:#fff
+    style ADULT_RESET fill:#88cc88</pre></div>
+<p>防沉迷系統依據台灣法規設計，分成人與未成年兩種不同的計時策略。成人採用「連續遊玩時間」計算（<code>session_play_seconds</code>）：每次離線超過 30 分鐘重置計時器；達 2 小時後發送提醒，玩家確認後重置，<strong>不強制下線</strong>（持續提醒機制）。未成年採用「每日累積時間」計算（<code>daily_play_seconds</code>）：UTC+8 00:00 後重置；達 2 小時後<strong>強制硬停</strong>，發送 <code>anti_addiction_signal</code> 並以 WS Close Code 4003 關閉連線。</p>
+<p>計時資料採用 Write-Through 策略：Redis 為主要計時器（TTL 設為距下一個 UTC+8 00:00 的秒數），每局 <code>settled</code> Phase 後將計時資料持久化至 PostgreSQL（<code>users.daily_play_seconds</code>、<code>users.session_play_seconds</code>）。Redis Sentinel Failover 或重啟後，Anti-Addiction Manager 從 PostgreSQL 回填計時資料，確保不因基礎設施故障而損失防沉迷記錄（Write-Through 策略，NFR-18）。</p>
+<p>牌局進行中觸發未成年時間上限時，系統會等待本局結算完成後再執行強制下線（<code>scheduleUnderageLogout(afterSettlement=true)</code>），避免強制中斷牌局造成的籌碼狀態不一致。</p>
+<hr>
+<h2>7. JWT 認證與 Refresh 流程</h2>
+<div class="diagram-container"><pre class="mermaid">sequenceDiagram
+    autonumber
+    participant C as Client
+    participant API as REST API / Auth Service
+    participant DB as PostgreSQL
+    participant REDIS as Redis 7.x\n(Sentinel)
+
+    Note over C,REDIS: 正常 API 請求流程
+
+    C->>API: 任意 API 請求\nAuthorization: Bearer {access_token}
+    API->>API: 驗證 RS256 簽名\n檢查 TTL（≤ 1h）
+    API->>REDIS: EXISTS block:{player_id}\n（JWT 黑名單查詢）
+
+    alt block:{player_id} 存在（60s 黑名單）
+        REDIS-->>API: 1（存在）
+        API-->>C: 401 { error: 'token_revoked' }
+    else 黑名單不存在
+        REDIS-->>API: 0（不存在）
+        API->>REDIS: GET session:{player_id}\n（Session Cache）
+        alt Cache Hit
+            REDIS-->>API: 玩家資料（cached, TTL=1h）
+        else Cache Miss
+            API->>DB: SELECT * FROM users\nWHERE id=$1 AND is_banned=false
+            DB-->>API: 帳號資料
+            API->>REDIS: SETEX session:{player_id} 3600 {data}
+        end
+        API-->>C: 200 API Response
+    end
+
+    Note over C,REDIS: Access Token 過期 → Refresh Token 輪換
+
+    C->>API: POST /api/v1/auth/refresh\n{ refresh_token: "abc123..." }
+    API->>DB: SELECT * FROM refresh_tokens\nWHERE token_hash=SHA256(abc123)\nAND revoked=false AND expires_at > NOW()
+
+    alt Refresh Token 不存在 / 已撤銷 / 已過期
+        DB-->>API: 0 rows
+        API-->>C: 401 { error: 'token_invalid' }\n（Refresh Token Rotation 保護：疑似 Token 盜用）
+        Note over API: 安全措施：撤銷該 player_id 所有 refresh_tokens\n（Token Reuse Detection）
+    else Refresh Token 有效
+        DB-->>API: refresh_token record\n（one-time use）
+        API->>DB: UPDATE refresh_tokens\nSET revoked=true WHERE id=$1
+        API->>API: 簽發新 Access Token\n(RS256, TTL=1h)
+        API->>API: 生成新 Refresh Token\n(TTL=7d, one-time use)
+        API->>DB: INSERT INTO refresh_tokens\n{ token_hash, expires_at=+7d, revoked=false }
+        DB-->>API: 新 refresh_token 儲存成功
+        API-->>C: 200 {\n  access_token: "new_at...",\n  refresh_token: "new_rt...",\n  expires_in: 3600\n}
+    end
+
+    Note over C,REDIS: 封號後 60s Block-to-Expire 機制（NFR-17）
+
+    Note over API,REDIS: Admin 執行封號操作
+    API->>DB: UPDATE users SET is_banned=true WHERE id=$1
+    DB-->>API: 1 row updated
+    API->>REDIS: SETEX block:{player_id} 60 "1"\n（60s JWT 黑名單）
+    API->>REDIS: DEL session:{player_id}\n（強制 Session Cache 失效）
+    API->>REDIS: PUBLISH sam-gong:admin:force_disconnect\n"{player_id}"\n（即時 WS 踢出）
+    REDIS-->>API: Publish OK
+
+    Note over C,REDIS: 60s 後 block:{player_id} 自動過期\n但 is_banned=true 持續阻擋後續登入
+
+    C->>API: 任意 API 請求（舊 Access Token，仍在 1h TTL 內）
+    API->>API: RS256 驗證通過（Token 未過期）
+    API->>REDIS: EXISTS block:{player_id}
+    REDIS-->>API: 1（60s 內命中黑名單）
+    API-->>C: 401 { error: 'token_revoked' }</pre></div>
+<p>JWT 認證採用 RS256 非對稱簽名（或 ES256），禁止 HS256（對稱密鑰洩漏風險）。Access Token TTL 為 1 小時，Refresh Token TTL 為 7 天，採一次性使用（Rotation）策略，每次 Refresh 後舊 Token 立即撤銷，新 Token 儲存 hash 至 PostgreSQL。</p>
+<p>Refresh Token Rotation 提供 Token 盜用偵測：若使用已撤銷的 Refresh Token（重複使用），Auth Service 視為疑似盜用，撤銷該帳號所有 Refresh Token，強制全裝置重新登入。Token 驗證流程採取雙重快取策略：Redis 黑名單（<code>block:{player_id}</code>，TTL=60s）優先查詢，命中則拒絕；Session Cache（<code>session:{player_id}</code>，TTL=1h）次之，降低 PostgreSQL 查詢頻率。</p>
+<p>60 秒 Block-to-Expire 機制（NFR-17）是封號即時生效的核心設計：封號時同時設定 Redis 短效黑名單（60s）與刪除 Session Cache，確保封號後 60 秒內所有 API 請求均返回 401，不依賴 Access Token 自然過期（最多需等 1 小時）。</p>
+<hr>
+<h2>8. 封號即時踢出流程</h2>
+<div class="diagram-container"><pre class="mermaid">sequenceDiagram
+    autonumber
+    participant ADMIN_UI as Admin UI\n(VPN Only)
+    participant ADMIN_API as Admin API Service\n(Internal)
+    participant DB as PostgreSQL\n(Primary)
+    participant REDIS as Redis 7.x\n(Sentinel Pub-Sub)
+    participant POD1 as Colyseus Pod 1
+    participant POD2 as Colyseus Pod 2
+    participant PODN as Colyseus Pod N
+    participant C as Client\n(被封玩家)
+
+    ADMIN_UI->>ADMIN_API: POST /api/v1/admin/player/:id/ban\nAdmin JWT（獨立私鑰, role=admin）
+    Note over ADMIN_API: VPN Only 限制\n稽核日誌記錄
+
+    ADMIN_API->>ADMIN_API: 驗證 Admin JWT\nclaims.role === 'admin'
+    ADMIN_API->>DB: UPDATE users\nSET is_banned=true, ban_reason=$1\nWHERE id=$2
+    DB-->>ADMIN_API: 1 row updated
+
+    ADMIN_API->>DB: INSERT INTO audit_log\n{ action: 'ban', target_player_id, admin_id, reason, timestamp }
+    DB-->>ADMIN_API: audit record saved
+
+    Note over ADMIN_API,REDIS: 三步驟即時封號機制
+
+    ADMIN_API->>REDIS: SETEX block:{player_id} 60 "1"\n（60s JWT 黑名單）
+    REDIS-->>ADMIN_API: OK
+
+    ADMIN_API->>REDIS: DEL session:{player_id}\n（強制 Session Cache 失效）
+    REDIS-->>ADMIN_API: OK
+
+    ADMIN_API->>REDIS: PUBLISH sam-gong:admin:force_disconnect\n"{player_id}"
+    REDIS-->>ADMIN_API: Publish OK（發送至所有訂閱 Pods）
+
+    ADMIN_API-->>ADMIN_UI: 200 { message: 'player banned', player_id }
+
+    Note over REDIS,PODN: Redis Pub-Sub 廣播至所有 Colyseus Pods
+
+    REDIS-->>POD1: MESSAGE sam-gong:admin:force_disconnect\n"{player_id}"
+    REDIS-->>POD2: MESSAGE sam-gong:admin:force_disconnect\n"{player_id}"
+    REDIS-->>PODN: MESSAGE sam-gong:admin:force_disconnect\n"{player_id}"
+
+    Note over POD1: 全局訂閱（server/src/index.ts 初始化）\n遍歷所有 Room clients 找到該 player_id
+
+    POD1->>POD1: 遍歷 all rooms\n查詢 client.auth.player_id === player_id
+    alt 玩家在此 Pod 的某個 Room 中
+        POD1->>C: client.leave(4001)\nWebSocket Close Code 4001\n（Token 失效/帳號封禁）
+        C->>C: onLeave(4001)\n清除本地 token\n跳轉至登入頁
+    else 玩家不在此 Pod
+        POD1->>POD1: No-op（不在此 Pod）
+    end
+
+    POD2->>POD2: 遍歷 all rooms\n查詢 client.auth.player_id === player_id
+    Note over POD2: 同樣邏輯，若不在 Pod2 則 No-op
+
+    Note over C: Client 收到 WS Close Code 4001\n顯示封號訊息，清除 token\n後續 REST API 請求均返回 401
+
+    Note over REDIS: 60s 後 block:{player_id} 自動過期\nRefresh Token 已在 DB 中 revoked=false\n（下次嘗試 refresh 時返回 401 account_banned）</pre></div>
+<p>封號即時踢出流程採用三步驟即時機制，確保被封號玩家在秒級內被踢出所有 Colyseus WebSocket 連線。Admin API 僅限內網 VPN 存取，使用獨立的 Admin JWT（不同私鑰，<code>claims.role=admin</code>），所有封號操作均記錄至 <code>audit_log</code> 表，可用於 SRE 稽核（REQ-011）。</p>
+<p>Redis Pub/Sub 是跨 Pod 廣播的核心機制：<code>PUBLISH sam-gong:admin:force_disconnect &quot;{player_id}&quot;</code> 廣播至所有訂閱該頻道的 Colyseus Pod。每個 Pod 在全局初始化（<code>server/src/index.ts</code>）時訂閱此頻道，收到訊息後遍歷本 Pod 的所有 Room，找到對應 <code>player_id</code> 的 client 並以 Close Code 4001 關閉 WebSocket 連線。</p>
+<p>多裝置登入踢出（Close Code 4005）採用類似機制，但使用獨立的 <code>force_disconnect_device</code> 頻道，並攜帶舊裝置的 <code>session_token</code> 以精確識別需踢出的連線，避免誤踢新登入裝置。</p>
+<hr>
+<h2>9. Colyseus 水平擴展與房間路由</h2>
+<div class="diagram-container"><pre class="mermaid">flowchart LR
+    subgraph Clients["Client Layer"]
+        C1["Client 1\n(Cocos Creator)"]
+        C2["Client 2\n(Cocos Creator)"]
+        C3["Client N\n(Cocos Creator)"]
+    end
+
+    subgraph Edge["Edge Layer"]
+        CF["CloudFlare\n(DDoS / TLS)"]
+        NGINX["NGINX Ingress\nws.samgong.io\nSticky Session\n(cookie: colyseus_session)\nproxy-read-timeout: 3600s"]
+    end
+
+    subgraph K8S["k8s Deployment: colyseus-server\n(sam-gong-prod namespace)"]
+        subgraph HPA["HPA: CPU > 70% → Scale\nmin=2 / max=10\nscaleDown stabilization=300s"]
+            POD1["Colyseus Pod 1\n:2567 (WS)\n:3001 (Health)\n~500 CCU / 83 rooms"]
+            POD2["Colyseus Pod 2\n:2567 (WS)\n:3001 (Health)\n~500 CCU / 83 rooms"]
+            POD3["Colyseus Pod N\n(HPA auto-scale)"]
+        end
+    end
+
+    subgraph Redis["Redis 7.x Sentinel\n(3 nodes: 1 master + 2 replicas)"]
+        PRESENCE["@colyseus/redis-presence\ncolyseus:presence:{room_id}\n（跨 Pod Room 路由）"]
+        MMQUEUE["Matchmaking Queue\nmm:queue:{tier_name}\n(Redis List / Sorted Set)"]
+        PUBSUB["Pub-Sub 頻道\nsam-gong:admin:force_disconnect\nsam-gong:admin:force_disconnect_device"]
+        SESSION["Session Cache\nsession:{player_id} TTL=1h\nblock:{player_id} TTL=60s"]
+    end
+
+    subgraph PG["PostgreSQL\n(Primary + Read Replica)"]
+        PG_W["Primary\n(Write)\nSERIALIZABLE 結算"]
+        PG_R["Read Replica\n(Read)\n排行榜 / 玩家資料"]
+    end
+
+    C1 -->|WSS| CF
+    C2 -->|WSS| CF
+    C3 -->|WSS| CF
+
+    CF --> NGINX
+    NGINX -->|"Sticky Cookie\n→ Pod 1"| POD1
+    NGINX -->|"Sticky Cookie\n→ Pod 2"| POD2
+    NGINX -->|"新連線\n→ Least Connections"| POD3
+
+    POD1 <-->|"Room Presence\n讀/寫"| PRESENCE
+    POD2 <-->|"Room Presence\n讀/寫"| PRESENCE
+    POD3 <-->|"Room Presence\n讀/寫"| PRESENCE
+
+    POD1 <-->|"Matchmaking\njoinOrCreate"| MMQUEUE
+    POD2 <-->|"Matchmaking\njoinOrCreate"| MMQUEUE
+
+    POD1 -->|"Subscribe"| PUBSUB
+    POD2 -->|"Subscribe"| PUBSUB
+    POD3 -->|"Subscribe"| PUBSUB
+
+    POD1 <-->|"Session Cache\nRate Limit"| SESSION
+    POD2 <-->|"Session Cache\nRate Limit"| SESSION
+
+    POD1 -->|"SERIALIZABLE\nWrites"| PG_W
+    POD2 -->|"SERIALIZABLE\nWrites"| PG_W
+
+    style HPA fill:#e8f4e8
+    style Redis fill:#ffe8e8
+    style PG fill:#e8e8ff</pre></div>
+<p>Colyseus 水平擴展架構透過 Redis 實現跨 Pod 無狀態協調。每個 Colyseus Pod 容量約 500 CCU（約 83 個 6 人房間），HPA 設定 CPU &gt; 70%（持續 5 分鐘）觸發擴容，<code>minReplicas=2</code>、<code>maxReplicas=10</code>，縮容策略採 <code>stabilizationWindow=300s</code>、每分鐘最多縮減 25%，避免頻繁縮容造成玩家斷線。</p>
+<p><code>@colyseus/redis-presence</code> 是跨 Pod 房間路由的核心：Room Presence 資訊（<code>colyseus:presence:{room_id}</code>）存於 Redis，所有 Pod 均可查詢，實現 <code>joinOrCreate</code> 時的全局房間路由。Matchmaking Queue（<code>mm:queue:{tier_name}</code>）同樣集中存於 Redis List/Sorted Set，確保跨 Pod 的配對一致性。</p>
+<p>WebSocket 連線透過 NGINX Ingress Cookie-based Sticky Session 固定路由（<code>upstream hash $cookie_colyseus_session</code>），確保同一玩家的 WS 連線始終路由至同一 Pod，保持 Room State 一致性。重連場景下，<code>@colyseus/redis-presence</code> 協調跨 Pod 重連，玩家可在不同 Pod 間重連至原 Room（30 秒重連窗口）。</p>
+<hr>
+<h2>10. 資料庫 ER 圖</h2>
+<div class="diagram-container"><pre class="mermaid">erDiagram
+    users {
+        uuid id PK
+        varchar display_name
+        varchar phone_hash
+        varchar oauth_provider
+        varchar oauth_id
+        boolean age_verified
+        smallint birth_year
+        boolean is_minor
+        boolean is_banned
+        text ban_reason
+        bigint chip_balance
+        timestamptz created_at
+        timestamptz updated_at
+        date daily_chip_claimed_at
+        date daily_rescue_claimed_at
+        boolean tutorial_completed
+        text avatar_url
+        smallint music_volume
+        smallint sfx_volume
+        boolean vibration
+        boolean show_in_leaderboard
+        int daily_play_seconds
+        int session_play_seconds
+        timestamptz last_login_at
+    }
+
+    refresh_tokens {
+        uuid id PK
+        uuid user_id FK
+        varchar token_hash
+        timestamptz expires_at
+        boolean revoked
+        timestamptz created_at
+    }
+
+    kyc_records {
+        uuid id PK
+        uuid user_id FK
+        varchar kyc_type
+        varchar status
+        bytea data_encrypted
+        timestamptz submitted_at
+        timestamptz reviewed_at
+        varchar reviewed_by
+    }
+
+    game_rooms {
+        uuid id PK
+        varchar room_code
+        varchar tier
+        varchar room_type
+        varchar colyseus_room_id
+        varchar status
+        timestamptz created_at
+        timestamptz closed_at
+    }
+
+    game_sessions {
+        uuid id PK
+        uuid room_id FK
+        int round_number
+        uuid banker_id FK
+        smallint banker_seat_index
+        bigint banker_bet_amount
+        bigint rake_amount
+        bigint pot_amount
+        boolean banker_insolvent
+        boolean all_fold
+        jsonb settlement_payload
+        timestamptz started_at
+        timestamptz ended_at
+    }
+
+    chip_transactions {
+        uuid id PK
+        uuid user_id FK
+        uuid game_session_id FK
+        tx_type_enum tx_type
+        bigint amount
+        bigint balance_before
+        bigint balance_after
+        jsonb metadata
+        timestamptz created_at
+    }
+
+    leaderboard_weekly {
+        uuid id PK
+        uuid user_id FK
+        varchar week_key
+        bigint net_chips
+        timestamptz first_win_at
+        timestamptz updated_at
+    }
+
+    daily_tasks {
+        uuid id PK
+        uuid user_id FK
+        varchar task_id
+        date task_date
+        boolean completed
+        bigint reward_chips
+        timestamptz completed_at
+    }
+
+    cookie_consents {
+        uuid id PK
+        uuid user_id FK
+        varchar session_id
+        varchar user_agent
+        varchar ip_hash
+        varchar consent_version
+        boolean analytics_consent
+        boolean marketing_consent
+        timestamptz consented_at
+        timestamptz revoked_at
+    }
+
+    chat_messages {
+        uuid id PK
+        uuid room_id FK
+        uuid sender_id FK
+        text content
+        boolean is_filtered
+        timestamptz created_at
+    }
+
+    player_reports {
+        uuid id PK
+        uuid reporter_id FK
+        uuid reported_id FK
+        uuid room_id FK
+        uuid message_id FK
+        varchar reason
+        varchar status
+        text reviewer_notes
+        timestamptz created_at
+        timestamptz reviewed_at
+    }
+
+    audit_log {
+        uuid id PK
+        uuid admin_id FK
+        uuid target_player_id FK
+        varchar action
+        text reason
+        jsonb metadata
+        timestamptz created_at
+    }
+
+    users ||--o{ refresh_tokens : "has"
+    users ||--o{ kyc_records : "has"
+    users ||--o{ chip_transactions : "has"
+    users ||--o{ leaderboard_weekly : "has"
+    users ||--o{ daily_tasks : "has"
+    users ||--o{ cookie_consents : "has"
+    users ||--o{ chat_messages : "sends"
+    users ||--o{ player_reports : "reports as reporter"
+    users ||--o{ player_reports : "is reported as target"
+    game_rooms ||--o{ game_sessions : "contains"
+    game_rooms ||--o{ chat_messages : "has"
+    game_rooms ||--o{ player_reports : "has"
+    game_sessions ||--o{ chip_transactions : "generates"
+    game_sessions }o--|| users : "has banker"
+    chat_messages ||--o{ player_reports : "references"
+    users ||--o{ audit_log : "is subject of"</pre></div>
+<p>資料庫 ER 圖涵蓋三公遊戲的所有核心資料表。<code>users</code> 表是中心節點，關聯所有業務實體，包含防沉迷欄位（<code>daily_play_seconds</code>、<code>session_play_seconds</code>）、籌碼餘額（<code>chip_balance</code>，非負約束）、年齡驗證狀態（<code>age_verified</code>、<code>is_minor</code>）以及排行榜控制旗標（<code>show_in_leaderboard</code>）。</p>
+<p><code>chip_transactions</code> 表採用月分區設計（<code>PARTITION BY RANGE (created_at)</code>，由 <code>pg_partman</code> 自動管理），財務記錄保留 7 年（REQ-019）。<code>tx_type</code> 採用 PostgreSQL Enum（<code>game_win|game_lose|daily_gift|rescue|iap|task_reward|ad_reward|refund|tutorial|admin_adjustment|rake</code>），Rake 交易的 <code>user_id</code> 為系統帳戶 UUID（<code>00000000-0000-0000-0000-000000000001</code>），不計入排行榜。</p>
+<p><code>game_sessions</code> 表記錄每局結算快照（<code>settlement_payload</code> JSONB），是稽核與爭議解決的核心依據。<code>game_rooms</code> 記錄廳別（<code>tier</code>）與房間類型（<code>matchmaking|private</code>），與 <code>game_sessions</code> 一對多關聯。<code>refresh_tokens</code> 表實現 Refresh Token Rotation，每次 Refresh 時舊 Token <code>revoked=true</code>，新 Token 新增一筆記錄。</p>
+<hr>
+<h2>11. 救援籌碼流程圖</h2>
+<div class="diagram-container"><pre class="mermaid">flowchart TD
+    START([觸發救援籌碼檢查]) --> CHANNEL{觸發通道}
+
+    CHANNEL -->|A: WebSocket 自動觸發\n結算後 chip_balance < 500 偵測| WS_CHECK
+    CHANNEL -->|B: REST API 手動申請\nPOST /api/v1/player/rescue-chip| REST_CHECK
+
+    WS_CHECK[Colyseus settled Phase\nchip_balance < 500 偵測\n觸發 Server 端自動查詢] --> ATOMIC_SQL
+    REST_CHECK[REST API 請求\nJWT 驗證\n取得 player_id] --> BALANCE_CHECK
+
+    BALANCE_CHECK{chip_balance < 500?} -->|否 餘額充足| REST_403[回應 400\n{ error: 'balance_sufficient' }]
+    BALANCE_CHECK -->|是 餘額不足| ATOMIC_SQL
+
+    ATOMIC_SQL["執行原子 SQL 操作\n（防 Race Condition）\n\nUPDATE users\nSET daily_rescue_claimed_at = NOW(),\n    chip_balance = chip_balance + 1000\nWHERE id = $1\n  AND chip_balance < 500\n  AND (\n    daily_rescue_claimed_at IS NULL\n    OR DATE(daily_rescue_claimed_at\n           AT TIME ZONE 'Asia/Taipei')\n    < CURRENT_DATE\n         AT TIME ZONE 'Asia/Taipei'\n  )\nRETURNING id, chip_balance"]
+
+    ATOMIC_SQL --> SQL_RESULT{RETURNING 返回結果?}
+
+    SQL_RESULT -->|有記錄\n原子更新成功| SUCCESS[救援籌碼發放成功\n+1,000 籌碼\nnew_balance = chip_balance]
+    SQL_RESULT -->|空結果\n今日已領取 or 餘額不符| ALREADY_CLAIMED[今日已領取\n或條件不符]
+
+    SUCCESS --> WS_SEND{觸發通道?}
+    WS_SEND -->|WS 自動觸發| WS_NOTIFY[server.send(client, 'rescue_chips'\n{ amount: 1000,\n  new_balance: xxx })\n（私人訊息）]
+    WS_SEND -->|REST API| REST_200[HTTP 200\n{ amount: 1000,\n  new_balance: xxx }]
+
+    WS_NOTIFY --> TX_INSERT
+    REST_200 --> TX_INSERT
+    TX_INSERT[INSERT INTO chip_transactions\n{ user_id, tx_type='rescue',\n  amount=1000,\n  balance_before, balance_after }]
+
+    ALREADY_CLAIMED --> WS_CLAIMED{觸發通道?}
+    WS_CLAIMED -->|WS 自動觸發| WS_NOT_AVAILABLE[server.send(client, 'rescue_not_available'\n{ reason: 'already_claimed' })\n（私人訊息）]
+    WS_CLAIMED -->|REST API| REST_403B[HTTP 403\n{ error: 'rescue_chip_claimed' }]
+
+    TX_INSERT --> DONE([流程結束])
+    WS_NOTIFY -.->|並發場景保護| RACE_NOTE["並發保護說明：\nColyseus WS 自動觸發 + REST API 同時呼叫\n→ 僅一個 UPDATE 能成功取得 RETURNING 記錄\n→ 另一個 SQL 返回空，視為已領取\n→ 無需額外分散式鎖"]
+    REST_403 --> DONE
+    REST_403B --> DONE
+    WS_NOT_AVAILABLE --> DONE
+
+    style SUCCESS fill:#88cc88
+    style ALREADY_CLAIMED fill:#ffcc00
+    style ATOMIC_SQL fill:#e8f4ff
+    style RACE_NOTE fill:#fff3cd</pre></div>
+<p>救援籌碼系統設計了兩個觸發通道：Colyseus WebSocket 自動觸發（每局 <code>settled</code> Phase 後偵測 <code>chip_balance &lt; 500</code>）以及 REST API 手動申請（<code>POST /api/v1/player/rescue-chip</code>）。兩個通道共用相同的原子 SQL 操作，確保冪等性。</p>
+<p>核心防重複發放機制採用單一 SQL <code>UPDATE ... RETURNING</code> 原子操作：SQL 同時檢查 <code>chip_balance &lt; 500</code> 以及 <code>daily_rescue_claimed_at</code> 是否在今日（UTC+8 台灣時區）已領取。若 <code>RETURNING</code> 返回空記錄（0 rows），表示條件不符或今日已領取，不重複發放。此單一 SQL 原子操作天然防止並發競態條件（Race Condition），無需額外的分散式鎖。</p>
+<p>救援籌碼額度為 1,000 籌碼，每日限領一次（<code>daily_rescue_claimed_at</code> 按台灣時區日期判斷），適用條件為 <code>chip_balance &lt; 500</code>。發放成功後記錄 <code>chip_transactions</code>（<code>tx_type=&#x27;rescue&#x27;</code>），完整追蹤籌碼流向。WebSocket 通道以私人訊息（<code>rescue_chips</code> / <code>rescue_not_available</code>）通知玩家，REST API 通道以標準 HTTP 回應（200/403）通知。</p>
+<hr>
+<h2>12. CI/CD Pipeline 流程圖</h2>
+<div class="diagram-container"><pre class="mermaid">flowchart LR
+    subgraph PR["Pull Request"]
+        DEV["開發者\nPush Feature Branch"]
+        PR_CREATE["建立 Pull Request\n(GitHub)"]
+        CR["Code Review\n(Manual Approval)"]
+    end
+
+    subgraph CI["CI Pipeline (GitHub Actions)\non: push to [main, develop]"]
+        direction TB
+        AUDIT["npm audit\n高危漏洞阻擋\n(severity: high/critical)"]
+        LINT["ESLint\n+ TS project references 邊界驗證\n+ Client bundle 關鍵字掃描\n(禁止遊戲邏輯洩漏)"]
+        SAST["Semgrep SAST\nrules/sql-injection.yaml\n+ 安全規則集"]
+        UNIT["Unit Tests\nHandEvaluator ≥ 200 vectors\nSettlementEngine 並發測試"]
+        INTEG["Integration Tests\nColyseus Testing Framework\nMock PostgreSQL / Redis"]
+        COV["Coverage Check\n≥ 80%\n(lines / branches / functions)"]
+
+        AUDIT --> LINT --> SAST --> UNIT --> INTEG --> COV
+    end
+
+    subgraph BUILD["Build Pipeline (GitHub Actions)"]
+        direction TB
+        DOCKER["Docker Multi-Stage Build\n(Node.js 22.x Alpine)"]
+        TRIVY["Trivy 容器漏洞掃描\n(HIGH/CRITICAL 阻擋)"]
+        OSS["OSS License 檢查\n(禁止 GPL 污染)"]
+        ECR["Push to ECR\n(tagged: commit SHA)"]
+
+        DOCKER --> TRIVY --> OSS --> ECR
+    end
+
+    subgraph STAGING_DEPLOY["Deploy to Staging\non: push to develop"]
+        STAGING["部署至 sam-gong-staging\n2 Colyseus + 1 PG + 1 Redis"]
+        SMOKE_S["Smoke Test\n+ Health Check /ready"]
+        BETA["Beta 測試\n(Integration / Performance)"]
+    end
+
+    subgraph PROD_DEPLOY["Deploy to Production\non: push to main (需 Approval)"]
+        APPROVAL["Manual Approval\n(Tech Lead / CTO)"]
+        BLUE["Blue Environment\n(現有線上服務)"]
+        GREEN["Green Environment\n(新版本部署)"]
+        SMOKE_P["Smoke Test\n+ Health Check\nBlue 繼續服務中"]
+        TRAFFIC["流量切換\nNGINX Ingress: Blue → Green\n30s 內完成"]
+        MONITOR["監控 5 分鐘\nError Rate < 1%\nP95 Latency < 200ms\nHealth Check > 70%"]
+        STABLE{穩定?}
+        DOWN_BLUE["下線 Blue Environment\n部署完成"]
+        ROLLBACK["Auto Rollback\nGreen → Blue\n≤ 30s\nPagerDuty 告警"]
+    end
+
+    DEV --> PR_CREATE --> CR
+    CR -->|Approve| CI
+    CI -->|all checks pass| BUILD
+    BUILD -->|develop branch| STAGING_DEPLOY
+    BUILD -->|main branch| PROD_DEPLOY
+
+    STAGING --> SMOKE_S --> BETA
+    APPROVAL --> GREEN --> SMOKE_P --> TRAFFIC --> MONITOR --> STABLE
+    STABLE -->|是 穩定| DOWN_BLUE
+    STABLE -->|否 異常\nError Rate > 1% 持續 2min\nor P95 > 200ms 持續 2min\nor Health Fail > 30%| ROLLBACK
+
+    BLUE -.->|保持服務| SMOKE_P
+
+    style ROLLBACK fill:#ff4444,color:#fff
+    style DOWN_BLUE fill:#88cc88
+    style STABLE fill:#ffcc00
+    style CI fill:#e8f4ff
+    style BUILD fill:#f4e8ff</pre></div>
+<p>CI/CD Pipeline 採用 GitHub Actions 實現完整的自動化品質門控與藍綠部署。CI 階段包含七個強制門控：<code>npm audit</code>（高危漏洞阻擋）、ESLint + TypeScript project references 邊界驗證（確保 Client bundle 不含遊戲邏輯）、Semgrep SAST（SQL injection 偵測）、Unit Tests（HandEvaluator ≥ 200 vectors）、Integration Tests（Colyseus Testing Framework + Mock DB）、以及覆蓋率要求（≥ 80% lines/branches/functions）。所有 CI 檢查必須全部通過，才能進入 Build 階段。</p>
+<p>Build 階段包含 Docker Multi-Stage Build（Node.js 22.x Alpine 基礎映像）、Trivy 容器漏洞掃描（HIGH/CRITICAL 阻擋）、OSS License 檢查（禁止 GPL 污染），最後以 commit SHA 為 tag 推送至 ECR。映像不可變（immutable tag），確保每次部署的映像可追溯至特定 commit。</p>
+<p>Production 部署採用藍綠（Blue-Green）策略：新版本先部署至 Green 環境，Blue 環境保持服務；Smoke Test 通過後切換 NGINX Ingress 流量（30 秒內完成），監控 5 分鐘。若 <code>api_error_rate_5xx &gt; 1%</code>（持續 2 分鐘）、<code>websocket_latency_p95 &gt; 200ms</code>（持續 2 分鐘）、或 Health Check 失敗率 &gt; 30%，觸發 Auto-Rollback（≤ 30 秒），並即時 PagerDuty 告警通知 On-call SRE。</p>
+<hr>
+<p><em>文件版本 v1.0 — 依 EDD v1.4-draft + ARCH v1.1 生成，STEP-13 自動生成 — 2026-04-22</em></p></main>
+  </div>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({startOnLoad:true,theme:'default',
+      flowchart:{curve:'basis',nodeSpacing:60,rankSpacing:80},
+      er:{layoutDirection:'TD',minEntityWidth:100,fontSize:12},
+      sequence:{actorMargin:60,messageMargin:30}});
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-yaml.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-json.min.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

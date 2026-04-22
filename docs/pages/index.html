@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>sam-gong-game 文件中心 — sam-gong-game</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+  <header class="top-nav">
+    <a href="index.html" class="nav-brand">sam-gong-game</a>
+    <div class="nav-controls">
+      <div class="search-wrap">
+        <input class="search-input" type="search" placeholder="搜尋文件...">
+        <div class="search-results"></div>
+      </div>
+      <a class="nav-gh-link" href="https://github.com/ibalasite/sam-gong-game-test" target="_blank" rel="noopener">⌥ GitHub</a>
+      <button class="sidebar-toggle" id="sidebarToggle" title="收合/展開側欄">☰</button>
+    </div>
+  </header>
+  <div class="doc-page-banner">
+    <p class="banner-breadcrumb"><a href="index.html">sam-gong-game</a> › sam-gong-game 文件中心 <span style="margin-left:1rem"><a href="https://github.com/ibalasite/sam-gong-game-test" target="_blank" rel="noopener" style="color:var(--banner-link)">⌥ GitHub ↗</a></span></p>
+    <h1 class="banner-title">sam-gong-game 文件中心</h1>
+  </div>
+  <div class="page-wrapper">
+    <aside class="sidebar" aria-label="文件導覽">
+      <div class="sidebar__section">
+        <div class="sidebar__label">文件</div>
+        <a class="sidebar__link active" href="index.html">🏠 首頁</a>
+<a class="sidebar__link" href="idea.html">💡 構想文件 (IDEA)</a>
+<a class="sidebar__link" href="brd.html">📋 商業需求文件 (BRD)</a>
+<a class="sidebar__link" href="prd.html">📝 產品需求文件 (PRD)</a>
+<a class="sidebar__link" href="pdd.html">🎨 產品設計文件 (PDD)</a>
+<a class="sidebar__link" href="edd.html">🏗️ 工程設計文件 (EDD)</a>
+<a class="sidebar__link" href="arch.html">🧩 架構設計</a>
+<a class="sidebar__link" href="api.html">🔌 API 文件</a>
+<a class="sidebar__link" href="schema.html">🗄️ Schema 文件</a>
+<a class="sidebar__link" href="test-plan.html">✅ 測試計畫</a>
+<a class="sidebar__link" href="diagrams.html">📊 系統圖表</a>
+<a class="sidebar__link" href="alignment-report.html">📄 Alignment Report</a>
+<a class="sidebar__link" href="smoke-test-report.html">📄 Smoke Test Report</a>
+<a class="sidebar__link" href="local-deploy.html">📄 Local Deploy</a>
+<a class="sidebar__link" href="lang.html">🔧 語言選型</a>
+      </div>
+    </aside>
+    <div class="sidebar-resizer" id="sidebarResizer"></div>
+    <main class="doc-content"><h1>三公 Sam Gong — Multiplayer Card Game</h1>
+<blockquote><p>即時多人三公牌局 · Colyseus 0.15 · Node.js · Kubernetes</p></blockquote>
+<p><a href="https://github.com/ibalasite/sam-gong-game-test/actions/workflows/pages.yml" target="_blank" rel="noopener"><img src="https://github.com/ibalasite/sam-gong-game-test/actions/workflows/pages.yml/badge.svg" alt="Deploy to GitHub Pages" loading="lazy"></a></p>
+<h2>🎴 線上文件</h2>
+<p>📖 <strong><a href="https://ibalasite.github.io/sam-gong-game-test/" target="_blank" rel="noopener">https://ibalasite.github.io/sam-gong-game-test/</a></strong></p>
+<h2>技術架構</h2>
+<table>
+<tr><th>層級</th><th>技術</th></tr>
+<tr><td>遊戲伺服器</td><td><a href="https://colyseus.io" target="_blank" rel="noopener">Colyseus 0.15</a> + Node.js + TypeScript</td></tr>
+<tr><td>前端</td><td>原生 HTML5 / CSS3 / Vanilla JS</td></tr>
+<tr><td>資料庫</td><td>PostgreSQL + Redis</td></tr>
+<tr><td>部署</td><td>Kubernetes (Rancher Desktop)</td></tr>
+<tr><td>CI/CD</td><td>GitHub Actions</td></tr>
+</table>
+<h2>遊戲功能</h2>
+<ul><li>✅ 1 莊 + 最多 5 閒，即時多人對戰</li><li>✅ 完整押注流程（莊家下注 → 閒家跟注/棄牌）</li><li>✅ 自動開牌動畫：逐座亮牌、牌型閃字</li><li>✅ 金幣飛入獎池動畫 + 收銀機音效</li><li>✅ 自動跟注 / 最低押注（可勾選、3 秒倒數）</li><li>✅ 結算泡泡顯示盈虧，不鎖畫面</li><li>✅ 聊天室、房間邀請代號分享</li></ul>
+<h2>本地啟動</h2>
+<pre><code class="language-bash"># 1. 安裝依賴
+npm install
+
+# 2. 啟動 Kubernetes 本地環境
+kubectl apply -f infra/k8s/local/ -n sam-gong-local
+
+# 3. Port-forward
+kubectl port-forward -n sam-gong-local svc/sam-gong-client-service 8080:80
+kubectl port-forward -n sam-gong-local svc/sam-gong-server-service 2567:2567
+
+# 4. 開啟瀏覽器
+open http://localhost:8080</code></pre>
+<h2>文件目錄</h2>
+<table>
+<tr><th>文件</th><th>說明</th></tr>
+<tr><td><a href="docs/BRD.md" target="_blank" rel="noopener">BRD</a></td><td>商業需求文件</td></tr>
+<tr><td><a href="docs/PRD.md" target="_blank" rel="noopener">PRD</a></td><td>產品需求規格</td></tr>
+<tr><td><a href="docs/EDD.md" target="_blank" rel="noopener">EDD</a></td><td>工程設計文件</td></tr>
+<tr><td><a href="docs/API.md" target="_blank" rel="noopener">API</a></td><td>API 參考文件</td></tr>
+<tr><td><a href="docs/ARCH.md" target="_blank" rel="noopener">ARCH</a></td><td>系統架構圖</td></tr>
+</table>
+<hr>
+<p>Generated with <a href="https://github.com/ibalasite" target="_blank" rel="noopener">devsop-autodev</a> · 2026-04-22</p></main>
+  </div>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({startOnLoad:true,theme:'default',
+      flowchart:{curve:'basis',nodeSpacing:60,rankSpacing:80},
+      er:{layoutDirection:'TD',minEntityWidth:100,fontSize:12},
+      sequence:{actorMargin:60,messageMargin:30}});
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-yaml.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-json.min.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>測試計畫 — sam-gong-game</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+  <header class="top-nav">
+    <a href="index.html" class="nav-brand">sam-gong-game</a>
+    <div class="nav-controls">
+      <div class="search-wrap">
+        <input class="search-input" type="search" placeholder="搜尋文件...">
+        <div class="search-results"></div>
+      </div>
+      <a class="nav-gh-link" href="https://github.com/ibalasite/sam-gong-game-test" target="_blank" rel="noopener">⌥ GitHub</a>
+      <button class="sidebar-toggle" id="sidebarToggle" title="收合/展開側欄">☰</button>
+    </div>
+  </header>
+  <div class="doc-page-banner">
+    <p class="banner-breadcrumb"><a href="index.html">sam-gong-game</a> › 測試計畫</p>
+    <h1 class="banner-title">測試計畫</h1>
+  </div>
+  <div class="page-wrapper">
+    <aside class="sidebar" aria-label="文件導覽">
+      <div class="sidebar__section">
+        <div class="sidebar__label">文件</div>
+        <a class="sidebar__link" href="index.html">🏠 首頁</a>
+<a class="sidebar__link" href="idea.html">💡 構想文件 (IDEA)</a>
+<a class="sidebar__link" href="brd.html">📋 商業需求文件 (BRD)</a>
+<a class="sidebar__link" href="prd.html">📝 產品需求文件 (PRD)</a>
+<a class="sidebar__link" href="pdd.html">🎨 產品設計文件 (PDD)</a>
+<a class="sidebar__link" href="edd.html">🏗️ 工程設計文件 (EDD)</a>
+<a class="sidebar__link" href="arch.html">🧩 架構設計</a>
+<a class="sidebar__link" href="api.html">🔌 API 文件</a>
+<a class="sidebar__link" href="schema.html">🗄️ Schema 文件</a>
+<a class="sidebar__link active" href="test-plan.html">✅ 測試計畫</a>
+<a class="sidebar__link" href="diagrams.html">📊 系統圖表</a>
+<a class="sidebar__link" href="alignment-report.html">📄 Alignment Report</a>
+<a class="sidebar__link" href="smoke-test-report.html">📄 Smoke Test Report</a>
+<a class="sidebar__link" href="local-deploy.html">📄 Local Deploy</a>
+<a class="sidebar__link" href="lang.html">🔧 語言選型</a>
+      </div>
+    </aside>
+    <div class="sidebar-resizer" id="sidebarResizer"></div>
+    <main class="doc-content"><h1>TEST_PLAN — 測試計畫</h1>
+<p>&lt;!-- SDLC QA — Layer 4：Test Plan Document --&gt;</p>
+<hr>
+<h2>Document Control</h2>
+<table>
+<tr><th>欄位</th><th>內容</th></tr>
+<tr><td><strong>DOC-ID</strong></td><td>TEST-PLAN-SAM-GONG-GAME-20260422</td></tr>
+<tr><td><strong>專案名稱</strong></td><td>三公遊戲（Sam Gong 3-Card Poker）即時多人線上平台</td></tr>
+<tr><td><strong>文件版本</strong></td><td>v1.0-draft</td></tr>
+<tr><td><strong>狀態</strong></td><td>DRAFT（STEP-14 自動生成）</td></tr>
+<tr><td><strong>作者</strong></td><td>Evans Tseng（由 /devsop-autodev STEP-14 自動生成）</td></tr>
+<tr><td><strong>日期</strong></td><td>2026-04-22</td></tr>
+<tr><td><strong>來源 EDD</strong></td><td>EDD-SAM-GONG-GAME-20260422 v1.4-draft</td></tr>
+<tr><td><strong>來源 PRD</strong></td><td>PRD-SAM-GONG-GAME-20260421 v0.14-draft</td></tr>
+</table>
+<hr>
+<h2>Change Log</h2>
+<table>
+<tr><th>版本</th><th>日期</th><th>作者</th><th>變更摘要</th></tr>
+<tr><td>v1.0-draft</td><td>2026-04-22</td><td>/devsop-autodev STEP-14</td><td>初稿；包含 Unit/Integration/E2E/Performance/UAT 五層完整測試計畫；依 EDD §8.4 Testing Strategy 生成</td></tr>
+</table>
+<hr>
+<h2>1. Overview</h2>
+<h3>1.1 測試目標</h3>
+<p>本測試計畫涵蓋三公遊戲（Sam Gong 3-Card Poker）線上多人平台的全面品質驗證，確保：</p>
+<ol><li><strong>遊戲邏輯正確性</strong>：HandEvaluator、SettlementEngine、BankerRotation 等核心模組結果可靠</li><li><strong>防沉迷合規性</strong>：符合台灣法規對成人（2h 提醒）與未成年（2h 硬停）的要求</li><li><strong>安全性</strong>：JWT 驗證、Rate Limit、SQL Injection 防護、封號即時踢出等機制有效</li><li><strong>效能達標</strong>：500 CCU 下 P95 WS 延遲 ≤ 100ms，SLA ≥ 99.5%/月</li><li><strong>業務驗收</strong>：所有 PRD 驗收標準（Acceptance Criteria）通過 UAT</li></ol>
+<h3>1.2 覆蓋率要求</h3>
+<table>
+<tr><th>指標</th><th>目標值</th><th>CI 門控</th></tr>
+<tr><td>Lines Coverage</td><td>≥ 80%</td><td>PR 合併阻擋</td></tr>
+<tr><td>Branches Coverage</td><td>≥ 80%</td><td>PR 合併阻擋</td></tr>
+<tr><td>Functions Coverage</td><td>≥ 80%</td><td>PR 合併阻擋</td></tr>
+<tr><td>Statements Coverage</td><td>≥ 80%</td><td>PR 合併阻擋</td></tr>
+<tr><td>HandEvaluator 測試向量</td><td>≥ 200 個</td><td>CI 驗證</td></tr>
+</table>
+<p>CI 命令：</p>
+<pre><code class="language-bash">jest --coverage --coverageThreshold=&#x27;{&quot;global&quot;:{&quot;lines&quot;:80,&quot;branches&quot;:80,&quot;functions&quot;:80,&quot;statements&quot;:80}}&#x27;</code></pre>
+<h3>1.3 測試環境概覽</h3>
+<table>
+<tr><th>環境</th><th>用途</th><th>觸發條件</th></tr>
+<tr><td>local</td><td>開發者本機單元測試</td><td>本地 npm test</td></tr>
+<tr><td>dev</td><td>持續整合（Unit + Integration）</td><td>push to feature/*</td></tr>
+<tr><td>staging</td><td>E2E + 效能測試</td><td>push to develop</td></tr>
+<tr><td>prod</td><td>UAT + Smoke Test（上線後）</td><td>部署完成後</td></tr>
+</table>
+<hr>
+<h2>2. Test Strategy</h2>
+<h3>2.1 測試層次架構</h3>
+<pre><code class="">┌─────────────────────────────────────────────────────┐
+│  UAT（User Acceptance Testing）                      │
+│  業務驗收、端到端場景、真實使用者操作流程              │
+├─────────────────────────────────────────────────────┤
+│  Performance Tests（效能測試）                        │
+│  k6 WS 負載、壓力、尖峰、耐久測試                     │
+├─────────────────────────────────────────────────────┤
+│  E2E Tests（端到端測試）                              │
+│  多玩家真實房間、完整遊戲週期、滲透測試                │
+├─────────────────────────────────────────────────────┤
+│  Integration Tests（整合測試）                        │
+│  @colyseus/testing Room 測試、REST API 整合、DB 測試  │
+├─────────────────────────────────────────────────────┤
+│  Unit Tests（單元測試）                               │
+│  Jest、純函數、各模組獨立測試                          │
+└─────────────────────────────────────────────────────┘</code></pre>
+<h3>2.2 各層測試策略</h3>
+<table>
+<tr><th>層次</th><th>框架</th><th>執行頻率</th><th>範圍</th><th>隔離層級</th></tr>
+<tr><td>Unit</td><td>Jest + ts-jest</td><td>每次 commit</td><td>純函數、類別方法</td><td>完全 Mock 外部依賴</td></tr>
+<tr><td>Integration</td><td>Jest + @colyseus/testing</td><td>每次 PR</td><td>Room 生命週期、API、DB</td><td>真實 Redis/DB 容器（testcontainers）</td></tr>
+<tr><td>E2E</td><td>Jest + Playwright/Colyseus Client SDK</td><td>每次 develop 分支</td><td>完整遊戲流程</td><td>Staging 環境</td></tr>
+<tr><td>Performance</td><td>k6</td><td>每週 + 每次 Release</td><td>500 CCU 並發</td><td>Staging 環境</td></tr>
+<tr><td>UAT</td><td>手動 + BDD</td><td>Release 前</td><td>PRD AC 驗收</td><td>Staging/Beta 環境</td></tr>
+</table>
+<h3>2.3 測試資料策略</h3>
+<ul><li><strong>Fixtures</strong>：<code>tests/fixtures/</code> TypeScript seed scripts，預置測試帳號與廳別</li><li><strong>Mock</strong>：</li><li style="margin-left:1.0rem">Redis：<code>ioredis-mock</code>（單元測試），真實 Redis 容器（整合測試）</li><li style="margin-left:1.0rem">PostgreSQL：<code>pg-mem</code>（單元測試），<code>testcontainers</code>（整合測試）</li><li style="margin-left:1.0rem">OTP SMS：固定 OTP Code（環境變數 <code>TEST_OTP_BYPASS_CODE</code>）</li><li><strong>清理</strong>：每次測試後執行清理 script 還原狀態</li></ul>
+<hr>
+<h2>3. Unit Test Plan</h2>
+<p><strong>工具</strong>：Jest 29.x + ts-jest + @colyseus/testing</p>
+<p><strong>執行命令</strong>：<code>npm run test:unit</code></p>
+<p><strong>測試目錄</strong>：<code>tests/unit/</code></p>
+<h3>3.1 HandEvaluator Tests</h3>
+<p><strong>模組</strong>：<code>server/src/game/HandEvaluator.ts</code></p>
+<p><strong>描述</strong>：測試 3 張牌點數計算（mod 10）、三公判定、D8 同點比牌（花色、牌值）邏輯。</p>
+<p>測試向量格式：<code>TC-ID | 描述 | 輸入（3 張牌）| 預期輸出 | 優先級</code></p>
+<h4>3.1.1 基本點數計算（calculate）</h4>
+<table>
+<tr><th>TC-ID</th><th>描述</th><th>輸入</th><th>預期輸出</th><th>優先級</th></tr>
+<tr><td>TC-HE-001</td><td>三公（J+Q+K）所有人頭牌</td><td>[{value:&#x27;J&#x27;},{value:&#x27;Q&#x27;},{value:&#x27;K&#x27;}]</td><td>{ points:0, is_sam_gong:true, hand_type:&#x27;sam_gong&#x27; }</td><td>P0</td></tr>
+<tr><td>TC-HE-002</td><td>三公（10+Q+K）</td><td>[{value:&#x27;10&#x27;},{value:&#x27;Q&#x27;},{value:&#x27;K&#x27;}]</td><td>{ points:0, is_sam_gong:true, hand_type:&#x27;sam_gong&#x27; }</td><td>P0</td></tr>
+<tr><td>TC-HE-003</td><td>三公（J+J+8）point=0+0+8=8, NOT三公</td><td>[{value:&#x27;J&#x27;},{value:&#x27;J&#x27;},{value:&#x27;8&#x27;}]</td><td>{ points:8, is_sam_gong:false, hand_type:&#x27;8&#x27; }</td><td>P0</td></tr>
+<tr><td>TC-HE-004</td><td>9點（A+8=1+8=9）</td><td>[{value:&#x27;A&#x27;,point:1},{value:&#x27;8&#x27;,point:8},{value:&#x27;K&#x27;,point:0}]</td><td>{ points:9, is_sam_gong:false, hand_type:&#x27;9&#x27; }</td><td>P0</td></tr>
+<tr><td>TC-HE-005</td><td>8點（3+5=8）</td><td>[{value:&#x27;3&#x27;},{value:&#x27;5&#x27;},{value:&#x27;K&#x27;}]</td><td>{ points:8, is_sam_gong:false, hand_type:&#x27;8&#x27; }</td><td>P0</td></tr>
+<tr><td>TC-HE-006</td><td>0點（非三公，2+4+4=10 mod 10=0）</td><td>[{value:&#x27;2&#x27;},{value:&#x27;4&#x27;},{value:&#x27;4&#x27;}]</td><td>{ points:0, is_sam_gong:false, hand_type:&#x27;0&#x27; }</td><td>P0</td></tr>
+<tr><td>TC-HE-007</td><td>1點（A+K+K=1+0+0=1）</td><td>[{value:&#x27;A&#x27;},{value:&#x27;K&#x27;},{value:&#x27;K&#x27;}]</td><td>{ points:1, is_sam_gong:false, hand_type:&#x27;1&#x27; }</td><td>P1</td></tr>
+<tr><td>TC-HE-008</td><td>2點（A+A=1+1=2）</td><td>[{value:&#x27;A&#x27;},{value:&#x27;A&#x27;},{value:&#x27;K&#x27;}]</td><td>{ points:2, is_sam_gong:false, hand_type:&#x27;2&#x27; }</td><td>P1</td></tr>
+<tr><td>TC-HE-009</td><td>5點（2+3=5）</td><td>[{value:&#x27;2&#x27;},{value:&#x27;3&#x27;},{value:&#x27;Q&#x27;}]</td><td>{ points:5, is_sam_gong:false, hand_type:&#x27;5&#x27; }</td><td>P1</td></tr>
+<tr><td>TC-HE-010</td><td>6點（6+J+Q=6+0+0=6）</td><td>[{value:&#x27;6&#x27;},{value:&#x27;J&#x27;},{value:&#x27;Q&#x27;}]</td><td>{ points:6, is_sam_gong:false, hand_type:&#x27;6&#x27; }</td><td>P1</td></tr>
+<tr><td>TC-HE-011</td><td>7點（7+K=7+0=7）</td><td>[{value:&#x27;7&#x27;},{value:&#x27;K&#x27;},{value:&#x27;J&#x27;}]</td><td>{ points:7, is_sam_gong:false, hand_type:&#x27;7&#x27; }</td><td>P1</td></tr>
+<tr><td>TC-HE-012</td><td>整數運算邊界：不使用浮點</td><td>[{value:&#x27;9&#x27;},{value:&#x27;9&#x27;},{value:&#x27;9&#x27;}]</td><td>{ points:7, is_sam_gong:false, hand_type:&#x27;7&#x27; }</td><td>P0</td></tr>
+<tr><td>TC-HE-013</td><td>A 點數為 1（非 11）</td><td>[{value:&#x27;A&#x27;},{value:&#x27;9&#x27;},{value:&#x27;9&#x27;}]</td><td>{ points:9, is_sam_gong:false, hand_type:&#x27;9&#x27; }</td><td>P0</td></tr>
+<tr><td>TC-HE-014</td><td>4點（4+K+Q=4+0+0=4）</td><td>[{value:&#x27;4&#x27;},{value:&#x27;K&#x27;},{value:&#x27;Q&#x27;}]</td><td>{ points:4, is_sam_gong:false, hand_type:&#x27;4&#x27; }</td><td>P1</td></tr>
+<tr><td>TC-HE-015</td><td>3點（3+J+Q=3+0+0=3）</td><td>[{value:&#x27;3&#x27;},{value:&#x27;J&#x27;},{value:&#x27;Q&#x27;}]</td><td>{ points:3, is_sam_gong:false, hand_type:&#x27;3&#x27; }</td><td>P1</td></tr>
+</table>
+<h4>3.1.2 D8 同點比牌（tiebreak）</h4>
+<table>
+<tr><th>TC-ID</th><th>描述</th><th>輸入（hand1 vs hand2）</th><th>預期輸出</th><th>優先級</th></tr>
+<tr><td>TC-HE-016</td><td>花色比較：♠ 優於 ♥</td><td>hand1=[{suit:&#x27;spade&#x27;,value:&#x27;3&#x27;},...], hand2=[{suit:&#x27;heart&#x27;,value:&#x27;3&#x27;},...]</td><td>1（hand1 勝）</td><td>P0</td></tr>
+<tr><td>TC-HE-017</td><td>花色比較：♥ 優於 ♦</td><td>hand1=[{suit:&#x27;heart&#x27;,value:&#x27;3&#x27;},...], hand2=[{suit:&#x27;diamond&#x27;,value:&#x27;3&#x27;},...]</td><td>1（hand1 勝）</td><td>P0</td></tr>
+<tr><td>TC-HE-018</td><td>花色比較：♦ 優於 ♣</td><td>hand1=[{suit:&#x27;diamond&#x27;,value:&#x27;3&#x27;},...], hand2=[{suit:&#x27;club&#x27;,value:&#x27;3&#x27;},...]</td><td>1（hand1 勝）</td><td>P0</td></tr>
+<tr><td>TC-HE-019</td><td>花色相同，牌值比較：K &gt; Q</td><td>hand1=[{suit:&#x27;spade&#x27;,value:&#x27;K&#x27;},...], hand2=[{suit:&#x27;spade&#x27;,value:&#x27;Q&#x27;},...]</td><td>1（hand1 勝）</td><td>P0</td></tr>
+<tr><td>TC-HE-020</td><td>牌值比較：A 最小</td><td>hand1=[{suit:&#x27;spade&#x27;,value:&#x27;2&#x27;},...], hand2=[{suit:&#x27;spade&#x27;,value:&#x27;A&#x27;},...]</td><td>1（hand1 勝）</td><td>P0</td></tr>
+<tr><td>TC-HE-021</td><td>完全相同手牌（平手）</td><td>hand1=hand2（相同花色/牌值組合）</td><td>0（平手）</td><td>P0</td></tr>
+<tr><td>TC-HE-022</td><td>最大花色比較（取手中最大花色張）</td><td>hand1=[spade2, club3, club4], hand2=[heart2, heart3, heart4]</td><td>1（hand1 勝，spade &gt; heart）</td><td>P1</td></tr>
+<tr><td>TC-HE-023</td><td>花色相同下最大牌值比較</td><td>hand1=[spade_K, spade_2, spade_3], hand2=[spade_Q, spade_J, spade_A]</td><td>1（hand1 勝，K &gt; Q）</td><td>P1</td></tr>
+</table>
+<h4>3.1.3 compare（閒家 vs 莊家）</h4>
+<table>
+<tr><th>TC-ID</th><th>描述</th><th>輸入</th><th>預期輸出</th><th>優先級</th></tr>
+<tr><td>TC-HE-024</td><td>閒家三公 vs 莊家 9 點</td><td>player=三公, banker=9pt</td><td>&#x27;win&#x27;</td><td>P0</td></tr>
+<tr><td>TC-HE-025</td><td>莊家三公 vs 閒家 9 點</td><td>player=9pt, banker=三公</td><td>&#x27;lose&#x27;</td><td>P0</td></tr>
+<tr><td>TC-HE-026</td><td>閒家 9 點 vs 莊家 8 點</td><td>player=9pt, banker=8pt</td><td>&#x27;win&#x27;</td><td>P0</td></tr>
+<tr><td>TC-HE-027</td><td>閒家 5 點 vs 莊家 7 點</td><td>player=5pt, banker=7pt</td><td>&#x27;lose&#x27;</td><td>P0</td></tr>
+<tr><td>TC-HE-028</td><td>同點 D8 tiebreak 閒家勝</td><td>player=8pt spade, banker=8pt heart</td><td>&#x27;win&#x27;</td><td>P0</td></tr>
+<tr><td>TC-HE-029</td><td>同點 D8 tiebreak 完全平手</td><td>player=8pt, banker=8pt（同花色同牌值）</td><td>&#x27;tie&#x27;</td><td>P0</td></tr>
+</table>
+<hr>
+<h3>3.2 SettlementEngine Tests</h3>
+<p><strong>模組</strong>：<code>server/src/game/SettlementEngine.ts</code></p>
+<p><strong>描述</strong>：測試三步驟結算邏輯、Rake 計算、莊家破產先到先得、全員棄牌、籌碼守恆。</p>
+<table>
+<tr><th>TC-ID</th><th>描述</th><th>輸入情境</th><th>預期輸出</th><th>優先級</th></tr>
+<tr><td>TC-SE-001</td><td>正常結算：1 贏家（N=1 倍），1 輸家</td><td>player1(call,win,pt=8), player2(call,lose,pt=5), banker_bet=1000, pot=1000</td><td>player1 net=+1000, player2 net=-1000, rake=50(floor(1000×0.05)), 守恆驗證通過</td><td>P0</td></tr>
+<tr><td>TC-SE-002</td><td>三公贏家（N=3 倍）結算</td><td>player1(call,三公,win), banker_bet=500, pot=500（player2 lose）</td><td>player1 net=+1500, player2 net=-500, rake=25, 莊家 net=-(1500+25)+(500-25)=-1025</td><td>P0</td></tr>
+<tr><td>TC-SE-003</td><td>9 點贏家（N=2 倍）結算</td><td>player1(call,9pt,win), banker_bet=500</td><td>player1 net=+1000, rake 計算正確</td><td>P0</td></tr>
+<tr><td>TC-SE-004</td><td>全員 Fold（all_fold）情境</td><td>所有閒家 fold</td><td>pot=0, rake=0, banker escrow 退回, all_fold=true</td><td>P0</td></tr>
+<tr><td>TC-SE-005</td><td>2 人桌唯一閒家 Fold</td><td>banker+1 閒家，閒家 fold</td><td>all_fold=true, pot=0, rake=0, banker_chips 退回 escrow</td><td>P0</td></tr>
+<tr><td>TC-SE-006</td><td>6 人桌全員 Fold</td><td>5 名閒家全部 fold</td><td>all_fold=true, pot=0, rake=0, 莊家 escrow 退回</td><td>P0</td></tr>
+<tr><td>TC-SE-007</td><td>莊家破產先到先得（順時針）</td><td>banker_chips=800, 2 贏家各 bet=500, 順時針 seat1 先</td><td>seat1 獲全額支付(N=1=500), seat2 進入 insolvent_winners, net_chips=-500</td><td>P0</td></tr>
+<tr><td>TC-SE-008</td><td>Insolvent Winner net_chips 必須非零</td><td>莊家破產，贏家未獲支付</td><td>insolvent_winner.net_chips = -called_bet（NOT 0）</td><td>P0</td></tr>
+<tr><td>TC-SE-009</td><td>Rake 計算：pot=0 時 rake=0</td><td>全員 fold，pot=0</td><td>rake_amount=0（不適用最少 1 規則）</td><td>P0</td></tr>
+<tr><td>TC-SE-010</td><td>Rake 計算：pot=1 時 rake=1（min 1 規則）</td><td>pot=1，floor(1×0.05)=0，but min=1</td><td>rake_amount=1</td><td>P0</td></tr>
+<tr><td>TC-SE-011</td><td>Rake 計算：pot=100，rake=5</td><td>pot=100</td><td>rake_amount=5（floor(100×0.05)=5）</td><td>P1</td></tr>
+<tr><td>TC-SE-012</td><td>平手（tie）情境</td><td>player 同點同 D8，result=tie</td><td>net_chips=0, payout_amount=0（退注），不入底池</td><td>P0</td></tr>
+<tr><td>TC-SE-013</td><td>籌碼守恆驗證</td><td>任意合法結算</td><td>sum(all net_chips) + rake_amount === 0</td><td>P0</td></tr>
+<tr><td>TC-SE-014</td><td>多贏家情境（2 贏 1 輸）</td><td>player1(win,N=1), player2(win,N=1), player3(lose)</td><td>每位贏家各得 banker_bet，輸家底池扣 rake 歸莊，守恆</td><td>P1</td></tr>
+<tr><td>TC-SE-015</td><td>莊家 net_chips 計算</td><td>2 閒家：1 贏家 N=1, 1 輸家</td><td>banker_net = loser_bet - rake - winner_payout</td><td>P0</td></tr>
+</table>
+<hr>
+<h3>3.3 BankerRotation Tests</h3>
+<p><strong>模組</strong>：<code>server/src/game/BankerRotation.ts</code></p>
+<p><strong>描述</strong>：測試首莊決定、順時針輪莊、跳過不合格莊家、環繞邊界。</p>
+<table>
+<tr><th>TC-ID</th><th>描述</th><th>輸入</th><th>預期輸出</th><th>優先級</th></tr>
+<tr><td>TC-BR-001</td><td>首莊：持最多籌碼者</td><td>[p0=5000, p1=3000, p2=2000]</td><td>banker=p0（seat 0）</td><td>P0</td></tr>
+<tr><td>TC-BR-002</td><td>首莊：同籌碼按進入順序</td><td>[p0=5000, p1=5000]</td><td>banker=p0（先進入者）</td><td>P1</td></tr>
+<tr><td>TC-BR-003</td><td>順時針輪莊：seat 0 → seat 1</td><td>currentBanker=0, seats=[0,1,2,3]</td><td>nextBanker=1</td><td>P0</td></tr>
+<tr><td>TC-BR-004</td><td>環繞邊界：最後玩家 → 第一玩家</td><td>currentBanker=3, seats=[0,1,2,3]</td><td>nextBanker=0</td><td>P0</td></tr>
+<tr><td>TC-BR-005</td><td>跳過破產莊家（chip &lt; min_bet）</td><td>seats=[0,1,2], seat1 chip=0, min_bet=100</td><td>跳過 seat1，nextBanker=2</td><td>P0</td></tr>
+<tr><td>TC-BR-006</td><td>所有候選莊家均不合格</td><td>所有玩家 chip &lt; min_bet</td><td>回到 waiting 狀態（返回 -1 或特殊標記）</td><td>P0</td></tr>
+<tr><td>TC-BR-007</td><td>中途離場玩家從輪莊序列移除</td><td>seats=[0,1,2], seat1 離場後 rotate</td><td>nextBanker 跳過 seat1</td><td>P1</td></tr>
+<tr><td>TC-BR-008</td><td>2 人桌輪莊</td><td>currentBanker=0, seats=[0,1]</td><td>nextBanker=1</td><td>P0</td></tr>
+<tr><td>TC-BR-009</td><td>skipInsolventBanker 環繞</td><td>seats=[0,1,2], seat0 破產, currentBanker=2</td><td>skipInsolventBanker → 跳過 seat0，選 seat1</td><td>P1</td></tr>
+</table>
+<hr>
+<h3>3.4 AntiAddictionManager Tests</h3>
+<p><strong>模組</strong>：<code>server/src/game/AntiAddictionManager.ts</code></p>
+<p><strong>描述</strong>：測試成人 2h 提醒、未成年 2h 硬停、Write-Through 機制、UTC+8 午夜重置。</p>
+<table>
+<tr><th>TC-ID</th><th>描述</th><th>輸入</th><th>預期輸出</th><th>優先級</th></tr>
+<tr><td>TC-AA-001</td><td>成人連續遊玩 &lt; 2h，無提醒</td><td>trackAdultSession，sessionSeconds=3600</td><td>status=normal（無警告）</td><td>P0</td></tr>
+<tr><td>TC-AA-002</td><td>成人連續遊玩達 2h，觸發提醒</td><td>sessionSeconds=7200</td><td>status=warning, 送出 anti_addiction_warning { type:&#x27;adult&#x27; }</td><td>P0</td></tr>
+<tr><td>TC-AA-003</td><td>成人 2h 提醒後重複：未確認不重置</td><td>提醒後繼續計時</td><td>仍維持 warning 狀態</td><td>P1</td></tr>
+<tr><td>TC-AA-004</td><td>成人確認提醒後計時重置</td><td>onAdultWarningConfirmed(playerId)</td><td>sessionSeconds 重置為 0</td><td>P0</td></tr>
+<tr><td>TC-AA-005</td><td>成人離線 &gt; 30min 後重新連線，計時重置</td><td>離線 31min 後重連</td><td>sessionSeconds 重置為 0</td><td>P1</td></tr>
+<tr><td>TC-AA-006</td><td>未成年每日 &lt; 2h，可繼續遊玩</td><td>trackUnderageDaily，dailySeconds=3600</td><td>status=normal</td><td>P0</td></tr>
+<tr><td>TC-AA-007</td><td>未成年每日達 2h，觸發硬停</td><td>dailySeconds=7200</td><td>status=hard_stop, 送出 anti_addiction_signal { type:&#x27;underage&#x27; }, WS Close 4003</td><td>P0</td></tr>
+<tr><td>TC-AA-008</td><td>未成年每日上限 UTC+8 午夜重置</td><td>次日 00:00 UTC+8 後</td><td>dailySeconds 重置為 0，可重新連線</td><td>P0</td></tr>
+<tr><td>TC-AA-009</td><td>getTaiwanMidnightTimestamp 計算正確</td><td>任意 UTC 時間</td><td>返回下一個 UTC+8 00:00 的 Unix ms</td><td>P0</td></tr>
+<tr><td>TC-AA-010</td><td>Write-Through：每局 settled 後寫入 PostgreSQL</td><td>settle 事件觸發</td><td>DB users.daily_play_seconds 更新正確</td><td>P0</td></tr>
+<tr><td>TC-AA-011</td><td>Redis failover 後從 PostgreSQL 回填</td><td>Redis 重啟</td><td>從 DB 回填計時資料，不丟失</td><td>P0</td></tr>
+<tr><td>TC-AA-012</td><td>confirm_anti_addiction payload 驗證 { type:&#x27;adult&#x27; }</td><td>發送 { type:&#x27;adult&#x27; }</td><td>onAdultWarningConfirmed 被呼叫</td><td>P0</td></tr>
+<tr><td>TC-AA-013</td><td>未成年牌局中達到 2h，等待本局結算後登出</td><td>遊戲進行中達限</td><td>scheduleUnderageLogout 設定，本局結算後觸發 WS Close 4003</td><td>P0</td></tr>
+</table>
+<hr>
+<h3>3.5 TutorialScriptEngine Tests</h3>
+<p><strong>模組</strong>：<code>server/src/game/TutorialScriptEngine.ts</code></p>
+<p><strong>描述</strong>：測試教學固定劇本載入、三局腳本正確性、牌張唯一性。</p>
+<table>
+<tr><th>TC-ID</th><th>描述</th><th>輸入</th><th>預期輸出</th><th>優先級</th></tr>
+<tr><td>TC-TS-001</td><td>R1 劇本：莊家三公（K♠/Q♥/J♦）</td><td>loadScript(1)</td><td>banker_hand=[&#x27;K♠&#x27;,&#x27;Q♥&#x27;,&#x27;J♦&#x27;], is_sam_gong=true, expected_outcome=&#x27;banker_win&#x27;</td><td>P0</td></tr>
+<tr><td>TC-TS-002</td><td>R1 劇本：閒家 1pt（A♠/2♣/8♦）</td><td>loadScript(1)</td><td>player_hand=[&#x27;A♠&#x27;,&#x27;2♣&#x27;,&#x27;8♦&#x27;]（1+2+8=11 mod 10=1pt）</td><td>P0</td></tr>
+<tr><td>TC-TS-003</td><td>R2 劇本：莊家 5pt（5♠/A♥/9♦）</td><td>loadScript(2)</td><td>banker_hand=[&#x27;5♠&#x27;,&#x27;A♥&#x27;,&#x27;9♦&#x27;]（5+1+9=15 mod 10=5pt）</td><td>P0</td></tr>
+<tr><td>TC-TS-004</td><td>R2 劇本：閒家 3pt（3♦/K♣/Q♠）</td><td>loadScript(2)</td><td>player_hand=[&#x27;3♦&#x27;,&#x27;K♣&#x27;,&#x27;Q♠&#x27;]（3+0+0=3pt）</td><td>P0</td></tr>
+<tr><td>TC-TS-005</td><td>R3 劇本：平局（force_tie=true）</td><td>loadScript(3)</td><td>banker=6pt, player=6pt, force_tie=true, expected_outcome=&#x27;tie&#x27;</td><td>P0</td></tr>
+<tr><td>TC-TS-006</td><td>18 張牌全部唯一（無重複）</td><td>loadScript(1/2/3) 全部</td><td>18 張牌張集合無任何重複</td><td>P0</td></tr>
+<tr><td>TC-TS-007</td><td>非法 round 數值報錯</td><td>loadScript(4 as any)</td><td>拋出 Error</td><td>P1</td></tr>
+<tr><td>TC-TS-008</td><td>tutorial_mode=false 時不使用固定劇本</td><td>正常遊戲模式</td><td>DeckManager 使用 crypto.randomInt 洗牌</td><td>P0</td></tr>
+</table>
+<hr>
+<h3>3.6 DeckManager Tests</h3>
+<p><strong>模組</strong>：<code>server/src/game/DeckManager.ts</code></p>
+<table>
+<tr><th>TC-ID</th><th>描述</th><th>輸入</th><th>預期輸出</th><th>優先級</th></tr>
+<tr><td>TC-DM-001</td><td>buildDeck 產生 52 張唯一牌</td><td>buildDeck()</td><td>deck.length=52，無重複</td><td>P0</td></tr>
+<tr><td>TC-DM-002</td><td>shuffle 後仍為 52 張唯一牌</td><td>shuffle()</td><td>洗牌後 deck.length=52，無重複</td><td>P0</td></tr>
+<tr><td>TC-DM-003</td><td>禁止 Math.random（使用 crypto.randomInt）</td><td>靜態分析</td><td>程式碼不含 Math.random</td><td>P0</td></tr>
+<tr><td>TC-DM-004</td><td>deal(3) 返回 3 張牌</td><td>deal(3)</td><td>cards.length=3</td><td>P0</td></tr>
+<tr><td>TC-DM-005</td><td>6 人桌 deal 18 張，牌張唯一</td><td>deal 6 次 × 3</td><td>18 張無重複</td><td>P0</td></tr>
+</table>
+<hr>
+<h3>3.7 Rate Limit Tests</h3>
+<p><strong>模組</strong>：<code>server/src/middleware/rateLimit.ts</code></p>
+<table>
+<tr><th>TC-ID</th><th>描述</th><th>輸入</th><th>預期輸出</th><th>優先級</th></tr>
+<tr><td>TC-RL-001</td><td>認證端點 &lt; 30 次/min 不觸發限制</td><td>29 req/min/IP to /auth/*</td><td>HTTP 200（正常回應）</td><td>P0</td></tr>
+<tr><td>TC-RL-002</td><td>認證端點達 30 次/min 觸發限制</td><td>30 req/min/IP to /auth/*</td><td>HTTP 429 + Retry-After header</td><td>P0</td></tr>
+<tr><td>TC-RL-003</td><td>高敏感端點 5 次/min 限制</td><td>6 req/min/user to /player/daily-chip</td><td>HTTP 429</td><td>P0</td></tr>
+<tr><td>TC-RL-004</td><td>一般端點 60 次/min 限制</td><td>61 req/min/user to /player/me</td><td>HTTP 429</td><td>P0</td></tr>
+<tr><td>TC-RL-005</td><td>IP 全局 300 次/min 限制</td><td>301 req/min/IP</td><td>HTTP 429</td><td>P0</td></tr>
+</table>
+<hr>
+<h2>4. Integration Test Plan</h2>
+<p><strong>工具</strong>：Jest + @colyseus/testing + testcontainers</p>
+<p><strong>執行命令</strong>：<code>npm run test:integration</code></p>
+<p><strong>測試目錄</strong>：<code>tests/integration/</code></p>
+<p><strong>前提條件</strong>：Docker 運行中（PostgreSQL + Redis 容器自動啟動）</p>
+<h3>4.1 Room Lifecycle Tests</h3>
+<p><strong>工具</strong>：<code>@colyseus/testing</code> — <code>ColyseusTestServer.create(SamGongRoom)</code></p>
+<table>
+<tr><th>TC-ID</th><th>描述</th><th>步驟</th><th>預期結果</th><th>優先級</th></tr>
+<tr><td>TC-RL-INT-001</td><td>Room onCreate 初始化狀態正確</td><td>createRoom(&#x27;sam_gong&#x27;, { tier:&#x27;青銅廳&#x27; })</td><td>state.phase=&#x27;waiting&#x27;, state.tier_config.min_bet=100</td><td>P0</td></tr>
+<tr><td>TC-RL-INT-002</td><td>玩家加入：JWT 驗證通過</td><td>connectTo(room, { token: validJWT })</td><td>onJoin 成功，PlayerState 初始化</td><td>P0</td></tr>
+<tr><td>TC-RL-INT-003</td><td>玩家加入：JWT 失效拒絕</td><td>connectTo(room, { token: expiredJWT })</td><td>onJoin 拋出 ServerError</td><td>P0</td></tr>
+<tr><td>TC-RL-INT-004</td><td>玩家加入：籌碼不足拒絕</td><td>connectTo(room, chip_balance=500, tier entry_chips=1000)</td><td>onJoin 拋出 ServerError（insufficient_chips）</td><td>P0</td></tr>
+<tr><td>TC-RL-INT-005</td><td>2 玩家加入後自動進入 dealing phase</td><td>connectTo × 2</td><td>state.phase=&#x27;dealing&#x27;</td><td>P0</td></tr>
+<tr><td>TC-RL-INT-006</td><td>玩家斷線 30s 重連視窗</td><td>disconnect client, reconnect within 30s</td><td>PlayerState 保留，推送 myHand</td><td>P0</td></tr>
+<tr><td>TC-RL-INT-007</td><td>玩家斷線超過 30s 自動 Fold</td><td>disconnect client, wait 31s</td><td>player.is_folded=true</td><td>P0</td></tr>
+<tr><td>TC-RL-INT-008</td><td>onDispose 寫入 game_sessions</td><td>destroyRoom</td><td>DB 存在對應 game_sessions 記錄</td><td>P0</td></tr>
+<tr><td>TC-RL-INT-009</td><td>房間最大容量 6 人</td><td>connectTo × 7</td><td>第 7 位拒絕加入（room_full）</td><td>P1</td></tr>
+<tr><td>TC-RL-INT-010</td><td>60s 無人加入自動解散</td><td>createRoom, 不加入玩家，等 60s</td><td>Room 銷毀（onDispose 呼叫）</td><td>P1</td></tr>
+</table>
+<hr>
+<h3>4.2 Game Flow Tests</h3>
+<p><strong>描述</strong>：完整遊戲流程從 onCreate 到 settled phase 的整合測試。</p>
+<table>
+<tr><th>TC-ID</th><th>描述</th><th>步驟</th><th>預期結果</th><th>優先級</th></tr>
+<tr><td>TC-GF-001</td><td>完整遊戲一局（2 人）</td><td>join×2 → dealing → banker_bet → call → showdown → settled</td><td>phase 依序正確轉換，net_chips 正確</td><td>P0</td></tr>
+<tr><td>TC-GF-002</td><td>banker_bet 計時器超時自動最低下注</td><td>不發送 banker_bet，等 30s</td><td>banker_bet = min_bet，phase=&#x27;player-bet&#x27;</td><td>P0</td></tr>
+<tr><td>TC-GF-003</td><td>閒家 call 計時器超時自動 Fold</td><td>不發送 call/fold，等 30s</td><td>player.is_folded=true</td><td>P0</td></tr>
+<tr><td>TC-GF-004</td><td>結算後 5s 自動開始下一局</td><td>settled 後等 5s</td><td>phase=&#x27;dealing&#x27;，round_number+1</td><td>P0</td></tr>
+<tr><td>TC-GF-005</td><td>結算後玩家不足進入 waiting</td><td>settled 後玩家 &lt; 2</td><td>phase=&#x27;waiting&#x27;</td><td>P1</td></tr>
+<tr><td>TC-GF-006</td><td>多局連續輪莊正確</td><td>完成 3 局</td><td>banker_seat_index 每局正確輪換</td><td>P0</td></tr>
+<tr><td>TC-GF-007</td><td>resetForNextRound 正確清空狀態</td><td>第 2 局開始前</td><td>bet_amount=0, is_folded=false, settlement 清空</td><td>P0</td></tr>
+</table>
+<hr>
+<h3>4.3 WebSocket Message Tests</h3>
+<p><strong>描述</strong>：所有 Client → Server 訊息類型的整合驗證。</p>
+<table>
+<tr><th>TC-ID</th><th>描述</th><th>訊息類型</th><th>輸入</th><th>預期結果</th><th>優先級</th></tr>
+<tr><td>TC-WS-001</td><td>banker_bet 合法下注</td><td>banker_bet</td><td>{ amount: 200 }（min=100, max=500）</td><td>state.banker_bet_amount=200, phase=&#x27;player-bet&#x27;</td><td>P0</td></tr>
+<tr><td>TC-WS-002</td><td>banker_bet 下注超過上限拒絕</td><td>banker_bet</td><td>{ amount: 600 }（max=500）</td><td>error { code:&#x27;bet_out_of_range&#x27; }</td><td>P0</td></tr>
+<tr><td>TC-WS-003</td><td>banker_bet 在 player-bet phase 發送拒絕</td><td>banker_bet</td><td>phase=&#x27;player-bet&#x27; 時發送</td><td>error { code:&#x27;invalid_phase&#x27; }</td><td>P0</td></tr>
+<tr><td>TC-WS-004</td><td>call 合法跟注</td><td>call</td><td>{} 在 player-bet phase，本人輪次</td><td>player.bet_amount=banker_bet_amount</td><td>P0</td></tr>
+<tr><td>TC-WS-005</td><td>call 籌碼不足拒絕</td><td>call</td><td>chip_balance &lt; banker_bet_amount</td><td>error { code:&#x27;insufficient_chips&#x27; }</td><td>P0</td></tr>
+<tr><td>TC-WS-006</td><td>fold 合法棄牌</td><td>fold</td><td>{} 在 player-bet phase，本人輪次</td><td>player.is_folded=true, bet_amount=0</td><td>P0</td></tr>
+<tr><td>TC-WS-007</td><td>see_cards 莊家查看手牌</td><td>see_cards</td><td>{} 在 banker-bet phase，is_banker=true</td><td>發送私人 myHand 訊息</td><td>P1</td></tr>
+<tr><td>TC-WS-008</td><td>send_chat 合法訊息</td><td>send_chat</td><td>{ text: &#x27;你好&#x27; }（≤200字）</td><td>廣播至房間</td><td>P1</td></tr>
+<tr><td>TC-WS-009</td><td>send_chat 超長訊息拒絕</td><td>send_chat</td><td>{ text: &#x27;x&#x27;.repeat(201) }</td><td>error</td><td>P1</td></tr>
+<tr><td>TC-WS-010</td><td>confirm_anti_addiction</td><td>confirm_anti_addiction</td><td>{ type:&#x27;adult&#x27; }</td><td>antiAddiction.onAdultWarningConfirmed 呼叫</td><td>P0</td></tr>
+<tr><td>TC-WS-011</td><td>非當前輪次玩家操作拒絕</td><td>call</td><td>非輪次玩家發送</td><td>error（非本人輪次）</td><td>P0</td></tr>
+<tr><td>TC-WS-012</td><td>封號後 WS Close 4001 即時踢出</td><td>Admin ban → Redis Pub/Sub</td><td>client.leave(4001)</td><td>P0</td></tr>
+</table>
+<hr>
+<h3>4.4 REST API Integration Tests</h3>
+<p><strong>描述</strong>：對 Express REST API 端點的整合測試（真實 DB + Redis）。</p>
+<table>
+<tr><th>TC-ID</th><th>描述</th><th>端點</th><th>輸入</th><th>預期回應</th><th>優先級</th></tr>
+<tr><td>TC-API-001</td><td>用戶登入成功</td><td>POST /api/v1/auth/login</td><td>{ credential: valid }</td><td>200, { access_token, refresh_token }</td><td>P0</td></tr>
+<tr><td>TC-API-002</td><td>用戶登入失敗（錯誤憑證）</td><td>POST /api/v1/auth/login</td><td>{ credential: invalid }</td><td>401, { error:&#x27;account_not_found&#x27; }</td><td>P0</td></tr>
+<tr><td>TC-API-003</td><td>Refresh Token Rotation</td><td>POST /api/v1/auth/refresh</td><td>{ refresh_token: valid }</td><td>200, 新 access_token 與 refresh_token</td><td>P0</td></tr>
+<tr><td>TC-API-004</td><td>取得玩家資料（JWT 驗證）</td><td>GET /api/v1/player/me</td><td>Authorization: Bearer validJWT</td><td>200, 玩家資料</td><td>P0</td></tr>
+<tr><td>TC-API-005</td><td>取得玩家資料（無 JWT）</td><td>GET /api/v1/player/me</td><td>無 Authorization header</td><td>401</td><td>P0</td></tr>
+<tr><td>TC-API-006</td><td>每日籌碼領取（冪等）</td><td>POST /api/v1/player/daily-chip</td><td>同一天呼叫兩次</td><td>第一次 200，第二次 400（已領取）</td><td>P0</td></tr>
+<tr><td>TC-API-007</td><td>救援籌碼申請（&lt; 500 籌碼）</td><td>POST /api/v1/player/rescue-chip</td><td>chip_balance=300</td><td>200, new_balance=1300</td><td>P0</td></tr>
+<tr><td>TC-API-008</td><td>救援籌碼申請（籌碼足夠拒絕）</td><td>POST /api/v1/player/rescue-chip</td><td>chip_balance=600</td><td>403</td><td>P0</td></tr>
+<tr><td>TC-API-009</td><td>排行榜查詢</td><td>GET /api/v1/leaderboard</td><td>week=current</td><td>200, 玩家清單（僅 show_in_leaderboard=true）</td><td>P0</td></tr>
+<tr><td>TC-API-010</td><td>OTP 年齡驗證流程</td><td>POST /api/v1/auth/otp/send + /verify</td><td>有效 OTP</td><td>200, age_verified=true</td><td>P0</td></tr>
+<tr><td>TC-API-011</td><td>SQL Injection 防護</td><td>POST /api/v1/auth/login</td><td>{ credential: &quot;&#x27;; DROP TABLE users;--&quot; }</td><td>400 或 401，DB 無影響</td><td>P0</td></tr>
+<tr><td>TC-API-012</td><td>封號 API（Admin）</td><td>POST /api/v1/admin/player/:id/ban</td><td>Admin JWT + player_id</td><td>200, player is_banned=true, Redis key 設定</td><td>P0</td></tr>
+<tr><td>TC-API-013</td><td>Rate Limit auth 端點（30/min/IP）</td><td>POST /api/v1/auth/login ×31</td><td>快速連續呼叫</td><td>第 31 次返回 429</td><td>P0</td></tr>
+<tr><td>TC-API-014</td><td>健康檢查端點</td><td>GET /api/v1/health</td><td>無</td><td>200 { status:&#x27;ok&#x27; }</td><td>P1</td></tr>
+<tr><td>TC-API-015</td><td>就緒探針（DB + Redis 連線）</td><td>GET /api/v1/health/ready</td><td>DB/Redis 正常</td><td>200</td><td>P0</td></tr>
+</table>
+<hr>
+<h2>5. E2E Test Plan</h2>
+<p><strong>工具</strong>：Jest + Colyseus Client SDK + 真實 Staging 環境</p>
+<p><strong>執行命令</strong>：<code>npm run test:e2e</code></p>
+<p><strong>測試目錄</strong>：<code>tests/e2e/</code></p>
+<p><strong>前提條件</strong>：Staging 環境部署完成，Fixtures 資料已載入</p>
+<h3>5.1 Happy Path：正常遊戲流程</h3>
+<table>
+<tr><th>TC-ID</th><th>描述</th><th>步驟</th><th>預期結果</th><th>優先級</th></tr>
+<tr><td>TC-E2E-001</td><td>新用戶註冊 → 年齡驗證 → 教學 → 進入青銅廳</td><td>register → OTP verify → tutorial → join matchmaking</td><td>成功進入青銅廳遊戲房間</td><td>P0</td></tr>
+<tr><td>TC-E2E-002</td><td>2 人完整一局遊戲</td><td>2 玩家加入 → 莊家下注 → 閒家 Call → Showdown → 結算</td><td>籌碼正確增減，phase 依序正確</td><td>P0</td></tr>
+<tr><td>TC-E2E-003</td><td>6 人滿房遊戲</td><td>6 玩家加入 → 完整一局</td><td>所有玩家結算正確，輪莊正確</td><td>P0</td></tr>
+<tr><td>TC-E2E-004</td><td>私人房間建立與加入</td><td>POST /rooms/private → 取得 room_code → 其他玩家用 room_code 加入</td><td>成功建立私人房間，其他玩家正常加入</td><td>P1</td></tr>
+<tr><td>TC-E2E-005</td><td>排行榜查詢正確反映遊戲結果</td><td>遊戲結束後查詢排行榜</td><td>本週淨籌碼正確更新（≤ 1min 延遲）</td><td>P1</td></tr>
+<tr><td>TC-E2E-006</td><td>每日任務完成流程</td><td>完成 3 局 → GET /tasks → POST /tasks/:id/complete</td><td>任務標記完成，獎勵發放正確</td><td>P1</td></tr>
+<tr><td>TC-E2E-007</td><td>救援籌碼自動觸發</td><td>結算後 chip_balance &lt; 500</td><td>Server 自動發送 rescue_chips 通知 + 籌碼更新</td><td>P0</td></tr>
+<tr><td>TC-E2E-008</td><td>斷線重連正常流程</td><td>遊戲進行中斷線 → 30s 內重連</td><td>恢復 PlayerState，收到 myHand 私人訊息</td><td>P0</td></tr>
+</table>
+<hr>
+<h3>5.2 Edge Cases：邊界情境</h3>
+<table>
+<tr><th>TC-ID</th><th>描述</th><th>步驟</th><th>預期結果</th><th>優先級</th></tr>
+<tr><td>TC-E2E-EC-001</td><td>2 人桌唯一閒家 Fold → all_fold</td><td>1 莊家 + 1 閒家，閒家 fold</td><td>all_fold=true, pot=0, rake=0, 莊家 escrow 退回</td><td>P0</td></tr>
+<tr><td>TC-E2E-EC-002</td><td>6 人桌全員 Fold</td><td>5 名閒家全部 fold</td><td>all_fold=true, banker escrow 退回</td><td>P0</td></tr>
+<tr><td>TC-E2E-EC-003</td><td>莊家破產先到先得</td><td>莊家籌碼不足支付所有贏家</td><td>順時針順序先支付，後者進入 insolvent_winners</td><td>P0</td></tr>
+<tr><td>TC-E2E-EC-004</td><td>莊家籌碼 &lt; min_bet 跳過輪莊</td><td>莊家破產後輪莊</td><td>跳過破產莊家，下一位符合資格者成為莊家</td><td>P0</td></tr>
+<tr><td>TC-E2E-EC-005</td><td>所有玩家籌碼不足莊家資格</td><td>全員 chip &lt; min_bet</td><td>Room 返回 waiting 狀態</td><td>P1</td></tr>
+<tr><td>TC-E2E-EC-006</td><td>同時多位玩家救援籌碼競態</td><td>2 玩家同時觸發 rescue chip</td><td>DB 原子操作確保只發放一次（冪等）</td><td>P0</td></tr>
+<tr><td>TC-E2E-EC-007</td><td>斷線超過 30s 自動 Fold 並繼續遊戲</td><td>玩家斷線 31s</td><td>is_folded=true，遊戲繼續進行</td><td>P0</td></tr>
+<tr><td>TC-E2E-EC-008</td><td>未成年遊玩 2h 後本局結算登出</td><td>未成年玩家連續 2h</td><td>本局結算完成後 WS Close 4003</td><td>P0</td></tr>
+<tr><td>TC-E2E-EC-009</td><td>多裝置登入踢出舊裝置（Close 4005）</td><td>同帳號從第二裝置登入</td><td>舊裝置收到 WS Close 4005</td><td>P1</td></tr>
+<tr><td>TC-E2E-EC-010</td><td>pot=1 時 rake=1（最小 rake 規則）</td><td>1 名輸家 bet=1</td><td>rake_amount=1（floor(0.05)=0 → min=1）</td><td>P0</td></tr>
+<tr><td>TC-E2E-EC-011</td><td>Insolvent winner net_chips 必須是 -called_bet</td><td>莊家破產，贏家未獲支付</td><td>net_chips = -called_bet（非 0）</td><td>P0</td></tr>
+<tr><td>TC-E2E-EC-012</td><td>教學模式完整 3 局流程</td><td>tutorial_mode=true，完成 R1/R2/R3</td><td>tutorial_completed=true，導向正式遊戲</td><td>P1</td></tr>
+</table>
+<hr>
+<h3>5.3 Security Tests：滲透測試場景</h3>
+<table>
+<tr><th>TC-ID</th><th>描述</th><th>測試方式</th><th>預期結果</th><th>優先級</th></tr>
+<tr><td>TC-SEC-001</td><td>JWT 失效後拒絕所有操作</td><td>使用過期 Access Token 呼叫任何 API</td><td>401 { error:&#x27;token_expired&#x27; }</td><td>P0</td></tr>
+<tr><td>TC-SEC-002</td><td>封號後即時踢出 WS（Close 4001）</td><td>Admin ban → 等待 Redis Pub/Sub</td><td>60s 內所有 Active WS 收到 Close 4001</td><td>P0</td></tr>
+<tr><td>TC-SEC-003</td><td>SQL Injection 防護（多端點）</td><td>Payload: <code>&#x27; OR 1=1; --</code>、<code>&#x27;; DROP TABLE users;--</code></td><td>400/401，DB 無結構變更</td><td>P0</td></tr>
+<tr><td>TC-SEC-004</td><td>Rate Limit auth 端點（30/min/IP）</td><td>31 次/min 對 /auth/login</td><td>第 31 次 429 + Retry-After</td><td>P0</td></tr>
+<tr><td>TC-SEC-005</td><td>Rate Limit WS 訊息（10/s/連線）</td><td>每秒發送 &gt; 10 條 WS 訊息</td><td>超限訊息被丟棄/返回 rate_limit 錯誤</td><td>P0</td></tr>
+<tr><td>TC-SEC-006</td><td>手牌資訊隔離（Wireshark 測試）</td><td>6 人房間，Wireshark 抓包</td><td>每位玩家封包僅含自身手牌，無他人手牌</td><td>P0</td></tr>
+<tr><td>TC-SEC-007</td><td>Client 無法呼叫 Server-only 模組</td><td>嘗試 import HandEvaluator 於 Client bundle</td><td>CI build 失敗（TypeScript project references 邊界）</td><td>P0</td></tr>
+<tr><td>TC-SEC-008</td><td>Admin API 非內網拒絕</td><td>從外部 IP 呼叫 /api/v1/admin/*</td><td>403 或連線拒絕</td><td>P0</td></tr>
+<tr><td>TC-SEC-009</td><td>CORS 非允許域名拒絕</td><td>Origin: https://attacker.com</td><td>Access-Control-Allow-Origin 不包含攻擊者域名</td><td>P0</td></tr>
+<tr><td>TC-SEC-010</td><td>Refresh Token 一次性使用（Rotation）</td><td>使用相同 Refresh Token 兩次</td><td>第二次返回 401 { error:&#x27;token_revoked&#x27; }</td><td>P0</td></tr>
+<tr><td>TC-SEC-011</td><td>非法操作（非輪次玩家下注）</td><td>非輪次閒家發送 call</td><td>error（非法操作）</td><td>P0</td></tr>
+<tr><td>TC-SEC-012</td><td>下注金額超出餘額拒絕</td><td>banker_bet &gt; chip_balance</td><td>error { code:&#x27;insufficient_chips&#x27; }</td><td>P0</td></tr>
+</table>
+<hr>
+<h2>6. Performance Test Plan</h2>
+<p><strong>工具</strong>：k6 + @colyseus/loadtest</p>
+<p><strong>執行命令</strong>：<code>npm run test:perf</code></p>
+<p><strong>測試目錄</strong>：<code>tests/performance/</code></p>
+<p><strong>前提條件</strong>：Staging 環境 k8s 部署（≥ 2 Colyseus Pod）</p>
+<h3>6.1 Load Test：500 CCU</h3>
+<p><strong>目標</strong>：驗證 NFR-02（P95 WS 延遲 ≤ 100ms，500 CCU）</p>
+<pre><code class="language-javascript">// tests/performance/ws-load.js
+import ws from &#x27;k6/ws&#x27;;
+import { check } from &#x27;k6&#x27;;
+
+export let options = {
+  vus: 500,          // 500 Virtual Users = 500 CCU
+  duration: &#x27;10m&#x27;,   // 持續 10 分鐘
+  thresholds: {
+    &#x27;ws_connecting&#x27;: [&#x27;p(95)&lt;1000&#x27;],       // WS 建立 ≤ 1s
+    &#x27;ws_msgs_received&#x27;: [&#x27;p(95)&lt;100&#x27;],     // 收到訊息 P95 ≤ 100ms
+    &#x27;ws_session_duration&#x27;: [&#x27;p(95)&lt;15000&#x27;], // 會話持續
+  },
+};</code></pre>
+<table>
+<tr><th>TC-ID</th><th>指標</th><th>目標值</th><th>測試持續時間</th></tr>
+<tr><td>TC-PERF-LT-001</td><td>P95 WS 延遲</td><td>≤ 100ms</td><td>10 分鐘穩態</td></tr>
+<tr><td>TC-PERF-LT-002</td><td>P99 WS 延遲</td><td>≤ 500ms</td><td>10 分鐘穩態</td></tr>
+<tr><td>TC-PERF-LT-003</td><td>WebSocket 連線成功率</td><td>≥ 99.5%</td><td>10 分鐘</td></tr>
+<tr><td>TC-PERF-LT-004</td><td>API 錯誤率（5xx）</td><td>≤ 0.1%</td><td>10 分鐘</td></tr>
+<tr><td>TC-PERF-LT-005</td><td>每秒 WS 訊息吞吐量</td><td>≥ 330 msg/s（估算峰值）</td><td>10 分鐘</td></tr>
+<tr><td>TC-PERF-LT-006</td><td>PostgreSQL P95 查詢延遲</td><td>≤ 50ms</td><td>測試期間監控</td></tr>
+<tr><td>TC-PERF-LT-007</td><td>Redis P95 操作延遲</td><td>≤ 5ms</td><td>測試期間監控</td></tr>
+<tr><td>TC-PERF-LT-008</td><td>記憶體使用量（每 Pod）</td><td>≤ 2Gi</td><td>測試期間監控</td></tr>
+<tr><td>TC-PERF-LT-009</td><td>CPU 使用率（每 Pod）</td><td>≤ 70%（HPA 觸發門檻）</td><td>測試期間監控</td></tr>
+</table>
+<hr>
+<h3>6.2 Stress Test：逐步增加至失效點</h3>
+<p><strong>目標</strong>：找出系統極限，驗證 HPA 自動擴展行為</p>
+<pre><code class="language-javascript">export let options = {
+  stages: [
+    { duration: &#x27;5m&#x27;, target: 200 },   // 爬升至 200 CCU
+    { duration: &#x27;5m&#x27;, target: 500 },   // 爬升至 500 CCU
+    { duration: &#x27;5m&#x27;, target: 1000 },  // 爬升至 1,000 CCU
+    { duration: &#x27;5m&#x27;, target: 2000 },  // 爬升至 2,000 CCU（目標上限）
+    { duration: &#x27;5m&#x27;, target: 0 },     // 冷卻
+  ],
+};</code></pre>
+<table>
+<tr><th>TC-ID</th><th>場景</th><th>觀察指標</th><th>預期行為</th><th>優先級</th></tr>
+<tr><td>TC-PERF-ST-001</td><td>200 CCU 穩態</td><td>延遲、錯誤率</td><td>P95 ≤ 100ms，無錯誤</td><td>P0</td></tr>
+<tr><td>TC-PERF-ST-002</td><td>500 CCU 穩態</td><td>延遲、錯誤率</td><td>P95 ≤ 100ms，NFR-02 通過</td><td>P0</td></tr>
+<tr><td>TC-PERF-ST-003</td><td>1,000 CCU 壓力測試</td><td>HPA 觸發時機</td><td>CPU &gt; 70% 後 HPA 新增 Pod</td><td>P1</td></tr>
+<tr><td>TC-PERF-ST-004</td><td>2,000 CCU 極限測試</td><td>系統降級行為</td><td>優雅降級（HTTP 503 + Retry-After），不崩潰</td><td>P1</td></tr>
+<tr><td>TC-PERF-ST-005</td><td>失效點識別</td><td>錯誤率飆升時的 CCU</td><td>記錄失效 CCU 值，作為容量規劃依據</td><td>P1</td></tr>
+</table>
+<hr>
+<h3>6.3 Spike Test：瞬間湧入</h3>
+<p><strong>目標</strong>：驗證突發流量下系統穩定性（如遊戲事件、社群擴散）</p>
+<pre><code class="language-javascript">export let options = {
+  stages: [
+    { duration: &#x27;1m&#x27;, target: 100 },   // 正常負載
+    { duration: &#x27;30s&#x27;, target: 800 },  // 瞬間湧入（8x）
+    { duration: &#x27;3m&#x27;, target: 800 },   // 維持高峰
+    { duration: &#x27;1m&#x27;, target: 100 },   // 回落
+  ],
+};</code></pre>
+<table>
+<tr><th>TC-ID</th><th>場景</th><th>觀察指標</th><th>預期行為</th><th>優先級</th></tr>
+<tr><td>TC-PERF-SK-001</td><td>瞬間湧入 800 CCU（30s 內）</td><td>連線成功率、延遲</td><td>連線成功率 ≥ 95%，延遲可暫時升高</td><td>P1</td></tr>
+<tr><td>TC-PERF-SK-002</td><td>HPA 反應時間</td><td>Pod 新增時間</td><td>CPU 超限後 5 分鐘內新 Pod 就緒</td><td>P1</td></tr>
+<tr><td>TC-PERF-SK-003</td><td>流量回落後延遲恢復</td><td>回落後 P95 延遲</td><td>恢復至 ≤ 100ms（5 分鐘內）</td><td>P1</td></tr>
+</table>
+<hr>
+<h3>6.4 Endurance Test：長時間穩定性</h3>
+<p><strong>目標</strong>：驗證 SLA 99.5%/月（error budget ≤ 3.65h/月），記憶體洩漏偵測</p>
+<pre><code class="language-javascript">export let options = {
+  vus: 300,            // 300 CCU 穩態
+  duration: &#x27;4h&#x27;,      // 4 小時耐久測試
+};</code></pre>
+<table>
+<tr><th>TC-ID</th><th>場景</th><th>觀察指標</th><th>預期行為</th><th>優先級</th></tr>
+<tr><td>TC-PERF-EN-001</td><td>4 小時 300 CCU 穩態</td><td>每小時 P95 延遲、錯誤率</td><td>P95 始終 ≤ 100ms，錯誤率 ≤ 0.5%</td><td>P0</td></tr>
+<tr><td>TC-PERF-EN-002</td><td>記憶體洩漏偵測</td><td>每小時 Pod 記憶體使用量</td><td>記憶體無持續增長趨勢</td><td>P1</td></tr>
+<tr><td>TC-PERF-EN-003</td><td>DB 連線池穩定性</td><td>pgBouncer 連線數</td><td>保持在 max_client_conn=200 以下</td><td>P0</td></tr>
+<tr><td>TC-PERF-EN-004</td><td>Redis 操作穩定性</td><td>Redis P95 延遲</td><td>始終 ≤ 5ms</td><td>P0</td></tr>
+<tr><td>TC-PERF-EN-005</td><td>Colyseus Room 洩漏偵測</td><td>活躍 Room 數量</td><td>無廢棄 Room 累積（onDispose 正確清理）</td><td>P1</td></tr>
+</table>
+<hr>
+<h3>6.5 DB Failover Test</h3>
+<p><strong>目標</strong>：驗證 NFR-18（PostgreSQL Failover ≤ 5 分鐘）</p>
+<table>
+<tr><th>TC-ID</th><th>描述</th><th>步驟</th><th>預期結果</th><th>優先級</th></tr>
+<tr><td>TC-PERF-DB-001</td><td>Primary DB 強制故障</td><td>強制終止 PostgreSQL Primary Pod</td><td>Replica 在 5min 內提升為 Primary</td><td>P0</td></tr>
+<tr><td>TC-PERF-DB-002</td><td>Failover 期間 API 降級</td><td>Failover 過程中持續呼叫 API</td><td>短暫 503，Failover 完成後自動恢復</td><td>P0</td></tr>
+<tr><td>TC-PERF-DB-003</td><td>結算事務原子性（Failover 期間）</td><td>Failover 時正在進行結算</td><td>已提交事務完整保存，未提交事務回滾</td><td>P0</td></tr>
+<tr><td>TC-PERF-DB-004</td><td>Redis Sentinel Failover</td><td>強制終止 Redis Master</td><td>Sentinel ≤ 60s 完成切換</td><td>P0</td></tr>
+<tr><td>TC-PERF-DB-005</td><td>季度 Failover 演練</td><td>定期演練（每季一次）</td><td>記錄 RTO，確保 ≤ 5min 目標持續達標</td><td>P1</td></tr>
+</table>
+<hr>
+<h2>7. UAT（User Acceptance Testing）</h2>
+<p><strong>負責人</strong>：QA Lead + Product Owner</p>
+<p><strong>執行環境</strong>：Staging 環境（接近生產配置）</p>
+<p><strong>參考文件</strong>：PRD AC（Acceptance Criteria），BRD 業務需求</p>
+<h3>7.1 遊戲核心功能驗收</h3>
+<table>
+<tr><th>UAT-ID</th><th>驗收標準</th><th>PRD 來源</th><th>驗收方式</th><th>Pass 條件</th></tr>
+<tr><td>UAT-GC-001</td><td>三公遊戲規則正確（三公最大，賠率 3x）</td><td>REQ-003</td><td>手動對局驗證</td><td>三公贏家獲得 3x 賠率</td></tr>
+<tr><td>UAT-GC-002</td><td>9 點賠率 2x，普通點賠率 1x</td><td>REQ-003</td><td>手動對局驗證</td><td>賠率正確</td></tr>
+<tr><td>UAT-GC-003</td><td>全員棄牌時莊家底注退回</td><td>REQ-003</td><td>手動操作 all_fold</td><td>莊家籌碼恢復</td></tr>
+<tr><td>UAT-GC-004</td><td>莊家破產先到先得（順時針）</td><td>REQ-003</td><td>設計特定場景</td><td>後排贏家 net_chips=-called_bet</td></tr>
+<tr><td>UAT-GC-005</td><td>D8 平局規則（花色 → 牌值）</td><td>REQ-003</td><td>設計同點場景</td><td>正確判定平局或勝負</td></tr>
+<tr><td>UAT-GC-006</td><td>輪莊機制：順時針，跳過破產</td><td>REQ-001</td><td>連續 5 局驗證</td><td>輪莊順序正確</td></tr>
+<tr><td>UAT-GC-007</td><td>廳別進場門檻驗證</td><td>REQ-001</td><td>籌碼不足嘗試進場</td><td>拒絕進場，顯示錯誤</td></tr>
+<tr><td>UAT-GC-008</td><td>計時器 30s 超時自動行動</td><td>REQ-001 D11/D12</td><td>等待超時</td><td>自動最低下注/自動 Fold</td></tr>
+</table>
+<hr>
+<h3>7.2 防沉迷功能驗收</h3>
+<table>
+<tr><th>UAT-ID</th><th>驗收標準</th><th>PRD 來源</th><th>驗收方式</th><th>Pass 條件</th></tr>
+<tr><td>UAT-AA-001</td><td>成人連續 2h 顯示提醒彈窗</td><td>REQ-015 AC-1</td><td>模擬 2h 計時（加速測試）</td><td>彈窗出現，遊戲繼續</td></tr>
+<tr><td>UAT-AA-002</td><td>成人確認提醒後計時重置</td><td>REQ-015 AC-1</td><td>點擊確認按鈕</td><td>計時重置，2h 後再次提醒</td></tr>
+<tr><td>UAT-AA-003</td><td>未成年每日 2h 後強制登出</td><td>REQ-015 AC-3</td><td>模擬 2h（加速測試）</td><td>本局結算後自動登出，顯示下線提示</td></tr>
+<tr><td>UAT-AA-004</td><td>未成年次日 UTC+8 00:00 後可重連</td><td>REQ-015 AC-3</td><td>次日模擬</td><td>可正常連線遊戲</td></tr>
+<tr><td>UAT-AA-005</td><td>Server 端計時（不信任 Client）</td><td>REQ-015</td><td>Client 修改時間</td><td>Server 計時不受影響</td></tr>
+</table>
+<hr>
+<h3>7.3 合規功能驗收</h3>
+<table>
+<tr><th>UAT-ID</th><th>驗收標準</th><th>PRD 來源</th><th>驗收方式</th><th>Pass 條件</th></tr>
+<tr><td>UAT-CP-001</td><td>虛擬籌碼不可兌換聲明顯示在 8 個畫面</td><td>REQ-013 AC-5</td><td>逐一查看畫面</td><td>8 個畫面均顯示，≥ 12pt 字體</td></tr>
+<tr><td>UAT-CP-002</td><td>新帳號 OTP 年齡驗證（出生年份 + 6 碼 OTP）</td><td>REQ-014</td><td>新帳號流程</td><td>100% 新帳號需完成年齡驗證</td></tr>
+<tr><td>UAT-CP-003</td><td>OTP 3 次錯誤失效</td><td>REQ-014</td><td>輸入 3 次錯誤 OTP</td><td>第 3 次後 OTP 失效</td></tr>
+<tr><td>UAT-CP-004</td><td>Cookie 同意橫幅（首次載入）</td><td>REQ-016</td><td>首次開啟 Web 版</td><td>顯示 Cookie 同意橫幅</td></tr>
+<tr><td>UAT-CP-005</td><td>帳號刪除 7 工作日內完成</td><td>REQ-019</td><td>申請刪除帳號</td><td>7 工作日內收到刪除確認</td></tr>
+<tr><td>UAT-CP-006</td><td>聊天訊息 30 日後自動刪除</td><td>REQ-007 AC-3</td><td>查詢 30 日前訊息</td><td>訊息不存在</td></tr>
+</table>
+<hr>
+<h3>7.4 社交功能驗收</h3>
+<table>
+<tr><th>UAT-ID</th><th>驗收標準</th><th>PRD 來源</th><th>驗收方式</th><th>Pass 條件</th></tr>
+<tr><td>UAT-SO-001</td><td>房間內聊天（≤ 200 字）</td><td>REQ-007</td><td>發送聊天訊息</td><td>訊息廣播至房間</td></tr>
+<tr><td>UAT-SO-002</td><td>舉報玩家功能</td><td>REQ-007</td><td>舉報他人</td><td>舉報記錄建立，狀態=&#x27;pending&#x27;</td></tr>
+<tr><td>UAT-SO-003</td><td>週排行榜顯示（≤ 1min 更新）</td><td>REQ-006</td><td>完成遊戲後查詢排行榜</td><td>排名在 1min 內更新</td></tr>
+<tr><td>UAT-SO-004</td><td>隱藏排行榜功能</td><td>REQ-006</td><td>設定 show_in_leaderboard=false</td><td>排行榜不顯示該玩家</td></tr>
+<tr><td>UAT-SO-005</td><td>私人房間（6 位英數 room_code）</td><td>REQ-010</td><td>建立私人房間</td><td>取得 6 位 room_code</td></tr>
+</table>
+<hr>
+<h3>7.5 教學功能驗收</h3>
+<table>
+<tr><th>UAT-ID</th><th>驗收標準</th><th>PRD 來源</th><th>驗收方式</th><th>Pass 條件</th></tr>
+<tr><td>UAT-TT-001</td><td>教學 R1：展示三公最高牌型</td><td>REQ-012 AC-5</td><td>完成教學 R1</td><td>正確顯示三公說明</td></tr>
+<tr><td>UAT-TT-002</td><td>教學 R2：展示普通比點</td><td>REQ-012 AC-5</td><td>完成教學 R2</td><td>正確顯示 5pt &gt; 3pt</td></tr>
+<tr><td>UAT-TT-003</td><td>教學 R3：展示平局概念</td><td>REQ-012 AC-5</td><td>完成教學 R3</td><td>正確顯示平局情境</td></tr>
+<tr><td>UAT-TT-004</td><td>教學完成後 tutorial_completed=true</td><td>REQ-012</td><td>完成 3 局教學</td><td>DB 更新 tutorial_completed=true</td></tr>
+<tr><td>UAT-TT-005</td><td>教學模式不可進入正式廳別</td><td>REQ-012</td><td>tutorial_mode=true 嘗試進入青銅廳</td><td>拒絕，引導完成教學</td></tr>
+</table>
+<hr>
+<h2>8. Test Environment</h2>
+<h3>8.1 docker-compose.test.yml</h3>
+<pre><code class="language-yaml"># tests/docker-compose.test.yml
+version: &#x27;3.9&#x27;
+
+services:
+  postgres-test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: sam_gong_test
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+    ports:
+      - &quot;5433:5432&quot;  # 避免與 local dev DB 衝突
+    healthcheck:
+      test: [&quot;CMD-SHELL&quot;, &quot;pg_isready -U test_user -d sam_gong_test&quot;]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis-test:
+    image: redis:7-alpine
+    ports:
+      - &quot;6380:6379&quot;  # 避免與 local Redis 衝突
+    command: redis-server --save &quot;&quot; --appendonly no  # 測試環境無需持久化
+    healthcheck:
+      test: [&quot;CMD&quot;, &quot;redis-cli&quot;, &quot;ping&quot;]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  colyseus-test:
+    build:
+      context: ../server
+      dockerfile: Dockerfile.test
+    environment:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://test_user:test_password@postgres-test:5432/sam_gong_test
+      REDIS_URL: redis://redis-test:6379
+      JWT_PRIVATE_KEY: ${TEST_JWT_PRIVATE_KEY}
+      JWT_PUBLIC_KEY: ${TEST_JWT_PUBLIC_KEY}
+      TEST_OTP_BYPASS_CODE: &quot;123456&quot;
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    ports:
+      - &quot;2568:2567&quot;  # Colyseus WS（測試端口）
+      - &quot;3002:3000&quot;  # REST API（測試端口）</code></pre>
+<h3>8.2 測試資料庫管理</h3>
+<p><strong>Schema 遷移</strong>：測試前執行 <code>npm run db:migrate:test</code>（node-pg-migrate + 測試 DB）</p>
+<p><strong>資料清理</strong>：每個 describe block 的 afterEach 執行 TRUNCATE（保留 Schema，清空資料）</p>
+<p><strong>Fixtures 腳本</strong>：</p>
+<pre><code class="language-typescript">// tests/fixtures/seed.ts
+export async function seedTestData(db: Pool) {
+  // 基本測試帳號
+  await db.query(`
+    INSERT INTO users (id, display_name, chip_balance, age_verified, is_minor)
+    VALUES
+      (&#x27;test-player-1&#x27;, &#x27;測試玩家1&#x27;, 50000, true, false),
+      (&#x27;test-player-2&#x27;, &#x27;測試玩家2&#x27;, 50000, true, false),
+      (&#x27;test-minor-1&#x27;, &#x27;未成年玩家&#x27;, 10000, true, true),
+      (&#x27;test-banker-1&#x27;, &#x27;測試莊家&#x27;, 100000, true, false)
+    ON CONFLICT (id) DO UPDATE SET chip_balance = EXCLUDED.chip_balance;
+  `);
+}
+
+export async function cleanupTestData(db: Pool) {
+  await db.query(`TRUNCATE chip_transactions, game_sessions, game_rooms,
+                           daily_tasks, leaderboard_weekly, player_reports,
+                           chat_messages, refresh_tokens RESTART IDENTITY CASCADE`);
+}</code></pre>
+<h3>8.3 環境變數（測試環境）</h3>
+<pre><code class="language-bash"># .env.test
+NODE_ENV=test
+DATABASE_URL=postgresql://test_user:test_password@localhost:5433/sam_gong_test
+REDIS_URL=redis://localhost:6380
+TEST_OTP_BYPASS_CODE=123456
+JWT_PRIVATE_KEY=&lt;test RSA private key&gt;
+JWT_PUBLIC_KEY=&lt;test RSA public key&gt;
+SYSTEM_ACCOUNT_UUID=00000000-0000-0000-0000-000000000001
+RESCUE_CHIP_THRESHOLD=500
+RESCUE_CHIP_AMOUNT=1000</code></pre>
+<h3>8.4 Mock 策略詳細配置</h3>
+<table>
+<tr><th>依賴</th><th>單元測試 Mock</th><th>整合測試 Mock</th></tr>
+<tr><td>Redis</td><td><code>ioredis-mock</code> npm 套件</td><td>真實 Redis 容器（docker-compose.test.yml）</td></tr>
+<tr><td>PostgreSQL</td><td><code>pg-mem</code> npm 套件（in-memory）</td><td><code>testcontainers</code> 真實 PostgreSQL 容器</td></tr>
+<tr><td>OTP SMS</td><td>環境變數 <code>TEST_OTP_BYPASS_CODE=123456</code></td><td>同左（固定繞過碼）</td></tr>
+<tr><td>JWT 公私鑰</td><td>測試專用 RSA 2048-bit Key Pair（不用於生產）</td><td>同左</td></tr>
+<tr><td>AWS KMS</td><td>Jest mock（<code>jest.mock(&#x27;aws-sdk&#x27;)</code>）</td><td>同左</td></tr>
+<tr><td>Colyseus Client</td><td><code>@colyseus/testing</code> ColyseusTestServer</td><td>真實 Staging Colyseus Server</td></tr>
+</table>
+<hr>
+<h2>9. Test Coverage Requirements</h2>
+<h3>9.1 覆蓋率目標</h3>
+<table>
+<tr><th>模組</th><th>目標覆蓋率</th><th>測試案例數（最低）</th></tr>
+<tr><td>HandEvaluator.ts</td><td>≥ 90%</td><td>≥ 200 個測試向量</td></tr>
+<tr><td>SettlementEngine.ts</td><td>≥ 90%</td><td>≥ 50 個測試案例</td></tr>
+<tr><td>BankerRotation.ts</td><td>≥ 85%</td><td>≥ 20 個測試案例</td></tr>
+<tr><td>AntiAddictionManager.ts</td><td>≥ 85%</td><td>≥ 20 個測試案例</td></tr>
+<tr><td>TutorialScriptEngine.ts</td><td>≥ 80%</td><td>≥ 10 個測試案例</td></tr>
+<tr><td>DeckManager.ts</td><td>≥ 80%</td><td>≥ 10 個測試案例</td></tr>
+<tr><td>REST API Endpoints</td><td>≥ 80%</td><td>全端點覆蓋</td></tr>
+<tr><td>SamGongRoom.ts</td><td>≥ 80%</td><td>整合測試覆蓋</td></tr>
+<tr><td><strong>整體覆蓋率</strong></td><td><strong>≥ 80%（lines/branches/functions）</strong></td><td>CI 門控</td></tr>
+</table>
+<h3>9.2 CI 門控設定</h3>
+<pre><code class="language-json">// jest.config.ts
+{
+  &quot;coverageThreshold&quot;: {
+    &quot;global&quot;: {
+      &quot;lines&quot;: 80,
+      &quot;branches&quot;: 80,
+      &quot;functions&quot;: 80,
+      &quot;statements&quot;: 80
+    },
+    &quot;./server/src/game/HandEvaluator.ts&quot;: {
+      &quot;lines&quot;: 90,
+      &quot;branches&quot;: 90,
+      &quot;functions&quot;: 90
+    },
+    &quot;./server/src/game/SettlementEngine.ts&quot;: {
+      &quot;lines&quot;: 90,
+      &quot;branches&quot;: 90,
+      &quot;functions&quot;: 90
+    }
+  }
+}</code></pre>
+<h3>9.3 CI Pipeline 測試階段</h3>
+<pre><code class="language-yaml"># .github/workflows/ci.yml 測試相關步驟
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_DB: sam_gong_test, POSTGRES_USER: test, POSTGRES_PASSWORD: test }
+        options: --health-cmd pg_isready
+      redis:
+        image: redis:7
+        options: --health-cmd &quot;redis-cli ping&quot;
+
+    steps:
+      - name: Lint（含 Client bundle 關鍵字掃描）
+        run: npm run lint
+
+      - name: TypeScript 型別檢查
+        run: npm run type-check
+
+      - name: Unit Tests（含覆蓋率）
+        run: npm run test:unit -- --coverage
+
+      - name: Integration Tests
+        run: npm run test:integration
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/sam_gong_test
+          REDIS_URL: redis://localhost:6379
+
+      - name: 覆蓋率上傳（Codecov）
+        uses: codecov/codecov-action@v3
+
+      - name: Semgrep SAST（含 SQL Injection 規則）
+        run: semgrep --config rules/sql-injection.yaml --config p/security-audit
+
+      - name: HandEvaluator 向量數驗證（≥ 200）
+        run: node scripts/verify-test-vectors.js</code></pre>
+<h3>9.4 測試覆蓋率排除項目</h3>
+<p>下列項目不計入覆蓋率要求（排除理由：純配置、型別定義、生成代碼）：</p>
+<pre><code class="">// jest.config.ts coveragePathIgnorePatterns
+[
+  &quot;node_modules&quot;,
+  &quot;tests/&quot;,
+  &quot;src/types/&quot;,         // TypeScript 型別定義文件
+  &quot;src/config/&quot;,        // 純配置檔案
+  &quot;src/migrations/&quot;,    // DB Migration 腳本
+  &quot;src/seeds/&quot;,         // 測試資料 Seed
+]</code></pre>
+<hr>
+<h2>10. Test Schedule &amp; Milestones</h2>
+<h3>10.1 測試時程</h3>
+<table>
+<tr><th>里程碑</th><th>日期</th><th>負責人</th><th>完成條件</th></tr>
+<tr><td>單元測試框架建立</td><td>2026-05-01</td><td>Dev Team</td><td>Jest + ts-jest 設定完成，HandEvaluator ≥ 50 向量</td></tr>
+<tr><td>HandEvaluator 200 向量完成</td><td>2026-06-21</td><td>QA + Dev</td><td>≥ 200 測試向量通過，CI 驗證</td></tr>
+<tr><td>Integration Test 完成</td><td>2026-06-30</td><td>QA</td><td>Room 生命週期 + REST API 整合測試通過</td></tr>
+<tr><td>E2E 測試完成（Happy Path）</td><td>2026-07-15</td><td>QA</td><td>所有 Happy Path 場景通過</td></tr>
+<tr><td>E2E 測試完成（Edge Cases）</td><td>2026-07-21</td><td>QA</td><td>所有邊界條件場景通過</td></tr>
+<tr><td>效能測試（500 CCU）通過</td><td>2026-07-28</td><td>QA + DevOps</td><td>P95 ≤ 100ms 驗證通過</td></tr>
+<tr><td>滲透測試</td><td>2026-08-01</td><td>Security Team</td><td>無高危漏洞，報告完成</td></tr>
+<tr><td>UAT 完成</td><td>2026-08-14</td><td>QA + PM + PO</td><td>所有 UAT 場景通過，PO 簽署</td></tr>
+<tr><td><strong>GA 上線</strong></td><td><strong>2026-08-21</strong></td><td>All</td><td>所有里程碑通過</td></tr>
+</table>
+<h3>10.2 測試里程碑 Pass 條件</h3>
+<table>
+<tr><th>階段</th><th>Pass 條件</th></tr>
+<tr><td>Alpha（2026-06-21）</td><td>Unit Tests 全通過；覆蓋率 ≥ 80%；HandEvaluator ≥ 200 向量</td></tr>
+<tr><td>Beta（2026-07-28）</td><td>Integration + E2E 全通過；效能 500 CCU P95 ≤ 100ms 通過</td></tr>
+<tr><td>Release Candidate（2026-08-14）</td><td>滲透測試完成（無高危）；UAT 全通過；SLA 指標驗證</td></tr>
+<tr><td>GA（2026-08-21）</td><td>所有測試通過；Production Smoke Test 通過；監控告警設定完成</td></tr>
+</table>
+<h3>10.3 測試退出條件（Exit Criteria）</h3>
+<p>以下任一情況發生，暫停測試並通知開發：</p>
+<ol><li>P0 優先級測試案例失敗（不允許帶已知 P0 缺陷上線）</li><li>覆蓋率低於 80%（阻擋 PR 合併）</li><li>效能測試 P95 &gt; 100ms（需效能優化後重測）</li><li>籌碼守恆驗證失敗（sum(net_chips) + rake ≠ 0）</li><li>安全測試：SQL Injection 或手牌洩漏測試失敗</li></ol>
+<hr>
+<h2>Appendix A：測試工具版本清單</h2>
+<table>
+<tr><th>工具</th><th>版本</th><th>用途</th></tr>
+<tr><td>Jest</td><td>29.x</td><td>單元測試 + 整合測試框架</td></tr>
+<tr><td>ts-jest</td><td>29.x</td><td>TypeScript 支援</td></tr>
+<tr><td>@colyseus/testing</td><td>0.15.x</td><td>Colyseus Room 測試</td></tr>
+<tr><td>@colyseus/loadtest</td><td>0.15.x</td><td>Room 吞吐量測試</td></tr>
+<tr><td>k6</td><td>0.50.x</td><td>WebSocket/HTTP 效能測試</td></tr>
+<tr><td>testcontainers</td><td>3.x</td><td>整合測試 DB/Redis 容器</td></tr>
+<tr><td>ioredis-mock</td><td>8.x</td><td>Redis Mock（單元測試）</td></tr>
+<tr><td>pg-mem</td><td>2.x</td><td>PostgreSQL in-memory（單元測試）</td></tr>
+<tr><td>Semgrep</td><td>1.x</td><td>SAST 靜態分析（CI）</td></tr>
+<tr><td>Playwright</td><td>1.x</td><td>E2E UI 測試（Client 端）</td></tr>
+</table>
+<hr>
+<h2>Appendix B：關鍵測試向量（HandEvaluator 精選）</h2>
+<p>以下為 200+ 測試向量集的代表性樣本（完整向量集位於 <code>tests/fixtures/hand-evaluator-vectors.json</code>）：</p>
+<pre><code class="language-typescript">// tests/fixtures/hand-evaluator-vectors.ts
+export const HAND_EVALUATOR_VECTORS = [
+  // 三公（Sam Gong）— 所有組合（J/Q/K/10 各 4 花色）
+  { cards: [{suit:&#x27;spade&#x27;,value:&#x27;J&#x27;},{suit:&#x27;heart&#x27;,value:&#x27;Q&#x27;},{suit:&#x27;diamond&#x27;,value:&#x27;K&#x27;}],
+    expected: { points:0, is_sam_gong:true, hand_type:&#x27;sam_gong&#x27; }},
+  { cards: [{suit:&#x27;club&#x27;,value:&#x27;10&#x27;},{suit:&#x27;spade&#x27;,value:&#x27;Q&#x27;},{suit:&#x27;heart&#x27;,value:&#x27;K&#x27;}],
+    expected: { points:0, is_sam_gong:true, hand_type:&#x27;sam_gong&#x27; }},
+  // 9點
+  { cards: [{suit:&#x27;spade&#x27;,value:&#x27;9&#x27;},{suit:&#x27;heart&#x27;,value:&#x27;K&#x27;},{suit:&#x27;diamond&#x27;,value:&#x27;J&#x27;}],
+    expected: { points:9, is_sam_gong:false, hand_type:&#x27;9&#x27; }},
+  { cards: [{suit:&#x27;spade&#x27;,value:&#x27;A&#x27;},{suit:&#x27;heart&#x27;,value:&#x27;8&#x27;},{suit:&#x27;diamond&#x27;,value:&#x27;K&#x27;}],
+    expected: { points:9, is_sam_gong:false, hand_type:&#x27;9&#x27; }},
+  // 8點
+  { cards: [{suit:&#x27;spade&#x27;,value:&#x27;8&#x27;},{suit:&#x27;heart&#x27;,value:&#x27;K&#x27;},{suit:&#x27;diamond&#x27;,value:&#x27;J&#x27;}],
+    expected: { points:8, is_sam_gong:false, hand_type:&#x27;8&#x27; }},
+  // ... 完整 200 個向量見 tests/fixtures/hand-evaluator-vectors.json
+];</code></pre>
+<hr>
+<p><em>文件生成：/devsop-autodev STEP-14（2026-04-22）</em></p>
+<p><em>下次審查：Alpha 測試完成後（2026-06-21）</em></p></main>
+  </div>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({startOnLoad:true,theme:'default',
+      flowchart:{curve:'basis',nodeSpacing:60,rankSpacing:80},
+      er:{layoutDirection:'TD',minEntityWidth:100,fontSize:12},
+      sequence:{actorMargin:60,messageMargin:30}});
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-yaml.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-json.min.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

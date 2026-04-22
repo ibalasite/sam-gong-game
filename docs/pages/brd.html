@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>商業需求文件 (BRD) — sam-gong-game</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+  <header class="top-nav">
+    <a href="index.html" class="nav-brand">sam-gong-game</a>
+    <div class="nav-controls">
+      <div class="search-wrap">
+        <input class="search-input" type="search" placeholder="搜尋文件...">
+        <div class="search-results"></div>
+      </div>
+      <a class="nav-gh-link" href="https://github.com/ibalasite/sam-gong-game-test" target="_blank" rel="noopener">⌥ GitHub</a>
+      <button class="sidebar-toggle" id="sidebarToggle" title="收合/展開側欄">☰</button>
+    </div>
+  </header>
+  <div class="doc-page-banner">
+    <p class="banner-breadcrumb"><a href="index.html">sam-gong-game</a> › 商業需求文件 (BRD)</p>
+    <h1 class="banner-title">商業需求文件 (BRD)</h1>
+  </div>
+  <div class="page-wrapper">
+    <aside class="sidebar" aria-label="文件導覽">
+      <div class="sidebar__section">
+        <div class="sidebar__label">文件</div>
+        <a class="sidebar__link" href="index.html">🏠 首頁</a>
+<a class="sidebar__link" href="idea.html">💡 構想文件 (IDEA)</a>
+<a class="sidebar__link active" href="brd.html">📋 商業需求文件 (BRD)</a>
+<a class="sidebar__link" href="prd.html">📝 產品需求文件 (PRD)</a>
+<a class="sidebar__link" href="pdd.html">🎨 產品設計文件 (PDD)</a>
+<a class="sidebar__link" href="edd.html">🏗️ 工程設計文件 (EDD)</a>
+<a class="sidebar__link" href="arch.html">🧩 架構設計</a>
+<a class="sidebar__link" href="api.html">🔌 API 文件</a>
+<a class="sidebar__link" href="schema.html">🗄️ Schema 文件</a>
+<a class="sidebar__link" href="test-plan.html">✅ 測試計畫</a>
+<a class="sidebar__link" href="diagrams.html">📊 系統圖表</a>
+<a class="sidebar__link" href="alignment-report.html">📄 Alignment Report</a>
+<a class="sidebar__link" href="smoke-test-report.html">📄 Smoke Test Report</a>
+<a class="sidebar__link" href="local-deploy.html">📄 Local Deploy</a>
+<a class="sidebar__link" href="lang.html">🔧 語言選型</a>
+      </div>
+    </aside>
+    <div class="sidebar-resizer" id="sidebarResizer"></div>
+    <main class="doc-content"><h1>BRD — 三公遊戲（Sam Gong 3-Card Poker）即時多人線上平台</h1>
+<p>&lt;!-- SDLC Requirements Engineering — Layer 1：Business Requirements --&gt;</p>
+<hr>
+<h2>Document Control</h2>
+<table>
+<tr><th>欄位</th><th>內容</th></tr>
+<tr><td><strong>DOC-ID</strong></td><td>BRD-SAM-GONG-GAME-20260421</td></tr>
+<tr><td><strong>專案名稱</strong></td><td>三公遊戲（Sam Gong 3-Card Poker）即時多人線上平台</td></tr>
+<tr><td><strong>文件版本</strong></td><td>v0.12-draft</td></tr>
+<tr><td><strong>狀態</strong></td><td>DRAFT（STEP-01 Review Round 11 完成）</td></tr>
+<tr><td><strong>作者</strong></td><td>Evans Tseng（由 /devsop-idea 自動生成）</td></tr>
+<tr><td><strong>日期</strong></td><td>2026-04-22</td></tr>
+<tr><td><strong>建立方式</strong></td><td>/devsop-idea 自動生成；由 /devsop-autodev STEP-01 Review Loop 自動修正（current: v0.12-draft）</td></tr>
+</table>
+<hr>
+<h2>Change Log</h2>
+<table>
+<tr><th>版本</th><th>日期</th><th>作者</th><th>變更摘要</th></tr>
+<tr><td>v0.1-draft</td><td>2026-04-21</td><td>/devsop-idea</td><td>初稿，由 AI 自動生成</td></tr>
+<tr><td>v0.2-draft</td><td>2026-04-21</td><td>/devsop-autodev STEP 01 BRD Fixer</td><td>修復 16 個 Findings（F1-F16）：新增核心目標宣言、IAP條件語句、三公規則附錄、觀戰模式排除、P0業務驗收條件、NFR章節、年齡驗證方案、防沉迷機制、Colyseus版本鎖定、籌碼經濟約束、市場數據免責聲明、美術策略決策機制、好友系統說明、§9.4合規矩陣、聊天室合規備注、Glossary擴充</td></tr>
+<tr><td>v0.3-draft</td><td>2026-04-22</td><td>/devsop-autodev STEP 01 BRD Fixer Round 2</td><td>修復 28 個 Findings（F1-F28）：F1新增房間人數及配對超時AC、F2新增輪莊制定義、F3修正同點比牌規則消除歧義並新增D8、F4新增斷線行為定義、F5修正籌碼守恆AC、F6新增Q5截止日及§8.1備注、F7更新O1/O2/O3時間框架錨定基準日、F8定義付費率分母、F9新增北極星量化目標、F10新增PostgreSQL/Redis版本、F11新增OTP年齡驗證風險備注、F12補充白銀/鉑金下注上限、F13新增VIP系統功能描述、F14新增房間生命週期終止條件、F15補充Beta視覺滿意度AC細節、F16鎖定Cocos Creator小版本、F17移動法律問題至Open Questions、F18新增防沉迷計時器重置條件、F19補充洗牌亂度AC樣本數、F20新增每日任務至MoSCoW、F21新增廣告模式功能需求、F22新增Unit Economics免責聲明、F23新增Cookie同意需求、F24替換相對日期、F25修正Colyseus版本標注、F26定義滲透測試頻率、F27新增聊天室關鍵字清單負責人、F28定義誤判率分母</td></tr>
+<tr><td>v0.4-draft</td><td>2026-04-22</td><td>/devsop-autodev STEP-01 Review Round 3</td><td>24個問題修正（VIP Out of Scope清理、O4/Q4/§3.5絕對日期、TypeScript版本鎖定、Node.js 22.x升級、RTM/Roadmap/商業模式VIP一致性、RTO/RPO NFR、籌碼底池定義等）</td></tr>
+<tr><td>v0.5-draft</td><td>2026-04-22</td><td>/devsop-autodev STEP-01 Review Round 4</td><td>17個問題修正（三公規則完整化、操作計時器、Sam Gong vs Sam Gong平手規則、§7.3/§9.3絕對日期、WebSocket NFR、MAU詞彙、房間級距表、新手引導納入MoSCoW等）</td></tr>
+<tr><td>v0.6-draft</td><td>2026-04-22</td><td>/devsop-autodev STEP-01 Review Round 5</td><td>12個問題修正（F1：修正D8 Ace為最小與台灣慣例一致，消除§5.5與D8矛盾；F2：三表統一房間級距/等級門檻/Glossary，新增獨立系統說明注，初始籌碼更正為100,000；F3：RTM新增Tutorial O2行；F4：定義斷線期間計時器不暫停行為；F5：新增中途跌破入場門檻移出規則；F6：Glossary新增WAU/Rake/Banker詞條並依字母重排；F7：Step2新增莊家30秒計時器，D12記入決策；F8：Dependencies表新增Node.js 22.x與TypeScript 5.4.x；F9：Q6截止日改為絕對日期2026-04-21；F10：H9/H10/H11補章節參考；F11：Step4明確Fold手牌保持暗牌；F12：救濟機制補充觸發時機與廣播提示）</td></tr>
+<tr><td>v0.7-draft</td><td>2026-04-22</td><td>/devsop-autodev STEP-01 Review Round 6</td><td>8個問題修正（結算雙向方向、三步→兩步統一、RTM格式修正、§7.3 Launch+6M里程碑、Tutorial server-authoritative、Cookie MoSCoW、同花色牌比較規則）</td></tr>
+<tr><td>v0.8-draft</td><td>2026-04-22</td><td>/devsop-autodev STEP-01 Review Round 7</td><td>9個問題修正（莊家破產D13、賠率語義明確化、Step6三步驟結算、Q5待決標注、§7.3 Amber Zone + NPS、Cookie目標修正、混合結算順序）</td></tr>
+<tr><td>v0.9-draft</td><td>2026-04-22</td><td>/devsop-autodev STEP-01 Review Round 8</td><td>9個問題修正（抽水底數統一、Step6c賠付來源明確、§3.1相對日期、每日贈籌重置時間、§9.4絕對日期、§3.3免責聲明、§12 Roadmap日期錨定、D13日期修正、廣告指標統一）</td></tr>
+<tr><td>v0.10-draft</td><td>2026-04-22</td><td>/devsop-autodev STEP-01 Review Round 9</td><td>10個問題修正（結算邏輯五處統一、Glossary Rake修正、D7格式、防沉迷時區、§5.4底池說明、KYC 90日→絕對日期、初始籌碼說明補充）</td></tr>
+<tr><td>v0.11-draft</td><td>2026-04-22</td><td>STEP-01 Review Round 10</td><td>4個問題修正（Step6a底池收齊邏輯、Step6b抽水基數明確化、Glossary補Fold/Call、500-999籌碼邊緣情況）</td></tr>
+<tr><td>v0.12-draft</td><td>2026-04-22</td><td>STEP-01 Review Round 11</td><td>4個問題修正（RTM補齊REQ-013~016、混合結算Step3語義統一、每日任務獎勵範圍、DOC-ID日期）</td></tr>
+</table>
+<hr>
+<h2>§0 背景研究（/devsop-idea 自動蒐集）</h2>
+<h3>競品/參考資源</h3>
+<ul><li><strong>colyseus-2d-multiplayer-card-game-templates</strong>（GitHub，sominator）：Unity / Phaser / Defold / Godot 四種 2D 卡牌模板，使用 Colyseus 作為 Server backend。可直接參考其 room state 設計。</li><li><strong>Colyseus 官方 UNO 範例</strong>：Turn-based 卡牌遊戲官方範例，完整展示 Schema-based state sync 與 Command Pattern。</li><li><strong>Riffle</strong>（GitHub，Ronan-H）：Angular + Colyseus 的 Web 卡牌遊戲，展示 Web client 與 Colyseus 整合實務。</li><li><strong>Colyseus Cocos Creator SDK</strong>（官方）：Colyseus 已提供 Cocos Creator 官方 SDK，使用方式與 JavaScript/TypeScript SDK 一致。</li><li><strong>既有三公遊戲</strong>：多為單機版、地區性娛樂 App（如各類「三公」關鍵字 Google Play App），但普遍欠缺專業 UI/UX、無 Server-authoritative 架構保證公平性。</li></ul>
+<h3>技術建議</h3>
+<ul><li><strong>Client</strong>：Cocos Creator 3.x（Web + 手機跨平台），TypeScript 開發。</li><li><strong>Server</strong>：Colyseus 0.15.x（locked）（Node.js/TypeScript），<code>@colyseus/schema</code> 做狀態同步。</li><li><strong>架構原則</strong>：Server-authoritative — Schema 類別僅含欄位定義，遊戲邏輯獨立於 State，使用 Command Pattern 管理回合流程。</li><li><strong>持久層</strong>：PostgreSQL（玩家資料、牌局紀錄）+ Redis（matchmaking queue、session cache）。</li><li><strong>部署</strong>：Colyseus Cloud 或自建 k8s【Q5 待決，截止 2026-05-15，見§14】；Client 走 WebSocket + TLS。</li></ul>
+<h3>已知風險</h3>
+<ul><li><strong>R-Legal（台灣法規）</strong>：三公屬「博弈」性質遊戲。依我國《刑法》第 266 條與最高法院判例，凡以「財物或可兌換財物之物」為賭注即違法。本產品必須採「虛擬籌碼、不可兌換、不可購買」模式以規避賭博罪嫌疑。《詐欺犯罪危害防制條例》亦將線上遊戲經營者納入規管，須遵守身份驗證、可疑交易通報等義務。</li><li><strong>R-Cheat</strong>：卡牌遊戲最大技術風險為作弊（偷看牌、結果預測、外掛注入）。Server-authoritative 是基本功，但 Client 端仍可能有自動下注/讀秒外掛，須配合行為分析與伺服器速率限制。</li><li><strong>R-Scale</strong>：Colyseus 單實例約支援 1,000-3,000 同時連線；若目標規模 &gt;10,000，需提早規劃 horizontal scaling（@colyseus/redis-presence + matchmaker driver）。</li><li><strong>R-UX</strong>：賭場風格 + 像素美術在跨平台（手機小螢幕）易顯擁擠；UI 需響應式設計並考慮大螢幕／小螢幕不同 layout。</li></ul>
+<hr>
+<h2>1. Executive Summary（PR-FAQ 風格）</h2>
+<h3>1.1 假設新聞稿</h3>
+<blockquote><p><strong>標題：</strong> Sayyo Games 推出「三公 Online」，打造華人市場首款 Server-Authoritative 公平三公即時多人遊戲</p></blockquote>
+<p>&gt;</p>
+<blockquote><p><strong>第一段（What &amp; Who）：</strong> Sayyo Games 今日推出「三公 Online」，一款主打「絕對公平」的即時多人三公遊戲。玩家可跨手機與網頁加入房間，與真人對戰，享受復古像素風賭場氛圍，所有牌局計算由伺服器權威判定，杜絕任何作弊可能。</p></blockquote>
+<p>&gt;</p>
+<blockquote><p><strong>第二段（Why Now）：</strong> 市面既有三公遊戲多為單機 App 或 P2P 連線，玩家普遍擔心對手作弊或伺服器灌水；同時現代華人玩家在手機與網頁間頻繁切換，需要跨平台即時對戰體驗。Colyseus 等 authoritative 框架成熟、Cocos Creator 跨平台能力完整，讓我們得以用小團隊在 4 個月內交付專業級多人遊戲。</p></blockquote>
+<p>&gt;</p>
+<blockquote><p><strong>第三段（How It Works）：</strong> （1）進入大廳，選擇籌碼級距或快速配對；（2）房間開局後，伺服器洗牌、發牌，Client 僅呈現動畫；（3）玩家下注、比牌、結算，所有計算在 Server 完成，玩家獲得無作弊疑慮的公平體驗。</p></blockquote>
+<p>&gt;</p>
+<blockquote><p><strong>用戶引言：</strong> 「以前玩三公 App 最怕對手作弊或 App 發牌不公平。這款每一張牌、每一次比較都由伺服器決定，終於能安心玩了。」— 張先生，45 歲，華人社群三公老玩家。</p></blockquote>
+<h3>1.2 FAQ（預先回答最困難的問題）</h3>
+<table>
+<tr><th>問題</th><th>回答</th></tr>
+<tr><td>為什麼現在做這個？</td><td>Cocos Creator 3.x 與 Colyseus 0.15 成熟，跨平台多人遊戲開發成本降至小團隊可承擔；華人手機遊戲市場對「公平性」呼聲高，Server-authoritative 成為差異化關鍵。</td></tr>
+<tr><td>為什麼是我們來做？</td><td>團隊具備 Cocos/Unity 跨平台開發經驗與 Node.js 後端能力，能快速交付 Server-authoritative 架構，並理解華人市場 UI 美學偏好。</td></tr>
+<tr><td>最大的風險是什麼？</td><td><strong>法規風險</strong>：三公屬博弈遊戲，必須以「虛擬娛樂籌碼、不可兌換、不可購買」模式運營，避免觸犯刑法賭博罪。<strong>作弊風險</strong>：即便 Server-authoritative 也須防 Client 外掛自動化。</td></tr>
+<tr><td>如果失敗，原因最可能是？</td><td>（1）法規定位失誤導致被迫下架；（2）美術質感不達玩家預期；（3）房間同時在線數 &lt; 200 使對戰配對失敗率過高，體驗崩壞。</td></tr>
+<tr><td>競品為什麼沒做？</td><td>既有三公 App 多由小團隊或個人獨立開發者產出，缺乏 authoritative server 架構能力；大型博弈廠商則聚焦德撲、21 點等國際化品類。</td></tr>
+</table>
+<hr>
+<h2>2. Problem Statement</h2>
+<h3>2.1 現狀描述</h3>
+<p>華人玩家（特別是 35-55 歲年齡層）對三公這類傳統撲克遊戲有強烈懷舊需求，目前主要透過：</p>
+<ul><li>線下實體聚會（受空間與時間限制）；</li><li>既有手機三公 App（Google Play / App Store 可搜到數十款，但多為單機對 AI、或 P2P 連線，美術簡陋、公平性不透明）；</li><li>通訊軟體自建群組配合線下籌碼（門檻高、易生糾紛）。</li></ul>
+<p>共通痛點：缺乏「可信、即時、跨平台、美術精緻」的三公多人遊戲。</p>
+<h3>2.2 根本原因（5 Whys）</h3>
+<pre><code class="">問題現象：玩家擔心既有三公 App 作弊或發牌不公平
+  Why 1：既有 App 多為 Client-side 計算或 P2P 架構
+    Why 2：開發團隊多為小團隊/個人，缺乏後端 authoritative server 能力
+      Why 3：authoritative server 需要專業後端框架與持續維運成本
+        Why 4：過去幾年 authoritative 多人框架（如 Colyseus）成熟度不足且學習曲線陡
+          Why 5（根本原因）：缺乏「易用、成熟、支援 Cocos Creator」的 authoritative server 框架生態，使小團隊無法負擔此類產品開發</code></pre>
+<h3>2.3 問題規模（量化）</h3>
+<blockquote><p><strong>【F11 重要聲明】</strong> 下表所有財務預測數字<strong>均基於 AI 推斷假設</strong>，非來自可信第三方市場研究報告。數字僅供內部方向性參考，<strong>不得作為投資決策或財務承諾依據</strong>。驗證期限：假設 A1（付費/留存偏好）需於封測前驗證；假設 A5（付費率 3%）需於 Launch+3M 前以同類 App Benchmark 驗證（見 §8.2）。</p></blockquote>
+<table>
+<tr><th>指標</th><th>數據</th><th>來源</th><th>驗證狀態</th></tr>
+<tr><td>受影響用戶數（華人三公潛在玩家）</td><td>估計全球華人市場 500 萬+ 潛在玩家</td><td><strong>AI 推斷假設</strong>，待市場調查驗證</td><td>⚠️ 未驗證（A1 驗證期：封測前）</td></tr>
+<tr><td>每人每週娛樂時間（可轉移至本產品）</td><td>3-5 小時</td><td><strong>AI 推斷假設</strong></td><td>⚠️ 未驗證</td></tr>
+<tr><td>市場規模（TAM）</td><td>華人休閒博弈類 App 年收入約 USD 8 億</td><td><strong>AI 推斷假設</strong>，待第三方報告（如 Newzoo / Sensor Tower）驗證</td><td>⚠️ 未驗證</td></tr>
+<tr><td>可服務市場（SAM）</td><td>繁體中文市場（台灣 / 港澳 / 海外華人）約 USD 1 億</td><td><strong>AI 推斷假設</strong></td><td>⚠️ 未驗證</td></tr>
+<tr><td>可獲取市場（SOM）</td><td>SAM 的 5-10%，約 USD 500 萬-1,000 萬/年</td><td><strong>AI 推斷假設</strong>（A5 驗證期：Launch+3M）</td><td>⚠️ 未驗證（A5 驗證期：Launch+3M）</td></tr>
+</table>
+<hr>
+<h2>3. Business Objectives</h2>
+<h3>3.1 商業目標</h3>
+<blockquote><p><strong>核心目標宣言（F1）：</strong> 至 <strong>2026-08-21</strong>（BRD核准日2026-04-21起4個月）上線一款 Server-authoritative 即時多人三公遊戲，以「絕對公平」為差異化核心，於 Launch+6M 達成 Peak CCU ≥ 500、DAU ≥ 2,000、於 Launch+3M 達成公平性 NPS ≥ 70，並於 Launch+9M 建立合規虛擬籌碼變現模式，付費率 ≥ 3%，奠定 Sayyo Games 華人休閒遊戲平台基礎。</p></blockquote>
+<table>
+<tr><th>#</th><th>目標</th><th>量化指標</th><th>時間框架</th><th>優先度</th></tr>
+<tr><td>O1</td><td>推出 Server-authoritative 公平三公多人遊戲</td><td>GA 上線、Server 權威計算率 100%、Client 無任何結果計算邏輯</td><td><strong>4個月（自BRD核准 2026-04-21起，GA目標 2026-08-21）</strong>（F7）</td><td>Must</td></tr>
+<tr><td>O2</td><td>建立穩定同時在線（CCU）基礎</td><td>Peak CCU ≥ 500，DAU ≥ 2,000</td><td><strong>GA後6個月（≤2027-02-21）</strong>（F7）</td><td>Must</td></tr>
+<tr><td>O3</td><td>建立變現模式（虛擬籌碼商店）<strong>【F2條件】</strong> 依據法律意見書結果：若IAP合法，啟用虛擬籌碼IAP；若存在法律疑慮，降級為廣告觀看換籌碼模式（Rewarded Ad），IAP停用。</td><td>ARPPU ≥ USD 10，付費率 ≥ 3%（IAP模式）；廣告觀看完成率 ≥ 80%（由 AdMob SDK 確認）；DAU 廣告觀看人數 ≥ 20% DAU（廣告模式）</td><td><strong>GA後9個月（≤2027-05-21）</strong>（F7）（法律意見書 2026-05-15 前決定）</td><td>Should</td></tr>
+<tr><td>O4</td><td>擴展遊戲品類（大老二、21 點）</td><td>至少 1 個新品類上線</td><td>GA後12個月（≤2027-08-21）</td><td>Could</td></tr>
+<tr><td>O合規</td><td>建立台灣法規合規基礎（防沉迷、年齡驗證、詐欺防制、KYC）</td><td>防沉迷合規100% + 法規審查通過</td><td>GA前</td><td>Must</td></tr>
+</table>
+<h3>3.2 與公司策略的對應</h3>
+<table>
+<tr><th>公司策略目標</th><th>本專案如何貢獻</th></tr>
+<tr><td>建立華人市場休閒遊戲 IP 組合</td><td>以三公為首發，驗證 authoritative 多人框架，複製至其他撲克類遊戲</td></tr>
+<tr><td>累積多人遊戲後端能力</td><td>Colyseus + Cocos 技術棧可複用於未來所有多人專案</td></tr>
+<tr><td>合規營運模式探索</td><td>以虛擬籌碼娛樂為底線，建立可跨境複製的合規 playbook</td></tr>
+</table>
+<h3>3.3 投資報酬分析（3 情境）</h3>
+<blockquote><p><strong>【免責聲明】</strong> 本表收益預測均為 AI 推斷假設，非來自可信第三方市場研究（詳見§2.3 免責聲明）。不得作為投資決策或財務承諾依據。建議 Launch+3M 後以實際數據更新。</p></blockquote>
+<table>
+<tr><th>項目</th><th>悲觀（-30%）</th><th>基準</th><th>樂觀（+30%）</th></tr>
+<tr><td>開發成本（4 個月）</td><td>NT$ 300 萬</td><td>NT$ 450 萬</td><td>NT$ 600 萬</td></tr>
+<tr><td>12 個月維運成本</td><td>NT$ 180 萬</td><td>NT$ 240 萬</td><td>NT$ 300 萬</td></tr>
+<tr><td>預期年收益（Launch+12M）</td><td>NT$ 200 萬</td><td>NT$ 800 萬</td><td>NT$ 2,000 萬</td></tr>
+<tr><td>Payback Period</td><td>&gt;24 個月</td><td>14 個月</td><td>6 個月</td></tr>
+</table>
+<h3>3.4 Requirements Traceability Matrix（需求追溯矩陣，RTM）</h3>
+<table>
+<tr><th>業務目標</th><th>成功指標</th><th>功能需求（PRD REQ-ID）</th><th>測試覆蓋</th><th>狀態</th></tr>
+<tr><td>O1：Server authoritative 公平性</td><td>Server 權威計算 100%、0 P0 Cheat Bug</td><td>REQ-001（洗牌）、REQ-002（發牌）、REQ-003（比牌）、REQ-004（結算）、REQ-013（UI動畫）、REQ-017（反作弊）</td><td>BDD S-001~S-004, S-013, S-017; IT-anticheat-001</td><td>✅ PRD已對應</td></tr>
+<tr><td>O2：CCU 規模</td><td>Peak CCU ≥ 500</td><td>REQ-010（配對）、REQ-011（房間狀態）、REQ-012（新手引導）、REQ-020a（每日贈送）、REQ-021（每日任務）</td><td>Load Test L-001; BDD S-010, S-011, S-012, S-020a, S-021</td><td>✅ PRD已對應</td></tr>
+<tr><td>O2</td><td>新手引導完成率 ≥ 60%（§5.3 MoSCoW）</td><td>REQ-012 Tutorial, REQ-010, REQ-011</td><td>BDD Scenario S-012</td><td>✅ PRD已對應</td></tr>
+<tr><td>O2（留存/社群）</td><td>週榜活躍玩家數≥500人（提案值，2026-05-15前確認）</td><td>REQ-006（排行榜）</td><td>UT/IT: IT-rank-001; BDD S-006（STEP-15回填）</td><td>🔲 待填</td></tr>
+<tr><td>O2（社群參與）</td><td>每房間每小時訊息≥1,000則（提案值，2026-05-15前確認）</td><td>REQ-007（聊天室）</td><td>UT/IT: IT-chat-001; BDD S-007（STEP-15回填）</td><td>🔲 待填</td></tr>
+<tr><td>O3：變現</td><td>ARPPU ≥ USD 10</td><td>REQ-020b（Should Have，IAP/廣告）</td><td>BDD S-020b（REQ-020b IAP/廣告）</td><td>✅ PRD已對應</td></tr>
+<tr><td>O4：品類擴展</td><td>1 個新品類</td><td>（未來 PRD v2）</td><td>N/A</td><td>🔲 待 v2</td></tr>
+<tr><td>O1</td><td>動畫流暢度：基準裝置≥30fps；旗艦機型目標≥60fps（§5.3 UI）</td><td>REQ-013 UI/Animation</td><td>BDD Scenario S-013</td><td>✅ PRD已對應</td></tr>
+<tr><td>O2</td><td>帳號系統：日留存率（§5.3 Account）</td><td>REQ-014 Account</td><td>BDD Scenario S-014</td><td>✅ PRD已對應</td></tr>
+<tr><td>O合規</td><td>防沉迷合規100%（§5.3 Anti-Addiction）</td><td>REQ-015 AntiAddiction</td><td>BDD Scenario S-015</td><td>✅ PRD已對應</td></tr>
+<tr><td>O合規</td><td>Cookie同意橫幅覆蓋率（§9.0）</td><td>REQ-016 Cookie</td><td>BDD Scenario S-016</td><td>✅ PRD已對應</td></tr>
+<tr><td>O合規</td><td>個資刪除請求7工作日內完成100%</td><td>REQ-014（帳號驗證）、REQ-015（防沉迷）、REQ-016（Cookie）、REQ-019（個資刪除）</td><td>IT-delete-001; BDD S-014, S-015, S-016, S-019（STEP-15回填）</td><td>✅ PRD已對應</td></tr>
+<tr><td>O1（Server-authoritative公平性）</td><td>反作弊投訴率≤0.1%</td><td>REQ-017 反作弊與速率限制</td><td>BDD S-017; IT-anticheat-001</td><td>✅ PRD已對應</td></tr>
+<tr><td>O2（留存）</td><td>每日任務完成率≥40% DAU (Should)</td><td>REQ-021每日任務系統</td><td>BDD S-021</td><td>🔲 待填</td></tr>
+<tr><td>O2（留存）</td><td>每日贈送籌碼領取率≥60% DAU (Must)</td><td>REQ-020a每日贈送+救濟</td><td>BDD S-020a; IT-chip-001</td><td>🔲 待填</td></tr>
+</table>
+<h3>3.5 Benefits Realization Plan（效益實現計畫）</h3>
+<table>
+<tr><th>效益</th><th>基準值（Pre-launch）</th><th>目標值</th><th>測量時間點</th><th>測量方式</th><th>負責人</th><th>若未達標的行動</th></tr>
+<tr><td>公平性信任度（NPS &quot;認為遊戲公平&quot; 題目）</td><td>N/A</td><td>≥ 70</td><td>Launch+3M（≤2026-11-21）</td><td>In-app Survey</td><td>PM</td><td>公開 Server 洗牌日誌 / 第三方審計</td></tr>
+<tr><td>CCU 規模</td><td>0</td><td>Peak CCU ≥ 500</td><td>Launch+6M（≤2027-02-21）</td><td>Colyseus Monitor</td><td>Eng Lead</td><td>啟動廣告採買 / Hotfix Sprint</td></tr>
+<tr><td>付費率</td><td>0%</td><td>≥ 3%</td><td>Launch+9M（≤2027-05-21）</td><td>Revenue Dashboard</td><td>PM</td><td>A/B 測試定價 / 用戶訪談</td></tr>
+<tr><td>留存率（7 日）</td><td>N/A</td><td>≥ 35%</td><td>Launch+6M（≤2027-02-21）</td><td>Analytics</td><td>Product</td><td>新手引導優化 / 每日任務改版</td></tr>
+</table>
+<hr>
+<h2>4. Stakeholders &amp; Users</h2>
+<h3>4.1 Target Users</h3>
+<table>
+<tr><th>用戶群</th><th>規模估算</th><th>核心需求</th><th>目前解法</th><th>痛點</th></tr>
+<tr><td>華人 35-55 歲休閒博弈玩家（主群）</td><td>300 萬+</td><td>懷舊三公、社交對戰</td><td>既有 App / 線下</td><td>擔心作弊、App 美術差、無法跨平台</td></tr>
+<tr><td>華人 25-34 歲上班族（次群）</td><td>150 萬+</td><td>碎片時間娛樂、輕社交</td><td>手遊 / 社群</td><td>三公門檻高、缺乏新手引導</td></tr>
+<tr><td>海外華人社群</td><td>50 萬+</td><td>文化連結、同鄉社交</td><td>線下聚會</td><td>實體距離限制</td></tr>
+</table>
+<h3>4.2 Not Our Users</h3>
+<ul><li>❌ 未成年玩家（18 歲以下）：法規與道德考量，必須有年齡驗證閘門。</li><li>❌ 尋求真實金錢賭博的玩家：本產品僅提供虛擬籌碼，不可兌換實體金錢。</li><li>❌ 國際市場非華人用戶：首發聚焦繁體中文市場，英文/其他語系為未來擴展。</li></ul>
+<h3>4.3 Stakeholder Map</h3>
+<table>
+<tr><th>角色</th><th>職責</th><th>主要關切</th></tr>
+<tr><td>Product Lead</td><td>需求定義、玩法規則、UX</td><td>玩家留存、公平性、變現</td></tr>
+<tr><td>Engineering Lead</td><td>Client + Server 技術實作</td><td>同時在線數、延遲、安全</td></tr>
+<tr><td>Art/UI Designer</td><td>像素風 / 賭場美術、動畫</td><td>視覺品質、跨螢幕適配</td></tr>
+<tr><td>Game Designer</td><td>牌局規則、賠率、籌碼曲線</td><td>遊戲性、平衡、留存</td></tr>
+<tr><td>Legal</td><td>法規合規（賭博、個資）</td><td>合規邊界、免責聲明</td></tr>
+<tr><td>Marketing / Ops</td><td>獲客、社群運營</td><td>CAC、LTV、活動</td></tr>
+<tr><td>End User</td><td>玩家</td><td>好玩、公平、流暢</td></tr>
+</table>
+<h3>4.4 RACI Matrix</h3>
+<table>
+<tr><th>活動</th><th>Product Lead</th><th>Engineering Lead</th><th>Art Designer</th><th>Game Designer</th><th>Legal</th></tr>
+<tr><td>需求定義</td><td>A/R</td><td>C</td><td>C</td><td>C</td><td>I</td></tr>
+<tr><td>技術架構（Cocos + Colyseus）</td><td>C</td><td>A/R</td><td>I</td><td>I</td><td>I</td></tr>
+<tr><td>三公規則與賠率設計</td><td>A</td><td>C</td><td>I</td><td>R</td><td>C</td></tr>
+<tr><td>UI/UX（像素/賭場風格）</td><td>A</td><td>C</td><td>R</td><td>C</td><td>I</td></tr>
+<tr><td>法規審查（博弈定位）</td><td>A</td><td>I</td><td>I</td><td>I</td><td>R</td></tr>
+<tr><td>上線決策</td><td>A/R</td><td>C</td><td>C</td><td>C</td><td>C</td></tr>
+</table>
+<hr>
+<h2>5. Proposed Solution</h2>
+<h3>5.1 解法概述</h3>
+<p>打造一款 <strong>Server-authoritative 即時多人三公遊戲</strong>，Client 端以 <strong>Cocos Creator</strong> 負責 UI/動畫/輸入，Server 端以 <strong>Colyseus（Node.js/TypeScript）</strong> 負責所有遊戲邏輯。</p>
+<p><strong>【F12 美術策略決策】</strong> v1.0 <strong>以像素風為主要美術風格</strong>（完整實作所有畫面）。賭場風格<strong>僅製作 2-3 個關鍵畫面的 A/B 測試素材</strong>（大廳主頁、牌局主畫面、結算畫面），供 Beta 封測期間進行用戶測試。<strong>2026-07-21（GA-1M）前</strong>由 PM + Art Director 依測試數據做出最終美術方向決策，決策結果記入 Decision Log（D7）。若決策未能於 Beta 前完成，預設維持像素風為正式版風格。</p>
+<h3>5.2 核心價值主張</h3>
+<p><strong>Customer Jobs（用戶要完成的任務）：</strong></p>
+<ul><li>Functional：與真人玩一場公平、流暢、跨平台的三公牌局。</li><li>Emotional：懷舊感、賭場刺激感、贏牌成就感、社交歸屬感。</li><li>Social：與朋友組桌、炫耀手氣、累積牌技聲望。</li></ul>
+<p><strong>Pain Relievers：</strong></p>
+<ul><li>Server-authoritative 架構，杜絕 Client 作弊疑慮。</li><li>跨平台（Web + Android + iOS）即時連線，不分裝置自由加入。</li><li>專業像素/賭場美術，提升質感。</li></ul>
+<p><strong>Gain Creators：</strong></p>
+<ul><li>虛擬籌碼等級（青銅→鑽石）累積，產生進度感。</li><li>每日任務、排行榜、好友組桌，強化社交。</li><li>新手引導教學，降低老玩家以外的進入門檻。</li></ul>
+<h3>5.3 解法邊界與 MoSCoW</h3>
+<p><strong>In Scope（本版本 MVP）：</strong></p>
+<table>
+<tr><th>功能</th><th>MoSCoW</th><th>對應目標</th><th>業務層驗收條件（F5）</th></tr>
+<tr><td>三公核心玩法（發牌/比牌/結算）</td><td>Must Have</td><td>O1</td><td>1. 100局牌局中比牌結果與手動驗算一致率 100%；2. P0 Bug 數量 = 0 方可上線</td></tr>
+<tr><td>Server-authoritative 洗牌與判牌</td><td>Must Have</td><td>O1</td><td>1. <strong>洗牌亂度 AC（F19）：</strong> 樣本數 ≥ 10,000 次洗牌；52張牌 × 52位置分佈卡方檢定，自由度 = 51，p-value &gt; 0.05 為通過；2. Client 端無任何判牌邏輯代碼；<strong>測試方式（F7）：靜態代碼分析掃描Client bundle；禁止關鍵字清單：compareCards、calculatePoints、determineWinner、cardValue、handRank、shuffle、sortCards、suitRank、suitOrder、tieBreak、rakeFee、settlementCalc、bankerPayout、Math.random；掃描結果0命中為Pass（工具：grep/ESLint custom rule，CI/CD每次build執行）</strong></td></tr>
+<tr><td>Room State + 玩家狀態同步</td><td>Must Have</td><td>O1</td><td>1. 玩家狀態延遲 ≤ 100ms（P95）；2. 斷線重連後狀態完整恢復，無資料遺失；<strong>可測AC（F6）：模擬斷線後29秒重連測試（執行100次），重連成功率 = 100%；重連後玩家手牌/籌碼/當局下注額與Server記錄完全一致，差異容忍 = 0籌碼。</strong>；<strong>3. 斷線行為定義（F4）：</strong> 玩家斷線後有 <strong>30 秒重連窗口</strong>；30 秒內未重連則視為棄牌（Fold），下注額=0，不入底池，無任何籌碼損失，牌局繼續進行；重連後可查看當局結果但不可補下注或操作；斷線期間由 Server 維持玩家席位狀態不釋放（30 秒內）；<strong>4. 房間生命週期終止條件（F14）：</strong> (a) 等待玩家超過 60 秒無人加入自動解散房間；(b) 玩家人數低於最低人數（2 人）時停止接受新局、等待玩家補入或解散；(c) 無最大場次限制，玩家可主動離開；(d) 所有玩家離開後房間立即銷毀，Server 釋放 Room 資源</td></tr>
+<tr><td>下注系統（虛擬籌碼）</td><td>Must Have</td><td>O1</td><td>1. 籌碼計算無浮點誤差（整數運算）；2. <strong>籌碼守恆 AC（F5/F16）：每局結算後，所有玩家淨增減籌碼之和 = 負（抽水額）；抽水 = floor(本局莊家獲勝之閒家下注額加總 × 5%，floor取整，最少1籌碼（底池 &gt; 0時生效；底池 = 0時抽水 = 0，不適用最少1籌碼條款））；閒家獲勝局不計入抽水底數；每局結算後，玩家籌碼增減：贏家閒家淨增 N× 下注額；莊家淨增 = 所有輸家下注額 - 所有贏家賠率 - 抽水；抽水 = floor(輸家閒家下注額加總 × 5%)，精確整數運算，誤差容忍 = 0</strong></td></tr>
+<tr><td>大廳 + Matchmaking（快速配對 / 指定房間）</td><td>Must Have</td><td>O2</td><td>1. 等待時間中位數 ≤ 30 秒（500 CCU 壓測環境）；2. 配對失敗率 ≤ 5%；3. <strong>每房間最少 2 人、最多 6 人</strong>；4. 快速配對等待超過 90 秒（30 秒同廳+60 秒擴展）自動取消配對並通知玩家（F1 配對超時 AC）</td></tr>
+<tr><td>像素風 / 賭場風 UI（至少一套完整）</td><td>Must Have</td><td>O1</td><td>1. <strong>Beta 封測視覺滿意度 AC（F15）：</strong> in-app 5星問卷「您對本遊戲視覺風格的滿意度」；有效樣本 ≥ 50 人；平均評分 ≥ 4.0/5.0；2. 移動端（375px 寬）無元素重疊或截斷</td></tr>
+<tr><td>發牌/翻牌/結算動畫</td><td>Must Have</td><td>O1</td><td>1. 動畫流暢度 ≥ 30fps（中低階手機）；2. 動畫時長不超過 3 秒，不阻塞玩家操作</td></tr>
+<tr><td>帳號系統（遊客登入 + Google/Facebook 綁定）</td><td>Must Have</td><td>O2</td><td>1. 遊客轉正式帳號流程 ≤ 3 步驟；2. 年齡驗證閘（出生年份 + OTP）100% 覆蓋新帳號（F7）</td></tr>
+<tr><td>防沉迷提醒（F8）</td><td>Must Have</td><td>O合規（法規合規）</td><td>1. 連續遊玩 2 小時後顯示提醒彈窗；2. 未成年帳號每日遊戲時數上限 2 小時強制下線；3. 每日遊玩時間顯示於帳號頁；<strong>準確度AC（F14）：連續遊玩30分鐘後，帳號頁顯示值與Server Session Log誤差 ≤ 1分鐘（60秒）</strong></td></tr>
+<tr><td>虛擬籌碼每日贈送（留存機制）★</td><td><strong>Must Have</strong>（升級自Should Have，決策D14，2026-04-22）</td><td>O2</td><td>1. 7 日留存率 ≥ 35%（Launch+6M 追蹤）；2. 每日領取率 ≥ 60% DAU</td></tr>
+<tr><td><strong>每日任務系統（F20）</strong></td><td><strong>Should Have</strong></td><td>O2</td><td><strong>AC：每日任務完成率 ≥ 40% DAU（Launch+3M 量測）</strong>；任務範例：每日完成 3 場對戰、連續登入 7 日、完成教學。任務獎勵為虛擬籌碼；每項任務獎勵：500–2,000 籌碼（具體金額由 PRD Game Designer 定義，確保 500–999 籌碼邊緣情況玩家可透過單日任務恢復進房資格）。</td></tr>
+<tr><td>好友系統（最小化版本，F13）</td><td>Should Have</td><td>O2</td><td>1. 支援搜尋好友 ID 並新增；2. 支援邀請好友進入指定房間；3. <strong>明確不支援好友間籌碼轉移</strong>（防洗籌碼）；4. 好友清單上限 100 人</td></tr>
+<tr><td>虛擬籌碼商店（IAP）<strong>【F2條件：依法律意見書啟用】</strong></td><td>Should Have</td><td>O3</td><td>1. IAP 交易成功率 ≥ 99%；2. 支付失敗退款流程 ≤ 24 小時；<strong>【F21 廣告降級模式】</strong> 3. 廣告降級模式候選 SDK：Google AdMob；每次廣告獎勵：500 籌碼；每日廣告觀看上限：5 次；廣告播放完成率 AC：已觀看廣告中完整觀看比例 ≥ 80%（由 AdMob SDK 回傳確認）</td></tr>
+<tr><td>排行榜</td><td>Could Have</td><td>O2</td><td>1. 排行榜數據更新延遲 ≤ 1 分鐘；2. 支援週榜/月榜切換</td></tr>
+<tr><td>聊天室（房間內）<strong>【F15 合規備注】</strong> 含關鍵字過濾、舉報機制、訊息留存 30 日</td><td>Could Have</td><td>O2</td><td>1. 敏感關鍵字過濾覆蓋率 ≥ 95%；2. 舉報後 24 小時內審核處理</td></tr>
+<tr><td><strong>VIP 訂閱系統（F13）</strong></td><td><strong>Won&#x27;t Have（v1.0）</strong>（Out of Scope，v1.x Backlog（無v1.0 REQ-ID，待v1.x PRD分配））</td><td>O3</td><td>N/A（v1.0 不實作；功能描述：VIP月費 USD 9.99；權益包含每日額外籌碼獎勵 +50%、VIP 頭像框、優先配對；列入 v1.x Backlog）</td></tr>
+<tr><td>Cookie 同意橫幅（Web 平台）</td><td>Must Have</td><td>O合規（§9合規）</td><td>1. Web 首次載入顯示 Cookie 同意橫幅；2. 必要/分析/行銷 Cookie 三類分別取得同意；3. 同意紀錄含時間戳+版本號，保留 3 年；4. 歐盟 IP（CloudFlare CF-IPCountry偵測）觸發 GDPR opt-in（非 pre-checked）；5. 用戶可隨時撤回同意（帳號設定頁）</td></tr>
+<tr><td>新手引導教學（Tutorial Onboarding）</td><td>Must Have</td><td>O2</td><td>AC：首次登入玩家的教學完成率 ≥ 60%（Launch+1M量測，分母為當月首次登入帳號數）；教學包含：三公規則說明、<strong>3輪固定劇本模擬牌局（詳見PRD REQ-012 AC-5）</strong>（不消耗籌碼）、籌碼系統說明；完成後解鎖正式對戰入口；<strong>模擬牌局邏輯由 Server 執行（tutorial_mode=true，籌碼扣除邏輯跳過）；Client 僅呈現動畫，與正式牌局相同 Server-authoritative 路徑</strong></td></tr>
+<tr><td>多語系（英、簡中）</td><td>Won&#x27;t Have（v1.0）</td><td>—</td><td>N/A</td></tr>
+<tr><td>其他撲克品類</td><td>Won&#x27;t Have（v1.0）</td><td>O4</td><td>N/A</td></tr>
+</table>
+<blockquote><p>★ <strong>虛擬籌碼每日贈送腳注：</strong> PRD已升級為Must Have；升級決策記入D14。</p></blockquote>
+<p><strong>Out of Scope（明確排除）：</strong></p>
+<ul><li>❌ 真實金錢下注（法規風險）。</li><li>❌ 虛擬籌碼兌換現實財物（法規風險）。</li><li>❌ 未成年用戶（必須有年齡閘）。</li><li>❌ 跨區伺服器（首版僅亞太區）。</li><li>❌ <strong>觀戰模式（Spectator Mode）</strong>：v1.0 不實作，避免 Schema 複雜度上升與延遲問題，需求已記錄至 Q6 與 D5，延後至 v1.x 評估。（F4）</li><li>❌ <strong>【F2條件】IAP 虛擬籌碼購買</strong>：是否在 Out of Scope 取決於法律意見書（預計 2026-05-15 完成）。法律意見書完成前，IAP 功能不得進入開發排程；若法務判定有法律風險，IAP 移入 Out of Scope，以 Rewarded Ad 廣告模式替代。</li></ul>
+<h3>5.4 籌碼經濟設計約束（F10）</h3>
+<table>
+<tr><th>設計項目</th><th>約束值</th><th>說明</th></tr>
+<tr><td><strong>初始籌碼量</strong></td><td>新玩家註冊贈送 100,000 虛擬籌碼</td><td>可完成至少 200 局基礎下注（500/局）；新玩家首次登入持 100,000 籌碼可進入黃金廳（入場門檻 ≥ 100,000）；注意：首局最低下注後餘額可能跌至 99,500，依§5.4「中途跌破入場門檻規則」，當局結算後將移至白銀廳大廳</td></tr>
+<tr><td><strong>每日免費贈送上限</strong></td><td>5,000 籌碼/日（玩家每日可主動從大廳領取5,000籌碼（主動領取模式，非登入自動發送））（每日 00:00 UTC+8 重置；超過 7 日未登入者不補發累積天數）</td><td>防止通膨；超過 7 日未登入則累積不補發</td></tr>
+<tr><td><strong>等級門檻籌碼數（玩家等級徽章）</strong></td><td>青銅：0–9,999；白銀：10,000–99,999；黃金：100,000–999,999；鉑金：1,000,000–9,999,999；鑽石：≥10,000,000</td><td>等級門檻決定玩家徽章/獎勵（與房間入場條件為獨立系統，見下方房間級距表）</td></tr>
+<tr><td><strong>每局下注範圍（依等級）</strong></td><td>青銅廳：100–500；白銀廳：1,000–5,000；黃金廳：10,000–50,000；鉑金廳：100,000–500,000；鑽石廳：1,000,000–5,000,000</td><td>各廳下注範圍詳見下方房間級距表；防止籌碼快速集中</td></tr>
+<tr><td><strong>零餘額救濟機制</strong></td><td>餘額 &lt; 500 時，系統自動補發 1,000 救濟籌碼（每帳號每日上限 1 次）。<strong>觸發時機</strong>：當局牌局結算後，若玩家餘額 &lt; 500 籌碼，Server 在下一局開始前自動補發 1,000 籌碼，並廣播狀態更新至 Client 顯示補發提示（提示文字：「您的籌碼已不足，系統已補發 1,000 救濟籌碼」）。</td><td>防止用戶因零餘額流失，維持基本遊玩體驗</td></tr>
+<tr><td><strong>籌碼回收機制</strong></td><td>房間系統抽水 5%（扣除的5%抽水進入遊戲維運基金，剩餘95%依結算結果分配）</td><td>控制籌碼通膨速率</td></tr>
+</table>
+<h4>房間級距表（Room Tier）</h4>
+<table>
+<tr><th>房間等級</th><th>進入條件（最低持有籌碼）</th><th>每局最低下注</th><th>每局最高下注</th></tr>
+<tr><td>青銅廳</td><td>≥ 1,000</td><td>100</td><td>500</td></tr>
+<tr><td>白銀廳</td><td>≥ 10,000</td><td>1,000</td><td>5,000</td></tr>
+<tr><td>黃金廳</td><td>≥ 100,000</td><td>10,000</td><td>50,000</td></tr>
+<tr><td>鉑金廳</td><td>≥ 1,000,000</td><td>100,000</td><td>500,000</td></tr>
+<tr><td>鑽石廳</td><td>≥ 10,000,000</td><td>1,000,000</td><td>5,000,000</td></tr>
+</table>
+<blockquote><p><strong>注意（F2）：</strong> 房間入場條件（房間級距）與等級門檻（玩家等級）為獨立系統：等級門檻決定徽章/獎勵，房間入場條件決定可進入房間。</p></blockquote>
+<p><strong>中途跌破入場門檻規則</strong>：玩家在遊戲過程中籌碼跌破當前房間入場條件時，當局牌局繼續正常進行；當局結算後，若玩家餘額仍低於入場門檻，系統提示「餘額不足本房間入場條件，本局結束後將移至大廳」，並於下一局開始前自動將玩家移出房間至大廳，不影響已在進行的牌局。</p>
+<p><strong>籌碼 500-999 邊緣情況</strong>：若玩家餘額介於 500-999 籌碼（高於救濟觸發值 &lt;500，但低於最低房間入場門檻青銅廳 ≥1,000），系統於大廳顯示提示：『您的籌碼不足進入任何房間，請完成每日任務或等待每日免費籌碼（每日 00:00 UTC+8 重置）』；不觸發救濟機制；玩家可透過完成每日任務（獎勵≥500籌碼）或等待每日免費籌碼（+5,000籌碼）後恢復青銅廳進房資格（entry≥1,000）。</p>
+<blockquote><p><strong>設計原則：</strong> 籌碼為純娛樂性虛擬貨幣，不反映任何真實財務價值，不可兌換、不可轉移至其他帳號（好友間籌碼轉移明確禁止）。</p></blockquote>
+<h3>5.5 三公規則草案附錄（F3）</h3>
+<blockquote><p><strong>【Q2 關閉決策】</strong> 採用<strong>台灣標準版三公規則</strong>，詳見下表。本決策已記入 Decision Log（見 §15 D6）。</p></blockquote>
+<h4>莊家（Banker）機制（F2）</h4>
+<table>
+<tr><th>項目</th><th>定義</th></tr>
+<tr><td><strong>莊家制度</strong></td><td>輪莊制（輪流坐莊，Rotating Banker）</td></tr>
+<tr><td><strong>首局莊家</strong></td><td>房間內持有籌碼最多的玩家擔任首局莊家；同籌碼量時以加入房間先後順序決定</td></tr>
+<tr><td><strong>輪莊規則</strong></td><td>每局結束後，莊家位置順時鐘移至下一位玩家；中途加入的玩家排隊等待輪莊，不插隊。<strong>【F8】棄牌（Fold）玩家正常保留輪莊序列席位，不因本局棄牌而跳過輪莊；與PRD §5.0輪莊規則一致</strong></td></tr>
+<tr><td><strong>莊家義務</strong></td><td>莊家需優先下注底注；其他玩家可選擇跟注（Call）或棄牌（Fold）</td></tr>
+<tr><td><strong>無純P2P比牌</strong></td><td>本版本不採用純P2P比牌模式；所有比牌以莊家為對比基準進行</td></tr>
+<tr><td><strong>莊家籌碼不足處理（D9）</strong></td><td>若莊家當前籌碼餘額低於本廳最低下注額（依房間tier動態決定，見§5.4房間級距表），系統自動輪莊至下一位玩家（跳過本局莊家資格）；此規則無例外。記入 Decision Log D9。</td></tr>
+</table>
+<p><strong>玩家操作計時器</strong>：每位閒家有 30 秒決定 Call 或 Fold（莊家下注後計時開始）；超時自動視為 Fold，下注額=0，不入底池，無任何籌碼損失；計時器倒數顯示於 Client UI。（30 秒為預設值，PRD 可調整；記入 Decision Log D11。）</p>
+<p><strong>斷線期間計時器行為</strong>：玩家斷線時，其操作計時器繼續倒數（不暫停）；若30秒內重連，顯示剩餘時間，玩家可繼續操作；若剩餘時間已歸零，系統已自動視為Fold，重連後玩家可觀看當局結果但無法再操作。</p>
+<h4>牌局流程（Server 執行順序）</h4>
+<ol><li>Server 洗牌（費雪-葉茨演算法）→ 發牌（每人 3 張暗牌）</li><li>莊家查看手牌 → 下注底注（≥ 本廳最低下注額，≤ 當局最高限注；依房間tier動態決定，見§5.4房間級距表）；<strong>莊家操作計時器</strong>：莊家有 30 秒完成底注下注；超時後系統自動以本廳最低下注額代為下注並進入Step 3。（規則與閒家計時器一致；記入 Decision Log D12）</li><li>閒家依順時鐘順序逐一決定 Call（跟注，下注與莊家等額）或 Fold（棄牌）；每人 30 秒計時</li><li>所有未 Fold 玩家翻牌；Fold 玩家手牌於結算時保持暗牌狀態（不公開，v1.0規則）；結算動畫僅顯示未Fold玩家的手牌比較過程。</li><li>Server 比牌（依 §5.5 比牌規則）→ 計算結算金額</li><li><strong>結算與籌碼分配（三步驟）</strong>：</li></ol>
+<ul><li style="margin-left:1.5rem">Step 6a（確認結果與底池）：Server 確認每位閒家的比牌結果；莊家獲勝之閒家下注額歸入底池；棄牌（Fold）閒家下注額=0，不下注，不入底池；莊家敗之閒家下注額不入底池（由莊家直接支付本金 1× + 賠率 N×）。</li><li style="margin-left:1.5rem">Step 6b（抽水）：從底池（輸家閒家下注額加總）扣除 5% 抽水（floor 取整，最少 1 籌碼）；抽水進入遊戲維運基金。<strong>空底池守衛：若底池（輸家閒家下注額加總）= 0（即全部閒家均勝、全員棄牌、或勝者與棄牌者合計無任何輸家），則抽水=0；最少1籌碼條款不適用，與PRD §5.3 Step 6b空底池守衛一致。</strong></li><li style="margin-left:1.5rem">Step 6c（分配）：閒家勝時，莊家直接支付給該閒家：本金（1× 下注額，不經底池）+ N× 下注額賠率；合計閒家總取回 = (1+N)× 下注額，淨利潤 = N× 下注額。莊家勝時，底池中閒家下注額（扣 5% 抽水後）歸莊家。抽水僅從莊家獲勝收取的閒家下注額中扣除；閒家勝時的本金與賠率由莊家全額支付，不受抽水影響。結算完成後 Server 廣播最終狀態至所有 Client。</li></ul>
+<h4>基礎規則</h4>
+<table>
+<tr><th>規則項目</th><th>定義</th></tr>
+<tr><td><strong>牌數</strong></td><td>每人發 3 張牌</td></tr>
+<tr><td><strong>點數計算</strong></td><td>3 張牌點數相加 mod 10；A=1, 2-9 面值, <strong>10</strong>/J/Q/K=0（均為10點牌，點值計算為0）</td></tr>
+<tr><td><strong>三公定義</strong></td><td>三張牌均為 10 點牌（J/Q/K/10），點數合計為 30（mod 10 = 0），三公為最大牌型</td></tr>
+<tr><td><strong>比牌順序</strong></td><td>三公 &gt; 9 點 &gt; 8 點 &gt; ... &gt; 1 點 &gt; 0 點（非三公）</td></tr>
+<tr><td><strong>同點比大小（F3 確定規則）</strong></td><td>同點數時：<strong>第一順位比最大單張花色</strong>（黑桃 &gt; 紅心 &gt; 方塊 &gt; 梅花）；花色相同時，再比最大單張點數（K&gt;Q&gt;J&gt;10&gt;9&gt;8&gt;7&gt;6&gt;5&gt;4&gt;3&gt;2&gt;A，A 為最小）；兩步皆同則平手退注。不採用「視地區習慣」之模糊規則（決策見 D8）（注意：若玩家持有多張相同花色的牌作為最大花色牌，以其中點數最高的一張作為代表牌進行比較）</td></tr>
+</table>
+<h4>公牌規則（F3 明確決定）</h4>
+<table>
+<tr><th>項目</th><th>決定</th><th>說明</th></tr>
+<tr><td><strong>公牌規則啟用</strong></td><td><strong>否（N）</strong></td><td>v1.0 不採用公牌（翻牌）規則，所有牌均為暗牌發完再比</td></tr>
+<tr><td><strong>理由</strong></td><td>公牌規則地區差異大（台灣各地不同）、增加遊戲複雜度、提高開發成本</td><td>可於 v1.x 作為可選規則變體推出</td></tr>
+</table>
+<h4>賠率表（台灣標準版）</h4>
+<table>
+<tr><th>牌型</th><th>賠率</th><th>說明</th></tr>
+<tr><td>三公（30點/三公牌型）</td><td>1:3</td><td>閒家勝：莊家向該閒家支付 下注額 × 3；莊家勝：閒家下注額歸底池</td></tr>
+<tr><td>9 點</td><td>1:2</td><td>閒家勝：莊家向該閒家支付 下注額 × 2；莊家勝：閒家下注額歸底池</td></tr>
+<tr><td>0–8 點（含8點，非三公）</td><td>1:1</td><td>閒家勝：莊家向該閒家支付 下注額 × 1；莊家勝：閒家下注額歸底池</td></tr>
+<tr><td>平手（兩步比牌皆相同：第一步最大單張花色相同，第二步最大單張點數亦相同；依D8決勝規則）</td><td>退注</td><td>退回下注籌碼，不計輸贏</td></tr>
+</table>
+<p><strong>賠率計算語義（Payout Semantics）</strong>：</p>
+<ul><li>閒家勝時：閒家本金（1×下注額）由莊家直接歸還（不經底池），另外由莊家額外支付對應倍數賠率（N×）；總取回 = (1+N)× 下注額。</li><li>例：閒家下注 1,000 籌碼、三公勝（1:3）→ 取回 1,000（本金，莊家直接歸還）+ 3,000（莊家賠付）= 共 4,000 籌碼；淨利潤 +3,000。</li><li>莊家勝時：閒家下注額全額歸底池，莊家從底池獲得（扣抽水後）。</li><li>抽水：僅從莊家獲勝所得的閒家下注額加總（輸家下注額）× 5%，floor取整，結算前扣除；閒家獲勝局的本金與賠率由莊家全額支付，不受抽水影響。</li><li>【抽水說明】：抽水僅從「莊家獲勝局的閒家下注額」中扣除，閒家獲勝局的本金與賠率不含抽水（由莊家全額支付）。</li></ul>
+<p><strong>【F2 全閒家棄牌特殊情境】</strong> 全閒家棄牌時：底池=0，抽水=0，莊家底注退回（莊家籌碼淨變動=0）。</p>
+<p><strong>結算方向（雙向）</strong>：莊家與每位未 Fold 閒家進行獨立比牌結算。閒家勝→莊家直接從自身籌碼支付（1+N）×下注額給該閒家（本金與賠率均不經底池）；閒家敗→閒家下注額歸入底池。閒家下注額構成底池（莊家本金不入底池）；閒家勝時，莊家直接從自身籌碼支付（1+N）×下注額；閒家敗時，閒家下注額入底池；結算後從底池（輸家下注額合計）扣除5%抽水（floor取整，最少1籌碼），剩餘歸莊家。輸家閒家下注額構成底池（贏家閒家本金由莊家直接返還，不入底池）。</p>
+<p><strong>混合結果結算順序</strong>（莊家同局有贏有輸時）：Server 採原子性三步驟：(1) 確認每位閒家的本局比牌結果（贏/輸/Fold）；莊家敗的閒家下注額由莊家從自身籌碼支付（本金+賠率）；莊家勝的閒家下注額歸入底池；(2) 從底池（輸家閒家下注額合計）扣除 5% 抽水（floor取整，最少1籌碼）；(3) 依比牌結果依順時鐘順序逐一支付：莊家直接支付給贏家閒家：本金（1×下注額）+ N×賠率；輸家閒家不取回；莊家最終淨增減 = 所有輸家下注總額 – 所有贏家賠率支出 – 抽水（含莊家破產規則 D13）。</p>
+<p><strong>莊家結算破產處理</strong>：若莊家在結算過程中籌碼不足以支付所有贏家賠率，採用以下規則：(1) 依閒家<strong>順時鐘</strong>順序逐一結算；(2) 每位贏家依序收取其應得賠率（先到先得）；(3) 莊家籌碼歸零後，後續排隊贏家所得為零（不按比例分配，不取回本金，得零）；(4) 抽水 = floor(破產前已完成結算之輸家閒家下注額加總 × 5%)，最少1籌碼（底池 &gt; 0 時）；未完成結算部分不計入抽水底數；不按比例扣除；(5) 此規則已納入 Decision Log D13。</p>
+<p><strong>特殊情況：三公 vs 三公</strong>：若莊閒均持三公（Sam Gong，三張牌均為10點牌（10/J/Q/K）），則依 D8 同點比大小規則（第一步比最大單張花色：黑桃&gt;紅心&gt;方塊&gt;梅花；花色亦同則比最大單張點數：K&gt;Q&gt;J&gt;10&gt;9&gt;...&gt;2&gt;A）比較；若兩步皆相同（完全相同花色牌，理論上不可能），則平手退注。（決策見 §15 D10）</p>
+<blockquote><p><strong>注意：</strong> 上述賠率為虛擬籌碼計算基準，不涉及任何真實金錢。賠率設計需由 Game Designer 在 PRD 階段進行籌碼平衡模擬驗證，確保長期籌碼總量維持合理。</p></blockquote>
+<hr>
+<h2>6. Market &amp; Competitive Analysis</h2>
+<h3>6.1 競品分析</h3>
+<table>
+<tr><th>競品</th><th>優勢</th><th>劣勢</th><th>我們的差異化</th></tr>
+<tr><td>既有「三公」手機 App（多家）</td><td>已有用戶基礎</td><td>美術簡陋、Client-side 計算、疑似作弊</td><td>Server-authoritative、專業美術</td></tr>
+<tr><td>德州撲克類 App（Zynga Poker, PokerStars）</td><td>成熟變現模式、國際化</td><td>非三公、華人親切度低</td><td>聚焦華人本土遊戲</td></tr>
+<tr><td>大老二 / 麻將 App（多家）</td><td>華人市場熟悉</td><td>品類不同</td><td>差異化品類定位</td></tr>
+<tr><td>線下實體牌局</td><td>社交深度、氛圍</td><td>空間時間受限</td><td>隨時隨地、跨平台</td></tr>
+</table>
+<h3>6.2 市場定位（Positioning Map）</h3>
+<pre><code class="">          專業級 / 授權級
+               │
+               │  ○ PokerStars（國際撲克）
+               │         ● 三公 Online（目標定位：華人專業三公）
+               │
+非華人導向 ────┼──────── 華人導向
+               │
+  ○ Zynga Poker│  ○ 既有三公 App（華人但業餘）
+               │
+          業餘 / 單機級</code></pre>
+<p><strong>定位聲明：</strong> 三公 Online 定位為「華人市場首款 Server-Authoritative 專業級三公多人遊戲」，差異化在於公平性保證 + 華人原生玩法 + 專業跨平台美術。</p>
+<hr>
+<h2>7. Success Metrics</h2>
+<h3>7.1 北極星指標</h3>
+<p><strong>North Star：</strong> 週活躍對戰場次數（Weekly Active Rounds）— 代表真正在玩、回來玩、並且享受對戰的使用者總量。</p>
+<p><strong>量化目標（F9）：</strong> Launch+6M 目標：週活躍對戰場次 ≥ 50,000 場</p>
+<h3>7.2 業務指標階層</h3>
+<pre><code class="">Outcome：華人三公玩家信任並長期使用「三公 Online」作為主要娛樂平台
+  Output：CCU ≥ 500 / DAU ≥ 2,000 / 7日留存 ≥ 35%
+  Output：公平性 NPS ≥ 70 / 投訴作弊率 ≤ 0.1%
+    Input：每週上線場次 / 籌碼商店轉換率 / 新手引導完成率</code></pre>
+<blockquote><p><strong>【F8】付費率定義：</strong> 付費率 = 當月有IAP消費唯一帳號數 / 當月MAU × 100%。分母為當月登入至少1次之唯一帳號數（MAU），分子為同月內完成至少1筆IAP交易之唯一帳號數。</p></blockquote>
+<h3>7.3 投資門檻（Go / No-Go 條件）</h3>
+<table>
+<tr><th>里程碑</th><th>評估時間</th><th>Go 條件</th><th>No-Go 條件</th><th>決策者</th></tr>
+<tr><td>Alpha 驗收</td><td>2026-06-21（GA-2M）</td><td>核心玩法完整、P0 Bug = 0、Server 洗牌通過亂度測試</td><td>P0 Bug ≥ 1 或核心玩法未完成</td><td>PM + Eng Lead</td></tr>
+<tr><td>Beta 驗收（封測 100 人）</td><td>2026-07-21（GA-1M）</td><td>7日留存 ≥ 25%、主觀公平性評分 ≥ 4/5</td><td>留存 &lt; 15% 或公平性 &lt; 3.5/5；※ Amber Zone：7日留存介於15%-25%時，由PM+Exec Sponsor書面記錄決策是否延期Beta或有條件通過</td><td>PM + Exec Sponsor</td></tr>
+<tr><td>GA 決策</td><td>2026-08-21</td><td>負載測試 500 CCU 通過、合規審查完成</td><td>壓測失敗或法務未簽核</td><td>Exec Sponsor + Legal</td></tr>
+<tr><td>Post-Launch 3M</td><td>2026-11-21（Launch+3M）</td><td>DAU ≥ 1,000、付費率 ≥ 1%、公平性 NPS ≥ 70（Should，Amber Zone &lt; 50 時書面說明）</td><td>DAU &lt; 300 或持續負成長</td><td>Exec Sponsor</td></tr>
+<tr><td>Post-Launch 6M</td><td>2027-02-21（Launch+6M）</td><td>Peak CCU ≥ 500、DAU ≥ 2,000、7日留存 ≥ 35%</td><td>DAU &lt; 1,000 或 Peak CCU &lt; 200 持續 2 週</td><td>Exec Sponsor</td></tr>
+<tr><td></td><td></td><td>※ Amber Zone：Peak CCU 介於 200-499 持續 2 週時，由 Exec Sponsor 書面決策（追加廣告預算 / 延長評估期 / 啟動應急方案）</td><td></td><td></td></tr>
+</table>
+<hr>
+<h2>8. Constraints &amp; Assumptions</h2>
+<h3>8.1 業務限制</h3>
+<table>
+<tr><th>限制</th><th>類型</th><th>影響</th></tr>
+<tr><td>技術：必須 Cocos Creator Client + Colyseus Server</td><td>硬性</td><td>技術選型鎖定</td></tr>
+<tr><td><strong>【F9】Colyseus 版本鎖定：0.15.x（minor locked）</strong></td><td>硬性</td><td>package.json 固定 <code>&quot;colyseus&quot;: &quot;~0.15.0&quot;</code>（npm semver ~0.15.0 = ≥0.15.0且&lt;0.16.0，允許patch更新）；升級需通過完整回歸測試並記入 Change Log；禁止自動升級至 0.16+</td></tr>
+<tr><td><strong>【F6】部署目標決定（Q5）</strong></td><td>硬性</td><td>部署目標（Colyseus Cloud vs 自建 k8s）必須於 <strong>2026-05-15 前</strong>決定，否則 EDD 無法啟動；詳見 §14 Q5</td></tr>
+<tr><td>法規：禁止真實金錢下注 / 籌碼兌換</td><td>硬性</td><td>商業模式鎖定</td></tr>
+<tr><td>規模：MVP 支援 500 Peak CCU</td><td>軟性</td><td>影響架構設計</td></tr>
+<tr><td>預算：NT$ 450 萬開發成本上限</td><td>軟性</td><td>功能優先序取捨</td></tr>
+<tr><td>時程：4 個月 MVP 上線</td><td>硬性</td><td>Scope 必須縮至 MoSCoW Must-Have</td></tr>
+</table>
+<h3>8.2 關鍵假設（需驗證）</h3>
+<table>
+<tr><th>#</th><th>假設</th><th>驗證方式</th><th>若假設錯誤的影響</th></tr>
+<tr><td>A1</td><td>華人玩家對 Server-authoritative 公平性有明顯付費/留存偏好</td><td>封測 A/B 訊息測試</td><td>差異化失效，需重新定位</td></tr>
+<tr><td>A2</td><td>Cocos Creator 3.x + Colyseus SDK 整合無阻塞性技術問題</td><td>2 週 PoC</td><td>延期或換技術棧</td></tr>
+<tr><td>A3</td><td>Colyseus 單節點可承載 500 CCU + &lt; 100ms latency</td><td>壓測</td><td>需提早 horizontal scaling</td></tr>
+<tr><td>A4</td><td>以虛擬籌碼/不可兌換模式在台灣法律風險可控</td><td>法務意見書</td><td>商業模式重建</td></tr>
+<tr><td>A5</td><td>付費率 3% 在華人休閒博弈類為合理目標</td><td>Benchmark 同類 App</td><td>財務預測調整</td></tr>
+</table>
+<h3>8.3 非功能需求（NFR）（F6）</h3>
+<table>
+<tr><th>#</th><th>類別</th><th>需求描述</th><th>量化指標</th><th>驗證方式</th><th>優先度</th></tr>
+<tr><td>NFR-01</td><td><strong>效能：延遲</strong></td><td>Server 遊戲邏輯回應延遲（玩家操作至 Server 確認）</td><td>≤ 100ms（P95，亞太區用戶）</td><td>壓測工具（Colyseus Load Test）+ APM 監控</td><td>Must</td></tr>
+<tr><td>NFR-02</td><td><strong>效能：並發</strong></td><td>支援 Peak CCU 同時在線</td><td>≥ 500 CCU，單節點；≥ 2,000 CCU（水平擴展後）</td><td>壓測（Artillery / k6）</td><td>Must</td></tr>
+<tr><td>NFR-03</td><td><strong>可用性</strong></td><td>服務可用性（不含計劃維護）；計劃維護窗口：每月最大4小時（需提前24小時公告）；SLA測量排除計劃維護時間；緊急維護（未預告）計入SLA停機時間</td><td>≥ 99.5% / 月（≤ 3.6 小時停機，不含計劃維護）；各組件獨立可用性目標：Colyseus WS ≥99.9%、REST API ≥99.9%、PostgreSQL ≥99.9%、Redis ≥99.9%（四組件串聯：0.999^4≈99.6%&gt;99.5%）</td><td>監控儀表板（Uptime Robot / Grafana）</td><td>Must</td></tr>
+<tr><td>NFR-04</td><td><strong>安全：傳輸加密</strong></td><td>所有 Client-Server 通訊</td><td>TLS 1.2+（禁止降級至 TLS 1.0/1.1）</td><td>SSL Labs 掃描 / 部署前安全審查</td><td>Must</td></tr>
+<tr><td>NFR-05</td><td><strong>安全：資料加密</strong></td><td>靜態敏感資料（密碼、KYC、支付）</td><td>AES-256 加密儲存</td><td>安全審查 + <strong>滲透測試（F26）：GA 前執行一次完整滲透測試；後續每 6 個月或重大版本上線前執行一次</strong></td><td>Must</td></tr>
+<tr><td>NFR-06</td><td><strong>相容性：瀏覽器</strong></td><td>Web 端主流瀏覽器支援</td><td>Chrome 100+、Safari 15+、Firefox 100+、Edge 100+</td><td>BrowserStack 跨瀏覽器測試</td><td>Must</td></tr>
+<tr><td>NFR-07</td><td><strong>相容性：行動裝置</strong></td><td>Android / iOS 最低版本</td><td>Android 8.0+（API 26+）、iOS 14+</td><td>實機測試 + Firebase Test Lab</td><td>Must</td></tr>
+<tr><td>NFR-08</td><td><strong>相容性：解析度</strong></td><td>行動端最小支援螢幕寬度</td><td>375px（iPhone SE）以上無 UI 截斷</td><td>視覺回歸測試</td><td>Must</td></tr>
+<tr><td>NFR-09</td><td><strong>可擴展性</strong></td><td>水平擴展觸發條件</td><td>單節點 CPU &gt; 70% 持續 5 分鐘觸發自動擴容</td><td>Colyseus + k8s HPA 設定</td><td>Should</td></tr>
+<tr><td>NFR-10</td><td><strong>可觀測性</strong></td><td>關鍵業務指標監控覆蓋</td><td>CCU、延遲 P95/P99、錯誤率、籌碼異常 100% 覆蓋</td><td>Grafana Dashboard</td><td>Should</td></tr>
+<tr><td>NFR-11</td><td><strong>合規：個資</strong></td><td>用戶資料刪除請求處理時效</td><td>收到請求 7 個工作日內完成刪除</td><td>合規審計</td><td>Must</td></tr>
+<tr><td>NFR-12</td><td><strong>效能：啟動時間</strong></td><td>遊戲 Web 端首屏載入時間</td><td>≤ 5 秒（4G 網路，1MB/s）</td><td>Lighthouse 測試</td><td>Should</td></tr>
+<tr><td>NFR-13</td><td><strong>資料備份與還原</strong></td><td>PostgreSQL每日全量備份+每小時WAL增量備份；Redis每15分鐘RDB快照</td><td>RPO ≤ 1小時；RTO ≤ 4小時</td><td>季度備份恢復演練，實際還原測試通過</td><td>Must</td></tr>
+<tr><td>NFR-14</td><td><strong>連線可靠性：WebSocket</strong></td><td>Colyseus WebSocket 心跳與重連</td><td>ping/pong 心跳間隔 ≤ 10 秒；客戶端斷線後自動重連最多 3 次（退避：1/2/4 秒）；超 30 秒斷線觸發 §5.3 斷線行為處理</td><td>網路模擬斷線測試（Playwright + 網路節流）</td><td>Must</td></tr>
+<tr><td>NFR-15</td><td><strong>安全：WebSocket速率限制</strong></td><td>每連線每秒消息數上限；單條消息最大payload；超限觸發速率限制</td><td>每連線每秒 ≤ 10條；單條 ≤ 4KB；超限斷線30秒冷卻</td><td>Artillery/k6</td><td>Must</td></tr>
+<tr><td>NFR-16</td><td><strong>效能：DB查詢延遲</strong></td><td>PostgreSQL查詢延遲；Redis操作延遲；含Circuit Breaker</td><td>PostgreSQL P95≤50ms；Redis P95≤5ms；含Circuit Breaker</td><td>k6 load test</td><td>Must</td></tr>
+<tr><td>NFR-17</td><td><strong>安全：JWT Session安全</strong></td><td>存取Token ≤ 1小時；Refresh Token有效期 ≤ 7天；封號後1分鐘失效；RS256/ES256簽名</td><td>封號後Token失效 ≤ 60秒</td><td>封號流程測試 + Token驗證</td><td>Must</td></tr>
+<tr><td>NFR-18</td><td><strong>可用性：DB熱備援Failover</strong></td><td>PostgreSQL主從streaming replication；自動failover ≤ 5分鐘</td><td>服務恢復時間 ≤ 5分鐘</td><td>季度failover演練（實際恢復測試通過）</td><td>Must</td></tr>
+<tr><td>NFR-19</td><td><strong>安全：REST API速率限制</strong></td><td>認證端點≤30次/min/IP；每日籌碼/任務端點≤5次/min/user；一般API≤60次/min/user；全局IP≤300次/min；超限返回HTTP 429（詳見PRD NFR-19）</td><td>各端點超限返回HTTP 429</td><td>壓測工具模擬超限請求驗證</td><td>Must</td></tr>
+</table>
+<hr>
+<h2>9. Regulatory &amp; Compliance Requirements</h2>
+<h3>9.0 Web 平台 Cookie 同意需求（F23）</h3>
+<p><strong>【F23】</strong> Web 平台首次載入時顯示 Cookie 同意橫幅，符合個資法告知義務。若有歐盟用戶，需符合 GDPR ePrivacy 指令之明確 opt-in 同意（不得預設勾選）。Cookie 分類至少包含：必要性 Cookie（不可拒絕）、分析性 Cookie（可選拒絕）、行銷性 Cookie（可選拒絕）。同意紀錄需記錄時間戳與版本號，保留 3 年。</p>
+<p><strong>歐盟用戶觸發條件（F17）：</strong> 以IP地理位置偵測（CloudFlare CF-IPCountry header或MaxMind GeoIP DB）；若用戶IP所屬國家為歐盟成員國，強制顯示GDPR opt-in同意流程（明確opt-in，非pre-checked）。</p>
+<h3>9.1 適用法規</h3>
+<table>
+<tr><th>法規 / 標準</th><th>適用範圍</th><th>關鍵義務</th><th>負責人</th></tr>
+<tr><td>中華民國《刑法》第 266 條（賭博罪）</td><td>遊戲機制</td><td>不得以財物或可兌換財物之物為賭注</td><td>Legal</td></tr>
+<tr><td>《詐欺犯罪危害防制條例》</td><td>線上遊戲經營者</td><td>實名制/KYC、可疑交易通報、配合檢警調查</td><td>Legal + Ops</td></tr>
+<tr><td>《個人資料保護法》</td><td>玩家資料處理</td><td>告知、同意、最小蒐集、刪除權</td><td>Legal + Eng</td></tr>
+<tr><td>《兒童及少年福利與權益保障法》</td><td>未成年保護</td><td>年齡驗證、防沉迷機制</td><td>Product</td></tr>
+<tr><td>Google Play / App Store 政策</td><td>上架審查</td><td>博弈類 App 嚴格審查；必須強調「無實質獎勵」</td><td>Product</td></tr>
+<tr><td>GDPR（若海外華人用戶涉入歐盟）</td><td>歐盟個資</td><td>DSR、DPO、DPIA</td><td>Legal</td></tr>
+</table>
+<h3>9.2 合規影響評估</h3>
+<table>
+<tr><th>合規要求</th><th>對產品設計的影響</th><th>對架構的影響</th><th>合規成本估算</th></tr>
+<tr><td>刑法賭博罪</td><td><strong>【F17 設計決策】v1.0採純虛擬娛樂籌碼，不可購買；IAP 啟用條件依 Q1 法律意見書（2026-05-15）決定</strong>（原法律開放問題已移至 §14 Q1）</td><td>籌碼系統需可靈活切換模式</td><td>法律顧問費 NT$ 30 萬</td></tr>
+<tr><td>詐欺防制條例</td><td>需實名制 / KYC 機制</td><td>帳號模組需串接身份驗證</td><td>3rd-party KYC 服務 NT$ 20 萬/年</td></tr>
+<tr><td>個資法</td><td>隱私權政策、刪除機制</td><td>資料刪除 API</td><td>開發內建</td></tr>
+<tr><td>未成年保護（F7年齡驗證）</td><td><strong>v1.0年齡驗證方案：出生年份自填 + 手機 OTP 雙重驗證</strong>。流程：①玩家填入出生年份 → ②系統驗算是否 ≥18 歲 → ③若通過，發送手機 OTP 驗證（6 碼，5 分鐘有效）→ ④OTP 驗證成功後帳號啟用。未完成驗證帳號只可進入教學模式，無法參與正式對戰。<strong>【F11 風險備注】OTP 限制：OTP 只驗證手機持有人，無法確認實際年齡。v1.0 門檻為出生年自填 + OTP。若法律意見書（2026-05-15）認定此方案不足，升級至第三方 KYC（TW 自然人憑證）。升級觸發條件見 §9.4 合規矩陣。</strong> <strong>OTP 安全限制</strong>：（1）錯誤輸入上限：同一 OTP 最多 3 次錯誤後自動失效（需重送）；（2）重送冷卻：每次重送間隔 ≥ 60 秒；（3）每日上限：同一手機號每日最多 5 次 OTP 請求；超限後需等至次日 00:00（UTC+8）重置；（4）異常偵測：同 IP 10 分鐘內超過 3 支手機號請求 OTP 觸發 Rate Limit（HTTP 429）。</td><td>帳號系統新增年齡欄位 + SMS OTP 服務整合（如 Twilio / AWS SNS）</td><td>開發成本 + SMS 費用約 NT$0.3/次</td></tr>
+<tr><td>平台審查</td><td>強調「娛樂性質、無實質獎勵」</td><td>文案與行銷材料</td><td>開發內建</td></tr>
+<tr><td>防沉迷機制（F8）</td><td><strong>具體實施方案：</strong> (1) 連續遊玩計時器：每局結束後累計，滿 2 小時（120分鐘）強制顯示休息提醒彈窗，玩家需主動確認後方可繼續；(2) 每日遊玩時間顯示：帳號主頁顯示今日累計遊玩時間；(3) 未成年帳號強制限制：年齡 &lt;18 歲帳號每日遊玩時數上限 2 小時，達上限後強制登出，次日 00:00（UTC+8）重置；(4) 防沉迷提醒內容：「您已連續遊玩 X 分鐘，請適度休息，注意健康。」<strong>【F18 計時器重置條件】</strong> (5) 連續遊玩計時器重置條件：玩家主動登出後重置；或離線（網路斷線 / App 關閉）超過 <strong>30 分鐘</strong>後重置；App 切換至背景超過 30 分鐘視為中斷並重置計時器。<strong>【F19 成人帳號午夜重置說明】</strong> 注意：成人帳號連續遊玩計時器不在UTC+8午夜自動重置（成人無每日強制時數限制）；僅主動登出或離線&gt;30分鐘時重置；每日累計遊玩時間（UI顯示用）每日00:00 UTC+8重置（顯示清零，不影響2小時提醒計時器）</td><td>帳號系統新增遊玩計時模組；後端 Session 時間追蹤</td><td>開發內建</td></tr>
+</table>
+<h3>9.3 合規時程里程碑</h3>
+<table>
+<tr><th>里程碑</th><th>預計日期</th><th>負責人</th><th>狀態</th></tr>
+<tr><td>法律意見書（博弈定位釐清）</td><td>2026-05-15</td><td>Legal</td><td>PENDING</td></tr>
+<tr><td>DPIA（資料保護影響評估）</td><td>2026-06-01</td><td>Legal</td><td>PENDING</td></tr>
+<tr><td>架構安全審查</td><td>2026-07-01（EDD完成後約30日）</td><td>Eng + Legal</td><td>PENDING</td></tr>
+<tr><td>法規合規測試</td><td>2026-07-21（Beta前）</td><td>QA + Legal</td><td>PENDING</td></tr>
+<tr><td>平台審查材料備齊</td><td>2026-08-07（GA-2週）</td><td>Product + Legal</td><td>PENDING</td></tr>
+<tr><td>GA法務簽核</td><td>2026-08-21</td><td>Legal + Exec Sponsor</td><td>PENDING</td></tr>
+</table>
+<h3>9.4 合規責任矩陣（F14）</h3>
+<table>
+<tr><th>合規領域</th><th>主責人</th><th>協作方</th><th>執行方式</th><th>驗收標準</th><th>截止節點</th></tr>
+<tr><td>博弈罪定位（刑法 §266）</td><td>Legal</td><td>PM + Exec</td><td>取得法律意見書</td><td>法律意見書正式出具，明確「合法」或「需調整」</td><td>2026-05-15</td></tr>
+<tr><td>KYC / 實名制</td><td>Legal + Ops</td><td>Eng（帳號模組）</td><td>串接第三方 KYC 服務或手機 OTP 驗證方案；<strong>【F11 升級觸發條件】若法律意見書（2026-05-15）認定 OTP 方案不足，則須於 2026-08-13（2026-05-15 法律意見書出具後 90 日）前完成升級至第三方 KYC（TW 自然人憑證或等效方案）；此截止日早於 GA（2026-08-21），確保合規在上線前完成</strong></td><td>100% 新帳號經過年齡 + 身份驗證</td><td>2026-06-21（GA-2M）</td></tr>
+<tr><td>個人資料保護法合規</td><td>Legal + DPO</td><td>Eng</td><td>撰寫隱私權政策、實作資料刪除 API</td><td>法務審查通過、DPIA 完成</td><td>2026-06-01</td></tr>
+<tr><td>未成年保護（防沉迷）</td><td>Product</td><td>Eng + Legal</td><td>年齡驗證閘 + 連續遊玩提醒 + 未成年時數限制；法規依據：《兒童及少年福利與權益保障法》第46條及主管機關（數位部/文化部）防沉迷行政指導；<strong>【注意】法律意見書（2026-05-15）確認未成年2小時強制限制的法規依據及強制程度</strong></td><td>QA 驗收：連續 2 小時提醒出現率 100%；未成年帳號 2 小時強制登出</td><td>2026-07-21（Beta前）</td></tr>
+<tr><td>GDPR（歐盟用戶）</td><td>Legal + DPO</td><td>Eng</td><td>DSR 機制、SCCs、DPO 指定</td><td>DPIA 完成；SCCs 簽署</td><td>GA 前（若有歐盟用戶）</td></tr>
+<tr><td>Google / Apple 平台審查</td><td>Product</td><td>Legal + Art</td><td>審查材料備齊、文案避博弈字眼</td><td>通過上架審查，無須重大修改</td><td>GA - 2 週</td></tr>
+<tr><td>詐欺防制條例通報機制</td><td>Legal + Ops</td><td>Eng</td><td>建立可疑交易通報 SOP、配合檢警調查流程</td><td>SOP 文件完成、Legal 審查通過</td><td>GA 前</td></tr>
+<tr><td>聊天室內容合規（F15）</td><td>Product + Ops</td><td>Eng</td><td>關鍵字過濾清單、舉報機制、訊息留存 30 日；<strong>【F27】關鍵字過濾清單由 Ops 負責維護，存放於專案 Git repo <code>/docs/content-policy/</code>；初始版本 GA 前完成，異常事件後 5 工作日內更新</strong></td><td>過濾覆蓋率 ≥ 95%；舉報處理 SLA ≤ 24 小時</td><td>聊天室功能上線前</td></tr>
+</table>
+<h3>9.5 Data Governance &amp; Lifecycle Management</h3>
+<table>
+<tr><th>資料類型</th><th>資料擁有人</th><th>保留期限</th><th>存取控制政策</th><th>刪除程序</th><th>稽核需求</th></tr>
+<tr><td>玩家個人資料（暱稱、Email、手機）</td><td>DPO</td><td>帳號關閉後 90 日</td><td>最小權限、加密儲存</td><td>用戶請求 7 日內完成</td><td>個資法</td></tr>
+<tr><td>牌局紀錄（含洗牌種子、手牌）</td><td>Eng Lead</td><td>180 日（熱）/ 2 年（冷）</td><td>僅反作弊與客服可查</td><td>自動歸檔後銷毀</td><td>反作弊審計</td></tr>
+<tr><td>支付紀錄</td><td>Finance</td><td>7 年（稅務）</td><td>Finance + 稽核</td><td>法定期限後銷毀</td><td>財政部規範</td></tr>
+<tr><td>系統日誌</td><td>SRE</td><td>90 日</td><td>SRE 內部</td><td>自動銷毀</td><td>ISO27001</td></tr>
+<tr><td>KYC 資料（若適用）</td><td>DPO + Legal</td><td>法定期限</td><td>加密、稽核</td><td>法律要求下銷毀</td><td>反詐法</td></tr>
+</table>
+<p><strong>資料主權：</strong> 首版資料存於台灣 / 日本 AWS 區域；若歐盟用戶介入，啟動 GDPR SCCs。</p>
+<h3>9.6 Intellectual Property &amp; Licensing</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td><strong>專利風景分析</strong></td><td>三公為公共領域傳統遊戲，無核心專利；需確認美術資產無侵權</td></tr>
+<tr><td><strong>OSS License 合規</strong></td><td>Cocos Creator（專有但免費商用條款）、Colyseus（MIT）、相關套件 license 清單需整理</td></tr>
+<tr><td><strong>第三方資產授權</strong></td><td>像素素材 / 音效若購買自資產商店，需保存授權證明；AI 生成資產須審定</td></tr>
+<tr><td><strong>客戶資料所有權</strong></td><td>玩家個資屬玩家所有；牌局資料屬公司所有（反作弊用途）</td></tr>
+<tr><td><strong>IP 歸屬</strong></td><td>遊戲軟體 IP 歸 Sayyo Games，貢獻者 CLA：待評估</td></tr>
+</table>
+<hr>
+<h2>10. Risk Assessment</h2>
+<table>
+<tr><th>風險</th><th>類型</th><th>可能性</th><th>影響</th><th>緩解策略</th><th>負責人</th></tr>
+<tr><td>R1 台灣賭博罪定位風險</td><td>法規</td><td>MEDIUM</td><td>HIGH</td><td>虛擬籌碼不可兌換 + 法律意見書 + 平台審查材料</td><td>Legal</td></tr>
+<tr><td>R2 Client 外掛/自動化</td><td>安全</td><td>HIGH</td><td>MEDIUM</td><td>Server 速率限制 + 行為異常偵測 + 帳號封鎖機制</td><td>Eng Lead</td></tr>
+<tr><td>R3 Colyseus 單節點承載不足</td><td>技術</td><td>MEDIUM</td><td>HIGH</td><td>提早壓測 + Redis Presence 水平擴展 PoC</td><td>Eng Lead</td></tr>
+<tr><td>R4 美術質感不達預期</td><td>產品</td><td>MEDIUM</td><td>MEDIUM</td><td>像素 vs 賭場雙軌 A/B + 封測反饋</td><td>Art + PM</td></tr>
+<tr><td>R5 Cocos + Colyseus SDK 整合 Bug</td><td>技術</td><td>LOW</td><td>HIGH</td><td>2 週 PoC + 官方 UNO 範例對照</td><td>Eng</td></tr>
+<tr><td>R6 平台（Google/Apple）審查駁回</td><td>商業</td><td>MEDIUM</td><td>HIGH</td><td>文案避開博弈字眼、強調娛樂、第三方審查預審</td><td>Product</td></tr>
+<tr><td>R7 未成年玩家規避年齡閘</td><td>法規</td><td>MEDIUM</td><td>MEDIUM</td><td>KYC + 行為偵測 + 防沉迷提醒</td><td>Product</td></tr>
+<tr><td>R8 競品快速跟進</td><td>市場</td><td>MEDIUM</td><td>MEDIUM</td><td>建立 Server-authoritative 技術護城河 + 快速迭代</td><td>Product</td></tr>
+<tr><td>R9 籌碼經濟通膨/崩盤</td><td>遊戲設計</td><td>MEDIUM</td><td>HIGH</td><td>籌碼發放/回收曲線模擬 + 每日上限</td><td>Game Designer</td></tr>
+<tr><td>R10 KYC / 個資外洩</td><td>安全</td><td>LOW</td><td>HIGH</td><td>加密儲存 + 第三方 KYC 服務 + 定期滲透測試</td><td>Eng + Legal</td></tr>
+<tr><td>R11 年齡計算誤差（最多11個月17歲用戶通過）</td><td>合規</td><td>MEDIUM</td><td>HIGH</td><td>緩解：法律意見書2026-05-15確認可行性；若不接受則v1.0即升級完整生日驗證</td><td>Legal</td><td>2026-05-15</td></tr>
+</table>
+<hr>
+<h2>11. Business Model</h2>
+<h3>11.1 商業模式畫布</h3>
+<table>
+<tr><th>要素</th><th>內容</th></tr>
+<tr><td><strong>收入來源</strong></td><td>虛擬籌碼 IAP（基本款）+ VIP 訂閱（進階）（VIP訂閱：v1.x計畫，v1.0 Out of Scope）+ 廣告（免費用戶觀看取得籌碼）</td></tr>
+<tr><td><strong>定價策略</strong></td><td>Freemium：免費遊玩、每日贈送基礎籌碼；付費購買虛擬籌碼包 / VIP</td></tr>
+<tr><td><strong>成本結構</strong></td><td>開發（一次性）、Colyseus Cloud 或 k8s 維運【Q5 待決，截止 2026-05-15，見§14】、客服、行銷 CAC、支付手續費</td></tr>
+<tr><td><strong>核心資源</strong></td><td>Colyseus + Cocos 技術棧、華人美術風格、反作弊演算法、KYC 整合</td></tr>
+<tr><td><strong>關鍵活動</strong></td><td>遊戲迭代、社群運營、反作弊運維、合規監控</td></tr>
+<tr><td><strong>關鍵夥伴</strong></td><td>Colyseus（雲服務或開源支援）、Cocos（引擎）、KYC 服務商、支付通道（IAP / 信用卡）</td></tr>
+<tr><td><strong>獲客管道</strong></td><td>Facebook 華人社團、YouTube 華人頻道贊助、Google UAC、App Store / Play Store 搜尋優化</td></tr>
+<tr><td><strong>Unit Economics</strong></td><td>CAC 估 USD 5-10 ｜ LTV 估 USD 30-60 ｜ LTV:CAC ≥ 3 目標 <strong>【F22 免責聲明】AI推斷假設，待市場測試驗證，不得作為財務承諾依據；建議 Launch+3M 後以實際數據更新</strong></td></tr>
+</table>
+<h3>11.2 商業模式假設驗證</h3>
+<table>
+<tr><th>假設</th><th>驗證方式</th><th>驗證期限</th><th>若錯誤的影響</th></tr>
+<tr><td>付費率 3% 可達成</td><td>封測 + Launch + 3M 追蹤</td><td>Launch + 3M</td><td>改用訂閱制或廣告主導</td></tr>
+<tr><td>華人市場 CAC &lt; USD 10</td><td>FB/Google 小額測試</td><td><strong>2026-05-05</strong>（F24）</td><td>行銷預算重估</td></tr>
+<tr><td>VIP 訂閱付費意願 &gt; 單次購買</td><td>A/B 測試</td><td>v1.x Launch+3M（v1.x功能，暫列至v1.x計畫確認後移入v1.x BRD）</td><td>只保留單次購買</td></tr>
+</table>
+<hr>
+<h2>12. High-Level Roadmap</h2>
+<div class="diagram-container"><pre class="mermaid">timeline
+    title 三公 Online 高層次里程碑
+    section Discovery（2026-04-21起–1個月）
+        Week 1-2 : BRD + PRD 核准
+        Week 3-4 : EDD / ARCH / Cocos+Colyseus PoC
+    section Build（1–3個月）
+        Month 2 : Alpha（核心玩法 + Server 邏輯）
+        Month 3 : 美術/動畫完整 + 帳號系統
+        Month 4 : Beta 封測 100 人
+    section Launch（4個月）
+        Month 4 末 : GA 上線（繁中 / 台港澳）（2026-08-21）
+    section Growth（4–12個月）
+        Launch + 3M : 付費系統 + 排行榜（2026-11-21）
+        Launch + 6M : 每日任務功能優化與進階版本（v1.0 Should Have基礎功能於GA上線，Launch+6M為完整強化版）、排行榜優化（VIP訂閱列入v1.x計畫，Out of Scope v1.0）（2027-02-21）
+        Launch + 12M : 第二品類（大老二或21點）（2027-08-21）</pre></div>
+<hr>
+<h2>13. Dependencies</h2>
+<table>
+<tr><th>依賴項</th><th>類型</th><th>負責方</th><th>若延誤的影響</th><th>來源</th><th>備注</th></tr>
+<tr><td>Cocos Creator 3.8.x（minor locked）（F16）</td><td>技術</td><td>Cocos 官方</td><td>開發阻塞</td><td>內部</td><td>if 延誤：Client 開發停擺</td></tr>
+<tr><td>Colyseus 0.15.x（locked）（F25）</td><td>技術</td><td>Colyseus 官方</td><td>開發阻塞</td><td>內部</td><td>if 延誤：Server 開發停擺</td></tr>
+<tr><td><strong>PostgreSQL 16.x（locked）</strong>（F10）</td><td>技術</td><td>內部 DBA / 雲服務</td><td>持久層開發阻塞</td><td>內部</td><td>if 延誤：玩家資料/牌局紀錄無法持久化</td></tr>
+<tr><td><strong>Redis 7.x（locked）</strong>（F10）</td><td>技術</td><td>內部 SRE / 雲服務</td><td>Matchmaking / Session Cache 阻塞</td><td>內部</td><td>if 延誤：配對與Session功能失效</td></tr>
+<tr><td><strong>Node.js 22.x（Active LTS）</strong></td><td>技術</td><td>SRE/Engineering Lead</td><td>Server 編譯與運行阻塞</td><td>內部</td><td>if 延誤：開發環境不一致</td></tr>
+<tr><td><strong>TypeScript 5.4.x</strong></td><td>技術</td><td>Engineering Lead</td><td>Client/Server 編譯阻塞</td><td>內部</td><td>if 延誤：跨開發者代碼相容性問題</td></tr>
+<tr><td>KYC 服務商（如 Jumio / 國內 HotAI）</td><td>外部</td><td>Vendor</td><td>帳號系統延期</td><td>外部</td><td>—</td></tr>
+<tr><td>支付通道（Google Play IAP / App Store IAP）</td><td>外部</td><td>Platform</td><td>變現延期</td><td>外部</td><td>—</td></tr>
+<tr><td>法律意見書</td><td>外部</td><td>律師事務所</td><td>上線延期</td><td>外部</td><td>—</td></tr>
+<tr><td>美術素材（像素風 + 賭場風雙軌）</td><td>內部/外包</td><td>Art Team</td><td>Beta 延期</td><td>內部</td><td>—</td></tr>
+</table>
+<h3>13.0 版本鎖定策略（F9）</h3>
+<table>
+<tr><th>套件 / 框架</th><th>鎖定版本</th><th>鎖定策略</th><th>升級政策</th></tr>
+<tr><td><strong>Colyseus</strong></td><td><code>0.15.x</code>（minor locked）</td><td><code>package.json</code> 使用 <code>&quot;colyseus&quot;: &quot;~0.15.0&quot;</code>（patch 可自動更新，minor 禁止跳）</td><td>升級至 0.16+ 需：完整回歸測試通過 + PM + Eng Lead 雙簽核 + Change Log 記錄</td></tr>
+<tr><td>Cocos Creator</td><td><strong><code>3.8.x</code>（minor locked）</strong>（F16）</td><td>鎖定大版本與次版本；patch 更新需 PoC 驗證；使用 <code>&quot;cocos-creator&quot;: &quot;3.8.x&quot;</code> 版本約束</td><td>跨次版本（3.8→3.9）或跨大版本升級需 EDD 評估 + PM + Eng Lead 雙簽核</td></tr>
+<tr><td><code>@colyseus/schema</code></td><td>隨 Colyseus 0.15.x</td><td>與主框架同步</td><td>同 Colyseus 升級政策</td></tr>
+<tr><td>Node.js</td><td>LTS（22.x，Active LTS）</td><td>使用 <code>.nvmrc</code> 固定；Node.js 20.x於2026-04進入Maintenance LTS；22.x為Active LTS，GA目標2026-08-21時仍在Active維護期</td><td>隨 LTS 週期更新，每年評估一次</td></tr>
+<tr><td>TypeScript</td><td>5.4.x（minor locked）</td><td><code>tsconfig.json</code> strict mode 啟用；patch更新允許</td><td>minor升級須全團隊同步，需更新 tsconfig 並全量回歸測試</td></tr>
+</table>
+<blockquote><p><strong>風險說明（F9）：</strong> Colyseus 0.15 → 0.16 有重大 API Breaking Changes（Room lifecycle、Schema 序列化格式均有變動）。版本過於寬鬆（<code>&gt;=0.15</code>）可能導致 npm install 時自動升級，引發線上不相容問題。</p></blockquote>
+<h3>13.1 Vendor &amp; Third-Party Dependency Risk Assessment</h3>
+<table>
+<tr><th>供應商 / 服務</th><th>關鍵性</th><th>替代方案</th><th>SLA 假設</th><th>若失敗的影響</th><th>退出計畫</th></tr>
+<tr><td>Colyseus（框架）</td><td>Tier 1</td><td>Nakama / 自研 WebSocket</td><td>開源社群支援</td><td>核心架構重寫</td><td>6 個月遷移</td></tr>
+<tr><td>Cocos Creator（引擎）</td><td>Tier 1</td><td>Unity / Godot</td><td>官方維護</td><td>Client 重寫</td><td>12 個月遷移</td></tr>
+<tr><td>Colyseus Cloud（若採用）</td><td>Tier 2</td><td>自建 k8s</td><td>99.5%</td><td>降級至 IaaS</td><td>2 週遷移</td></tr>
+<tr><td>KYC 服務商</td><td>Tier 2</td><td>多家可選</td><td>99.5%</td><td>帳號新增暫停</td><td>30 日替換</td></tr>
+<tr><td>IAP 平台（Google / Apple）</td><td>Tier 1</td><td>—</td><td>平台 SLA</td><td>付費功能停擺</td><td>無（平台壟斷）</td></tr>
+<tr><td>AWS / GCP</td><td>Tier 2</td><td>多雲</td><td>99.9%</td><td>短期不可用</td><td>多 region 備援</td></tr>
+</table>
+<hr>
+<h2>14. Open Questions</h2>
+<table>
+<tr><th>#</th><th>問題</th><th>影響層級</th><th>負責人</th><th>截止日</th><th>狀態</th></tr>
+<tr><td>Q1</td><td>虛擬籌碼是否可由玩家用現金購買？購買是否觸犯賭博罪？</td><td>策略</td><td>Legal</td><td>2026-05-15</td><td>OPEN</td></tr>
+<tr><td>Q2</td><td>三公的「公牌」規則（地區差異大）採用哪一種標準？</td><td>範圍</td><td>Game Designer</td><td>2026-05-01</td><td><strong>CLOSED（F3）</strong> — 採台灣標準版，不啟用公牌規則（詳見 §5.5 及 D6）</td></tr>
+<tr><td>Q3</td><td>是否需要實名 KYC？還是手機簡訊驗證即可？</td><td>法規</td><td>Legal + Product</td><td>2026-05-15</td><td>OPEN</td></tr>
+<tr><td>Q4</td><td>像素風與賭場風美術，最終採一套或雙主題？</td><td>產品</td><td>Art + PM</td><td>2026-07-21（GA-1M）</td><td>OPEN</td></tr>
+<tr><td>Q5</td><td>Colyseus Cloud 還是自建 k8s？成本/維運對比？</td><td>技術</td><td>Eng Lead</td><td><strong>2026-05-15</strong>（F6：部署目標決定截止日，EDD 開始前必須完成）</td><td>OPEN</td></tr>
+<tr><td>Q6</td><td>是否支援觀戰模式？（影響 Schema 複雜度）</td><td>範圍</td><td>PM</td><td>2026-04-21（已關閉）</td><td><strong>CLOSED（F4）</strong> — v1.0 不支援觀戰模式，移入 Out of Scope（詳見 §5.3 及 D5），v1.x 再評估</td></tr>
+</table>
+<hr>
+<h2>15. Decision Log</h2>
+<table>
+<tr><th>#</th><th>決策日期</th><th>議題</th><th>決策內容</th><th>決策依據</th><th>決策者</th><th>影響範圍</th></tr>
+<tr><td>D1</td><td>2026-04-21</td><td>BRD 初稿建立</td><td>以 /devsop-idea 自動生成 BRD</td><td>加速 Discovery 階段</td><td>AI + Evans</td><td>全文件</td></tr>
+<tr><td>D2</td><td>2026-04-21</td><td>技術棧鎖定</td><td>Cocos Creator（Client）+ Colyseus（Server）</td><td>使用者草稿指定</td><td>Evans</td><td>全架構</td></tr>
+<tr><td>D3</td><td>2026-04-21</td><td>架構原則</td><td>Server authoritative，Client 零結果計算</td><td>防作弊核心需求</td><td>Evans</td><td>全架構</td></tr>
+<tr><td>D4</td><td>2026-04-21</td><td>商業模式</td><td>虛擬籌碼不可兌換（娛樂性質）</td><td>規避賭博罪</td><td>AI + Legal 待確認</td><td>全產品</td></tr>
+<tr><td>D5</td><td>2026-04-21</td><td>觀戰模式（Spectator Mode）</td><td>v1.0 不實作觀戰模式，移入 Out of Scope</td><td>Schema 複雜度、延遲風險、Q6 評估後延期</td><td>PM</td><td>§5.3 Out of Scope、§14 Q6</td></tr>
+<tr><td>D6</td><td>2026-04-21</td><td>三公規則標準版本</td><td>採用台灣標準版三公規則：不啟用公牌規則（N），三公賠率 1:3，9點賠率 1:2，8點以下 1:1</td><td>地區規則統一減少開發複雜度；Q2 關閉</td><td>PM + Game Designer</td><td>§5.5 三公規則草案附錄</td></tr>
+<tr><td>D7</td><td>TBD（截止 2026-07-21）</td><td>美術風格最終選定</td><td><strong>暫定：像素風為主；2026-07-21 前由 PM + Art Director 依 A/B 測試數據決定</strong></td><td>像素風成本低風險小，賭場風僅試做關鍵畫面，Beta 數據驅動決策</td><td>PM + Art Director</td><td>§5.1、美術資源分配</td></tr>
+<tr><td>D8</td><td>2026-04-22</td><td>同點比大小決勝規則</td><td>同點比大小順序（D8）：第一步比最大單張花色（黑桃&gt;紅心&gt;方塊&gt;梅花）；花色相同時比最大單張點數（K&gt;Q&gt;J&gt;10&gt;9&gt;8&gt;7&gt;6&gt;5&gt;4&gt;3&gt;2&gt;A，A為最小）。此規則適用於所有同點數情境，包含三公vs三公（見D10）。</td><td>消除地區差異歧義，確保Server判牌邏輯唯一確定性，避免玩家爭議；A為最小符合台灣三公慣例</td><td>PM + Game Designer</td><td>§5.5 同點比大小規則</td></tr>
+<tr><td>D9</td><td>2026-04-22</td><td>莊家籌碼不足處理規則</td><td>若莊家當前籌碼餘額低於本廳最低下注額（依房間tier動態決定，見§5.4房間級距表），系統自動輪莊至下一位玩家（跳過本局莊家資格）；此規則無例外</td><td>避免莊家無法下注導致牌局卡死，確保遊戲流程不中斷</td><td>PM + Game Designer</td><td>§5.5 莊家機制</td></tr>
+<tr><td>D10</td><td>2026-04-22</td><td>三公 vs 三公平手規則</td><td>若莊閒均持三公，依D8同點比大小規則（第一步比最大單張花色；花色相同再比最大單張點數K&gt;Q&gt;J&gt;10&gt;9&gt;...&gt;2&gt;A）；兩步皆同則平手退注（依D8：①最大單張花色 ②最大單張點數；由於52張標準牌組中每張牌唯一，實際不可能發生完全平手）</td><td>三公對三公屬邊緣情境，必須明確定義避免Server邏輯未覆蓋導致遊戲卡死或爭議</td><td>PM + Game Designer</td><td>§5.5 賠率表後</td></tr>
+<tr><td>D11</td><td>2026-04-22</td><td>閒家操作計時器預設值</td><td>每位閒家有30秒決定Call或Fold；超時自動視為Fold；計時器倒數顯示於Client UI；30秒為預設值，PRD可調整</td><td>防止玩家長時間不操作導致牌局卡死，提升遊戲節奏與其他玩家體驗</td><td>PM + Game Designer</td><td>§5.5 莊家機制</td></tr>
+<tr><td>D12</td><td>2026-04-22</td><td>莊家自動下注行為（超時）</td><td>莊家有30秒完成底注下注；超時後系統自動以本廳最低下注額代為下注並進入Step 3；規則與閒家計時器一致</td><td>防止莊家長時間不下注導致牌局卡死；與閒家超時規則對稱，確保遊戲流程完整性</td><td>PM + Game Designer</td><td>§5.5 牌局流程 Step 2</td></tr>
+<tr><td>D13</td><td>2026-04-22</td><td>莊家結算破產處理順序</td><td>採順時鐘優先支付（先到先得）；莊家籌碼歸零後，後續排隊贏家所得為零（不按比例分配，不取回本金，得零）</td><td>確保Server邏輯確定性，防止爭議</td><td>PM + Engineering Lead</td><td>§5.5 結算邏輯</td></tr>
+<tr><td>D14</td><td>2026-04-22</td><td>每日贈送籌碼優先度升級</td><td>每日贈送籌碼由Should Have升級為Must Have，依PRD團隊留存需求分析決策</td><td>每日贈送籌碼直接驅動留存（Retention），已成為O2 Must達成條件的關鍵依賴</td><td>PM</td><td>§5.3 MoSCoW表</td></tr>
+<tr><td>D15</td><td>2026-04-21</td><td>好友系統v1.0範圍排除</td><td>好友房間功能（REQ-005）延後至v1.x；BRD §5.3 MoSCoW原標注為「Should Have」，但依Sprint容量評估決定v1.0 DEFERRED至v1.x，不影響BRD §5.3既有標注</td><td>Sprint容量評估，v1.0聚焦核心遊戲機制</td><td>PM</td><td>REQ-005, BRD §5.3 MoSCoW表</td></tr>
+</table>
+<hr>
+<h2>16. Glossary</h2>
+<table>
+<tr><th>術語</th><th>業務定義</th></tr>
+<tr><td>ARPPU</td><td>Average Revenue Per Paying User，每付費用戶平均收入</td></tr>
+<tr><td>Banker / 莊家</td><td>每局牌局負責先下底注的玩家，其他玩家跟注或棄牌；採輪莊制（見§5.5）。</td></tr>
+<tr><td>Call／跟注</td><td>閒家在莊家下注底注後，選擇以等額籌碼跟注，進入翻牌比牌流程；Call額 = 莊家本局底注額。</td></tr>
+<tr><td>CCU</td><td>Concurrent Users，同時在線人數</td></tr>
+<tr><td>Cocos Creator</td><td>跨平台 2D/3D 遊戲引擎，支援 Web + iOS + Android + Windows</td></tr>
+<tr><td>Colyseus</td><td>Node.js 多人遊戲框架，提供 Room / State / Schema / Matchmaker</td></tr>
+<tr><td><strong>DAU</strong></td><td>Daily Active Users，每日活躍用戶數，為留存與參與度的核心指標</td></tr>
+<tr><td><strong>Freemium（F16）</strong></td><td>免費增值商業模式。基礎遊戲免費、核心功能免費，但提供可選付費項目（如虛擬籌碼包、VIP 訂閱）以產生收入。本專案採 Freemium 模式，確保付費不影響遊戲公平性</td></tr>
+<tr><td>Fold／棄牌</td><td>Fold／棄牌：閒家在莊家下注底注後，選擇放棄本局比牌；不下注，無任何籌碼損失；下注額=0，不入底池；手牌保持暗牌，結算時不公開（v1.0規則）。</td></tr>
+<tr><td><strong>IAP（F16）</strong></td><td>In-App Purchase，應用程式內購買。玩家在 App 內以真實金錢購買虛擬物品（如虛擬籌碼包）的機制，需透過 Google Play / App Store 平台支付通道進行，受平台政策與台灣法規約束（本專案啟用條件依法律意見書）</td></tr>
+<tr><td><strong>KYC（F16）</strong></td><td>Know Your Customer，認識你的客戶。指對用戶進行身份驗證的流程，在本專案中包含年齡驗證（出生年份）與手機 OTP 雙重驗證機制，用以確認玩家已成年並防範詐欺行為</td></tr>
+<tr><td><strong>MAU（Monthly Active Users）</strong></td><td>月活躍用戶數。本專案定義：當月內至少完成 1 次登入之唯一帳號數；作為§7.2付費率公式的分母。</td></tr>
+<tr><td>Matchmaking</td><td>配對系統，依籌碼等級/牌技/等待時間將玩家配入房間</td></tr>
+<tr><td><strong>NPS</strong></td><td>Net Promoter Score，淨推薦值，衡量用戶推薦意願（-100 到 +100），本專案用於衡量公平性信任度</td></tr>
+<tr><td><strong>OTP</strong></td><td>One-Time Password，一次性密碼。用於手機驗證（SMS 傳送 6 碼數字），有效期 5 分鐘，防止帳號被盜用或偽造年齡</td></tr>
+<tr><td>Rake / 抽水</td><td>每局牌局系統從底池（輸家閒家下注額加總）扣取的手續費，固定為5%（floor取整，最少1籌碼，底池&gt;0時生效）；扣除後剩餘底池歸莊家。</td></tr>
+<tr><td>Server-authoritative</td><td>伺服器權威架構，所有遊戲邏輯與狀態由伺服器決定，Client 僅呈現</td></tr>
+<tr><td><strong>Server-side Rendering（SSR）</strong></td><td>本專案<strong>不適用</strong>；Cocos Creator 為 Client-side 渲染引擎</td></tr>
+<tr><td>Virtual Chip（虛擬籌碼）</td><td>遊戲內娛樂性貨幣，無法兌換現金或實體物品，無真實財務價值</td></tr>
+<tr><td>WAU / Weekly Active Rounds（週活躍對戰場次）</td><td>本專案北極星指標。定義為自然週（週一00:00至週日23:59 UTC+8）內所有完成至少一輪完整比牌流程的對戰場次總計（包含平手場次，不含中途解散場次）。</td></tr>
+<tr><td><strong>防沉迷（F16）</strong></td><td>防止遊戲沉迷機制的統稱。本專案實施內容包含：連續遊玩 2 小時提醒彈窗、每日遊玩時間顯示、未成年帳號每日 2 小時遊玩上限並強制登出。依《兒童及少年福利與權益保障法》要求執行</td></tr>
+<tr><td><strong>虛擬籌碼等級清單（F16）</strong></td><td>依持有籌碼量劃分的帳號等級，決定玩家徽章與獎勵：青銅（0–9,999）、白銀（10,000–99,999）、黃金（100,000–999,999）、鉑金（1,000,000–9,999,999）、鑽石（≥10,000,000）。<strong>注意：玩家等級（徽章）與房間入場條件為獨立系統</strong>（見§5.4 房間級距表），等級不直接決定可進入房間；房間入場需符合各廳最低持有籌碼門檻（青銅廳≥1,000；白銀廳≥10,000；黃金廳≥100,000；鉑金廳≥1,000,000；鑽石廳≥10,000,000）。等級僅影響徽章/獎勵，不影響比牌規則或賠率</td></tr>
+<tr><td>三公（Sam Gong）</td><td>華人傳統撲克玩法：每人發 3 張牌，依點數總和 mod 10 比大小。三公定義：三張牌均為10點牌（10/J/Q/K），點數合計30（mod 10=0），三公為最大牌型；優先於所有非三公牌型（包括9點）。注意：僅有三張均為10點牌（合計30）才構成三公；一般手牌點數mod 10=0（如2+9+9=20，mod 10=0）並非三公。三公雖計算點數為0，但牌型優先級最高。</td></tr>
+</table>
+<hr>
+<h2>17. References</h2>
+<ul><li>背景研究（/devsop-idea 自動蒐集）：見 §0</li><li>競品資訊：見 §6</li><li>使用者原始需求草稿：docs/IDEA.md §6 原文</li><li>Colyseus 官方文件：https://docs.colyseus.io/</li><li>Cocos Creator 官方文件：https://docs.cocos.com/creator/</li><li>台灣線上遊戲反詐義務：《詐欺犯罪危害防制條例》</li></ul>
+<hr>
+<h2>18. BRD→PRD Handoff Checklist</h2>
+<h3>18.1 Handoff 前置條件確認</h3>
+<table>
+<tr><th>#</th><th>確認項目</th><th>狀態</th><th>負責人</th></tr>
+<tr><td>H1</td><td>BRD 已取得所有利害關係人核准（§20 Approval Sign-off）</td><td>🔲 PENDING</td><td>PM</td></tr>
+<tr><td>H2</td><td>北極星指標已確認並量化</td><td>✅</td><td>PM</td></tr>
+<tr><td>H3</td><td>用戶研究計畫已排程（封測 100 人）</td><td>🔲 PENDING</td><td>PM</td></tr>
+<tr><td>H4</td><td>技術可行性已初步評估（2 週 PoC）</td><td>🔲 PENDING</td><td>Eng Lead</td></tr>
+<tr><td>H5</td><td>成功指標（§7）已量化且有基準值</td><td>✅</td><td>PM</td></tr>
+<tr><td>H6</td><td>法務初步審查已完成（§9 合規需求確認）</td><td>🔲 PENDING</td><td>Legal</td></tr>
+<tr><td>H7</td><td>PRD Owner 已指定</td><td>🔲 PENDING</td><td>PM</td></tr>
+<tr><td>H8</td><td>PRD Kick-off 會議已排程</td><td>🔲 PENDING</td><td>PM</td></tr>
+<tr><td>H9</td><td>VIP訂閱已確認Out of Scope v1.0，RTM/Roadmap/商業模式表已清理（詳見§3.4、§11.1、§12）</td><td>🔲 PENDING</td><td>PM</td></tr>
+<tr><td>H10</td><td>廣告降級模式（AdMob）需求已納入PRD範圍確認（詳見§5.3、§3.1 O3）</td><td>🔲 PENDING</td><td>PM</td></tr>
+<tr><td>H11</td><td>防沉迷計時器重置條件（30分鐘離線閾值）已由法務確認符合兒少法要求（詳見§9.2、§5.3）</td><td>🔲 PENDING</td><td>Legal</td></tr>
+</table>
+<h3>18.2 Handoff 時移交的文件</h3>
+<table>
+<tr><th>文件 / 產出物</th><th>存放位置</th><th>狀態</th></tr>
+<tr><td>BRD.md（本文件）</td><td>docs/BRD.md</td><td>✅ 已生成</td></tr>
+<tr><td>IDEA.md（原始需求）</td><td>docs/IDEA.md</td><td>✅ 已生成</td></tr>
+<tr><td>背景研究摘要（§0）</td><td>BRD §0</td><td>✅ 已含入</td></tr>
+<tr><td>競品分析（§6）</td><td>BRD §6</td><td>✅ 已含入</td></tr>
+<tr><td>RTM 初稿（§3.4）</td><td>BRD §3.4</td><td>✅ 已完成</td></tr>
+<tr><td>技術限制清單（§8）</td><td>BRD §8</td><td>✅ 已含入</td></tr>
+<tr><td>風險清單（§10）</td><td>BRD §10</td><td>✅ 已含入</td></tr>
+</table>
+<h3>18.3 PRD Owner 接受確認</h3>
+<table>
+<tr><th>欄位</th><th>內容</th></tr>
+<tr><td><strong>PRD Owner</strong></td><td>Evans Tseng（專案負責人）</td></tr>
+<tr><td><strong>確認聲明</strong></td><td>已由 /devsop-autodev STEP-03/04 自動生成並通過多輪 Exhaustive Review</td></tr>
+<tr><td><strong>預計 PRD 初稿完成日</strong></td><td>2026-04-22（已完成，v0.14-draft）</td></tr>
+</table>
+<hr>
+<h2>19. Organizational Change Management</h2>
+<h3>19.1 變革影響評估</h3>
+<table>
+<tr><th>受影響部門 / 團隊</th><th>變革程度</th><th>主要影響</th><th>變革冠軍</th></tr>
+<tr><td>工程團隊</td><td>高</td><td>新技術棧（Colyseus + Cocos 3.x）</td><td>Eng Lead</td></tr>
+<tr><td>美術團隊</td><td>中</td><td>像素 / 賭場雙軌美術嘗試</td><td>Art Director</td></tr>
+<tr><td>客服團隊（新建）</td><td>高</td><td>首次建立遊戲客服流程</td><td>Ops Lead</td></tr>
+<tr><td>合規 / 法務</td><td>中</td><td>博弈類產品首度上線</td><td>Legal Lead</td></tr>
+</table>
+<h3>19.2 訓練與溝通計畫</h3>
+<table>
+<tr><th>目標群體</th><th>訓練內容</th><th>溝通形式</th><th>時程</th><th>負責人</th></tr>
+<tr><td>工程團隊</td><td>Colyseus + Cocos 內部 Workshop</td><td>Tech Talk + Hands-on</td><td>Discovery Week 3</td><td>Eng Lead</td></tr>
+<tr><td>客服團隊</td><td>FAQ + 申訴流程 + 反作弊升級</td><td>SOP + 影片教學</td><td>Launch - 2 週</td><td>Ops Lead</td></tr>
+<tr><td>高階</td><td>合規邊界與應對預案</td><td>簡報</td><td>BRD 審查時</td><td>Legal</td></tr>
+<tr><td>玩家</td><td>新手引導、遊戲規則、公平性說明</td><td>In-app + YouTube</td><td>Launch</td><td>Product</td></tr>
+</table>
+<h3>19.3 抗拒緩解策略</h3>
+<table>
+<tr><th>可能抗拒</th><th>原因</th><th>緩解策略</th><th>早期預警</th></tr>
+<tr><td>團隊對 Colyseus 陌生</td><td>學習曲線</td><td>2 週 PoC + 官方 UNO 範例研讀</td><td>Sprint velocity 下降</td></tr>
+<tr><td>美術雙軌額外成本</td><td>資源加倍</td><td>先做像素（成本低），賭場風僅做關鍵畫面</td><td>美術 backlog 延宕</td></tr>
+<tr><td>法務謹慎導致時程延後</td><td>博弈類模糊地帶</td><td>早期介入 + 外部法律意見書</td><td>Legal 回覆 &gt; 1 週</td></tr>
+</table>
+<h3>19.4 成功衡量（Internal Adoption）</h3>
+<table>
+<tr><th>指標</th><th>基準</th><th>目標（Launch + 3M）</th></tr>
+<tr><td>內部測試活躍度（Alpha Dogfooding）</td><td>0</td><td>≥ 80% 團隊每週至少 1 局</td></tr>
+<tr><td>客服 SLA（首回應時間）</td><td>N/A</td><td>≤ 4 小時；計算方式：工單系統自動記錄提交至首次回覆時間戳；計算範圍：工作日09:00-18:00（UTC+8），非工作時間不計入</td></tr>
+<tr><td><strong>反作弊誤判率（F28）</strong></td><td>N/A</td><td>≤ 1%（<strong>誤判率定義：被標記後人工審查確認為誤判帳號數 / 當期所有被標記帳號數 × 100%；以 30 日滾動窗口計算</strong>）</td></tr>
+</table>
+<hr>
+<h2>20. Approval Sign-off</h2>
+<table>
+<tr><th>角色</th><th>姓名</th><th>核准範圍</th><th>簽核日期</th><th>意見</th></tr>
+<tr><td>Product Lead</td><td>（待填）</td><td>需求完整性與業務邏輯</td><td></td><td></td></tr>
+<tr><td>Engineering Lead</td><td>（待填）</td><td>技術可行性與架構合理性</td><td></td><td></td></tr>
+<tr><td>Art Director</td><td>（待填）</td><td>美術規格與視覺風格</td><td></td><td></td></tr>
+<tr><td>Legal</td><td>（待填）</td><td>法規合規邊界</td><td></td><td></td></tr>
+<tr><td>Executive Sponsor</td><td>（待填）</td><td>預算授權與策略優先順序</td><td></td><td></td></tr>
+</table>
+<hr>
+<p><em>此 BRD 由 /devsop-idea 自動生成（v0.1-draft），請執行 /devsop-brd-review 進行正式審查與補齊缺漏。</em></p></main>
+  </div>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({startOnLoad:true,theme:'default',
+      flowchart:{curve:'basis',nodeSpacing:60,rankSpacing:80},
+      er:{layoutDirection:'TD',minEntityWidth:100,fontSize:12},
+      sequence:{actorMargin:60,messageMargin:30}});
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-yaml.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-json.min.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

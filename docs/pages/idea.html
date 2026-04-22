@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>構想文件 (IDEA) — sam-gong-game</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+  <header class="top-nav">
+    <a href="index.html" class="nav-brand">sam-gong-game</a>
+    <div class="nav-controls">
+      <div class="search-wrap">
+        <input class="search-input" type="search" placeholder="搜尋文件...">
+        <div class="search-results"></div>
+      </div>
+      <a class="nav-gh-link" href="https://github.com/ibalasite/sam-gong-game-test" target="_blank" rel="noopener">⌥ GitHub</a>
+      <button class="sidebar-toggle" id="sidebarToggle" title="收合/展開側欄">☰</button>
+    </div>
+  </header>
+  <div class="doc-page-banner">
+    <p class="banner-breadcrumb"><a href="index.html">sam-gong-game</a> › 構想文件 (IDEA)</p>
+    <h1 class="banner-title">構想文件 (IDEA)</h1>
+  </div>
+  <div class="page-wrapper">
+    <aside class="sidebar" aria-label="文件導覽">
+      <div class="sidebar__section">
+        <div class="sidebar__label">文件</div>
+        <a class="sidebar__link" href="index.html">🏠 首頁</a>
+<a class="sidebar__link active" href="idea.html">💡 構想文件 (IDEA)</a>
+<a class="sidebar__link" href="brd.html">📋 商業需求文件 (BRD)</a>
+<a class="sidebar__link" href="prd.html">📝 產品需求文件 (PRD)</a>
+<a class="sidebar__link" href="pdd.html">🎨 產品設計文件 (PDD)</a>
+<a class="sidebar__link" href="edd.html">🏗️ 工程設計文件 (EDD)</a>
+<a class="sidebar__link" href="arch.html">🧩 架構設計</a>
+<a class="sidebar__link" href="api.html">🔌 API 文件</a>
+<a class="sidebar__link" href="schema.html">🗄️ Schema 文件</a>
+<a class="sidebar__link" href="test-plan.html">✅ 測試計畫</a>
+<a class="sidebar__link" href="diagrams.html">📊 系統圖表</a>
+<a class="sidebar__link" href="alignment-report.html">📄 Alignment Report</a>
+<a class="sidebar__link" href="smoke-test-report.html">📄 Smoke Test Report</a>
+<a class="sidebar__link" href="local-deploy.html">📄 Local Deploy</a>
+<a class="sidebar__link" href="lang.html">🔧 語言選型</a>
+      </div>
+    </aside>
+    <div class="sidebar-resizer" id="sidebarResizer"></div>
+    <main class="doc-content"><h1>IDEA — 三公遊戲（Sam Gong 3-Card Poker）即時多人線上平台</h1>
+<p>&lt;!-- SDLC Requirements Engineering — Layer 0：Idea Capture --&gt;</p>
+<p>&lt;!-- 由 /devsop-idea 自動填寫；未來需求變更時，此文件作為「原始意圖」比對基準 --&gt;</p>
+<hr>
+<h2>Document Control</h2>
+<table>
+<tr><th>欄位</th><th>內容</th></tr>
+<tr><td><strong>DOC-ID</strong></td><td>IDEA-SAM-GONG-GAME-20260421</td></tr>
+<tr><td><strong>專案名稱</strong></td><td>三公遊戲（Sam Gong 3-Card Poker）即時多人線上平台</td></tr>
+<tr><td><strong>文件版本</strong></td><td>v0.1-capture</td></tr>
+<tr><td><strong>狀態</strong></td><td>DRAFT</td></tr>
+<tr><td><strong>作者</strong></td><td>Evans Tseng（由 /devsop-idea 自動生成）</td></tr>
+<tr><td><strong>建立日期</strong></td><td>2026-04-21</td></tr>
+<tr><td><strong>最後更新</strong></td><td>2026-04-21</td></tr>
+<tr><td><strong>輸入模式</strong></td><td>AI 自動填入（使用者於 Step -0.5 選擇）</td></tr>
+<tr><td><strong>建立方式</strong></td><td>/devsop-idea 自動捕捉；請執行 /devsop-brd-review 審查後方可升版</td></tr>
+<tr><td><strong>下游文件</strong></td><td>docs/BRD.md（由本文件產生）</td></tr>
+</table>
+<hr>
+<h2>1. Idea Essence（核心本質）</h2>
+<h3>1.1 一句話描述（Elevator Pitch）</h3>
+<blockquote><p><strong>三公 Online 幫助華人休閒撲克玩家解決「擔心既有三公 App 作弊/不公平」的痛點，方式是以 Server-authoritative 架構（Cocos Creator Client + Colyseus Server）打造一款跨平台即時多人三公遊戲。</strong></p></blockquote>
+<h3>1.2 核心假說（Lean Hypothesis）</h3>
+<blockquote><p><strong>If we build</strong> 一款 Server-authoritative、伺服器完全掌控洗牌/發牌/比牌/結算的即時多人三公遊戲，搭配像素/賭場風格專業 UI,</p></blockquote>
+<blockquote><p><strong>then</strong> 華人 25-55 歲休閒撲克玩家</p></blockquote>
+<blockquote><p><strong>will</strong> 選擇本產品作為主要三公娛樂平台並願意購買虛擬籌碼,</p></blockquote>
+<blockquote><p><strong>which will lead to</strong> Peak CCU ≥ 500、付費率 ≥ 3%、並建立可複製至其他撲克品類的 authoritative server 基礎能力.</p></blockquote>
+<h3>1.3 成功願景（Success Vision）</h3>
+<p><strong>12 個月後，若本專案成功，以下情境將成真：</strong></p>
+<ul><li>用戶維度：華人三公玩家社群口碑推薦「最公平的三公 App」，7 日留存 ≥ 35%，公平性 NPS ≥ 70。</li><li>業務維度：DAU ≥ 2,000、Peak CCU ≥ 500、ARPPU ≥ USD 10，年收益達 NT$ 800 萬以上。</li><li>技術維度：Cocos + Colyseus 技術棧沉澱為公司 multiplayer 基礎能力，可於 3 個月內複製至其他撲克品類（大老二、21 點）。</li></ul>
+<h3>1.4 Innovation Type Classification（創新類型分類）</h3>
+<table>
+<tr><th>類型</th><th>定義</th><th>是否適用</th></tr>
+<tr><td><strong>Incremental</strong>（漸進式）</td><td>改善既有產品功能或流程效率</td><td>☐</td></tr>
+<tr><td><strong>Sustaining</strong>（持續性）</td><td>在既有市場中競爭，提供更好的解法</td><td>☑</td></tr>
+<tr><td><strong>Adjacent</strong>（鄰近式）</td><td>現有能力進入新市場或新用戶群</td><td>☐</td></tr>
+<tr><td><strong>Disruptive</strong>（顛覆性）</td><td>從低端或全新市場切入，重塑現有市場</td><td>☐</td></tr>
+<tr><td><strong>Radical / Breakthrough</strong>（突破性）</td><td>基於新技術或商業模式，創造新市場</td><td>☐</td></tr>
+</table>
+<p><strong>本 IDEA 的分類</strong>：<strong>Sustaining（持續性創新）</strong></p>
+<p><strong>分類依據</strong>：既有華人三公 App 市場已存在，但品質良莠不齊。本產品在相同市場中以「Server-authoritative 公平性 + 專業美術 + 跨平台」差異化競爭，屬於「更好的解法」而非創造新市場。資源投入策略走「快速 ROI + 精準行銷」路徑。</p>
+<hr>
+<h2>2. Problem Statement（問題陳述）</h2>
+<h3>2.1 現狀描述（As-Is Narrative）</h3>
+<p>華人玩家（35-55 歲為主力）熱愛傳統三公遊戲，目前仰賴三條路徑滿足需求：（1）線下實體聚會，受空間時間限制；（2）Google Play / App Store 上數十款既有三公 App，但多為 Client-side 計算、美術粗糙、公平性不透明；（3）通訊軟體自建群組配合線下籌碼，門檻高且易生糾紛。玩家對「可信、即時、跨平台、美術精緻」的三公多人遊戲有強烈未被滿足需求。</p>
+<h3>2.2 根本原因分析（5 Whys）</h3>
+<pre><code class="">問題現象：玩家擔心既有三公 App 作弊或發牌不公平
+  Why 1：既有 App 多為 Client-side 計算或 P2P 架構
+    Why 2：開發團隊多為小團隊/個人，缺乏後端 authoritative server 能力
+      Why 3：authoritative server 需要專業後端框架與持續維運成本
+        Why 4：過去幾年 authoritative 多人框架（如 Colyseus）成熟度不足且學習曲線陡
+          Why 5（根本原因）：缺乏「易用、成熟、支援 Cocos Creator」的 authoritative server 生態，使小團隊無法負擔此類產品開發</code></pre>
+<h3>2.3 問題規模（量化估算）</h3>
+<table>
+<tr><th>指標</th><th>估算數字</th><th>資料來源</th><th>信心水準</th></tr>
+<tr><td>受影響使用者數（全球華人三公潛在玩家）</td><td>500 萬+</td><td>AI 推斷</td><td>低</td></tr>
+<tr><td>每人每週娛樂時間（可轉移至本產品）</td><td>3-5 小時</td><td>AI 推斷</td><td>低</td></tr>
+<tr><td>每人每年願付娛樂費用</td><td>USD 20-50</td><td>AI 推斷</td><td>低</td></tr>
+<tr><td>可定址市場規模（TAM）</td><td>USD 8 億/年（華人休閒博弈類全球）</td><td>AI 推斷</td><td>低</td></tr>
+<tr><td>可服務市場規模（SAM）</td><td>USD 1 億/年（繁中市場）</td><td>AI 推斷</td><td>低</td></tr>
+<tr><td>可獲取市場規模（SOM）</td><td>USD 500 萬-1,000 萬/年</td><td>AI 推斷</td><td>低</td></tr>
+</table>
+<hr>
+<h2>3. Target Users（目標使用者）</h2>
+<h3>3.1 主要使用者群（Q1 澄清結果）</h3>
+<p><strong>使用者描述</strong>：華人休閒撲克遊戲玩家（主群 35-55 歲；次群 25-34 歲上班族；海外華人社群）</p>
+<table>
+<tr><th>屬性</th><th>描述</th></tr>
+<tr><td>職業 / 角色</td><td>主群：中生代專業工作者、自營業者、退休族；次群：上班族</td></tr>
+<tr><td>行業 / 情境</td><td>碎片時間娛樂、社交聚會線上替代、懷舊紙牌遊戲愛好</td></tr>
+<tr><td>技術成熟度</td><td>中階：使用 LINE / Facebook / 手遊 App 無障礙</td></tr>
+<tr><td>使用頻率</td><td>每週 3-5 次，每次 20-60 分鐘</td></tr>
+<tr><td>決策角色</td><td>使用者即決策者（C2C 消費產品）</td></tr>
+</table>
+<h3>3.2 Jobs to Be Done（用戶核心任務）</h3>
+<table>
+<tr><th>任務類型</th><th>用戶任務描述</th></tr>
+<tr><td><strong>Functional</strong></td><td>當我想玩三公放鬆時，我想要快速配對真人對手、公平對戰，以便獲得娛樂與勝負滿足感</td></tr>
+<tr><td><strong>Emotional</strong></td><td>贏牌的刺激感、懷舊感、無作弊疑慮的安心感</td></tr>
+<tr><td><strong>Social</strong></td><td>與朋友組桌炫耀手氣、在群組中建立「牌技好手」聲望、融入華人文化社群</td></tr>
+</table>
+<h3>3.3 非目標使用者（Not Our Users）</h3>
+<table>
+<tr><th>排除群體</th><th>排除原因</th></tr>
+<tr><td>❌ 未成年玩家（18 歲以下）</td><td>法規要求、道德考量，必須年齡驗證閘門</td></tr>
+<tr><td>❌ 尋求真實金錢賭博的玩家</td><td>本產品僅虛擬籌碼，不可兌換現金</td></tr>
+<tr><td>❌ 非華人市場國際用戶</td><td>首版聚焦繁中；英/簡中待 v2</td></tr>
+<tr><td>❌ 硬核撲克職業玩家</td><td>三公為休閒品類，非職業競技</td></tr>
+</table>
+<hr>
+<h2>4. Value Hypothesis（價值假說）</h2>
+<h3>4.1 核心價值主張（Value Proposition Canvas）</h3>
+<p><strong>Pain Relievers（痛點緩解）：</strong></p>
+<table>
+<tr><th>使用者痛點</th><th>我們的緩解方式</th></tr>
+<tr><td>擔心既有 App 作弊 / 發牌不公平</td><td>Server-authoritative 架構，所有計算在伺服器；可公開洗牌審計</td></tr>
+<tr><td>美術粗糙、體驗廉價</td><td>專業像素/賭場風格 UI + 完整發牌/翻牌/結算動畫</td></tr>
+<tr><td>跨裝置不連通（手機/網頁）</td><td>Cocos Creator 跨平台，帳號跨端同步</td></tr>
+<tr><td>缺乏真人對戰</td><td>Colyseus Matchmaking + 即時 Room State 同步</td></tr>
+</table>
+<p><strong>Gain Creators（增益創造）：</strong></p>
+<table>
+<tr><th>使用者期望收益</th><th>我們如何創造</th></tr>
+<tr><td>進度感、成就感</td><td>虛擬籌碼等級（青銅→鑽石）、每日任務、排行榜</td></tr>
+<tr><td>社交連結</td><td>好友系統、房間內聊天、組桌邀請</td></tr>
+<tr><td>免費即可入門</td><td>遊客登入、每日贈送基礎籌碼</td></tr>
+<tr><td>勝負刺激</td><td>即時結算動畫、籌碼累積視覺化</td></tr>
+</table>
+<h3>4.2 差異化定位</h3>
+<blockquote><p>相對既有三公 App（Client-side 計算、美術粗糙、P2P 連線）與國際撲克品牌（德撲為主、非華人原生），本產品的獨特差異是<strong>華人市場首款 Server-authoritative 的三公專業級多人遊戲</strong>，以公平性為核心賣點，搭配華人市場原生玩法與本土化美術風格。</p></blockquote>
+<hr>
+<h2>5. MVP &amp; Learning Plan（最小可行驗證計畫）</h2>
+<h3>5.1 MVP 邊界定義</h3>
+<table>
+<tr><th>MVP 功能</th><th>驗證假設</th><th>最低可接受標準</th></tr>
+<tr><td>三公核心玩法 + Server authoritative 計算</td><td>玩家認可「公平性」差異化價值</td><td>Beta 封測公平性 NPS ≥ 4/5</td></tr>
+<tr><td>大廳 + 快速配對</td><td>Matchmaking 可吸引足夠同時在線</td><td>平均配對時間 ≤ 30 秒</td></tr>
+<tr><td>虛擬籌碼系統 + 每日贈送</td><td>籌碼經濟足以支撐持續遊玩</td><td>7 日留存 ≥ 25%</td></tr>
+<tr><td>像素 or 賭場風 UI（擇一完整）</td><td>美術質感可接受</td><td>封測主觀評分 ≥ 4/5</td></tr>
+<tr><td>帳號系統（遊客 / 社群登入）</td><td>註冊門檻不阻礙轉換</td><td>註冊完成率 ≥ 80%</td></tr>
+</table>
+<p><strong>明確不在 MVP 範圍（Non-MVP）：</strong></p>
+<ul><li>❌ 虛擬籌碼 IAP 購買（推遲至 Launch + 3M，優先驗證留存）</li><li>❌ VIP 訂閱（推遲至 Launch + 6M）</li><li>❌ 多語系（首版僅繁中）</li><li>❌ 其他撲克品類（v2 規劃）</li><li>❌ 觀戰模式（v1.1 視用戶需求評估）</li></ul>
+<h3>5.2 Validation Metrics（驗證指標，Pre-BRD 階段）</h3>
+<table>
+<tr><th>指標</th><th>測量方式</th><th>通過閾值（Go）</th><th>失敗閾值（Kill/Pivot）</th><th>追蹤週期</th></tr>
+<tr><td>法務風險可控</td><td>律師意見書</td><td>明確建議虛擬籌碼不可兌換模式合法</td><td>明確指出無可行合規路徑</td><td>BRD 核准前</td></tr>
+<tr><td>技術 PoC 可行性</td><td>Cocos + Colyseus 原型</td><td>2 週內完成 1 桌 4 人對戰</td><td>2 週未能跑通</td><td>Discovery Week 3</td></tr>
+<tr><td>使用者訪談確認痛點</td><td>華人玩家訪談 N ≥ 10</td><td>≥ 70% 表達「公平性」為選擇因素</td><td>&lt; 40%</td><td>BRD 審查前</td></tr>
+<tr><td>付費意願調查</td><td>問卷 / 訪談</td><td>≥ 30% 表達願意付費買籌碼</td><td>&lt; 15%</td><td>Beta 前</td></tr>
+<tr><td>封測留存</td><td>Analytics</td><td>7 日留存 ≥ 25%</td><td>&lt; 10%</td><td>Beta 週 4</td></tr>
+</table>
+<p><strong>驗證計畫時程：</strong></p>
+<pre><code class="">Week 1-2：法律意見書 + 技術 PoC 啟動
+Week 2-3：使用者訪談（N ≥ 10）+ 付費意願調查
+Week 3：Go/Kill/Pivot 決策
+Week 4+：進入 PRD / EDD 階段</code></pre>
+<h3>5.3 Riskiest Assumption（最高風險假設，Leap of Faith）</h3>
+<blockquote><p><strong>以下假設一旦被推翻，整個 IDEA 必須根本性調整或放棄。</strong></p></blockquote>
+<blockquote><p>我們假設 <strong>以「虛擬籌碼不可兌換娛樂產品」形式運營的三公遊戲在台灣法律框架下可合法上架並持續運營</strong>。</p></blockquote>
+<blockquote><p>若此假設為假，則 <strong>整個商業模式不成立</strong>，專案應 <strong>停止或根本性調整（如改為純休閒益智遊戲去除籌碼元素）</strong>。</p></blockquote>
+<blockquote><p>我們將透過 <strong>正式法律意見書 + 向平台（Google/Apple）預審</strong> 在 <strong>BRD 核准前 4 週</strong> 驗證此假設。</p></blockquote>
+<table>
+<tr><th>假設</th><th>驗證方法</th><th>驗證期限</th><th>若錯誤的後果</th></tr>
+<tr><td>虛擬籌碼模式在台灣合法</td><td>律師意見書 + 平台預審</td><td>BRD 前 4 週</td><td>商業模式重建或專案停止</td></tr>
+<tr><td>Cocos Creator 3.x + Colyseus SDK 整合無重大阻塞</td><td>2 週 PoC</td><td>Discovery Week 3</td><td>換技術棧（延期 4-8 週）</td></tr>
+<tr><td>華人玩家確實重視公平性 &gt; 方便性</td><td>訪談 N ≥ 10</td><td>BRD 前</td><td>差異化失效，需重新定位</td></tr>
+</table>
+<hr>
+<h2>6. Clarification Interview Record（澄清訪談記錄）</h2>
+<blockquote><p>本節記錄 /devsop-idea Step 2 的完整結果。本次採「AI 自動填入」模式，未執行互動式提問；以下所有欄位為 AI 根據使用者草稿原文推斷。</p></blockquote>
+<h3>Q1 — 主要使用者</h3>
+<table>
+<tr><th>欄位</th><th>內容</th></tr>
+<tr><td><strong>回答</strong></td><td>華人休閒撲克玩家（主群 35-55 歲中生代，次群 25-34 歲上班族，海外華人社群）</td></tr>
+<tr><td><strong>選擇方式</strong></td><td>AI 自動填入（使用者草稿未明示，AI 依「三公」為華人傳統撲克玩法推斷）</td></tr>
+<tr><td><strong>影響範疇</strong></td><td>BRD §4 Stakeholders、PDD Persona、RTM 使用者欄位</td></tr>
+</table>
+<h3>Q2 — 核心痛點</h3>
+<table>
+<tr><th>欄位</th><th>內容</th></tr>
+<tr><td><strong>回答</strong></td><td>既有三公 App 多為 Client-side 計算或 P2P 連線，存在作弊疑慮；美術粗糙、公平性不透明；無跨平台即時多人專業體驗</td></tr>
+<tr><td><strong>選擇方式</strong></td><td>AI 自動填入（從使用者草稿「Server authoritative，Client 只做展示與輸入」反推痛點）</td></tr>
+<tr><td><strong>影響範疇</strong></td><td>BRD §2 Problem Statement、§5 Proposed Solution、§7 Success Metrics</td></tr>
+</table>
+<h3>Q3 — 技術限制或偏好</h3>
+<table>
+<tr><th>欄位</th><th>內容</th></tr>
+<tr><td><strong>回答</strong></td><td><strong>使用者明確指定</strong>：Client 必須為 Cocos Creator；Server 必須為 Colyseus（Node.js）；架構必須 Server-authoritative</td></tr>
+<tr><td><strong>選擇方式</strong></td><td>使用者草稿明示（非 AI 推斷）</td></tr>
+<tr><td><strong>影響範疇</strong></td><td>BRD §8 Constraints、EDD 技術選型、ARCH 架構設計</td></tr>
+</table>
+<h3>Q4 — 預期使用規模</h3>
+<table>
+<tr><th>欄位</th><th>內容</th></tr>
+<tr><td><strong>回答</strong></td><td>中規模：100-10,000 人同時使用（目標 Peak CCU ≥ 500）</td></tr>
+<tr><td><strong>選項</strong></td><td>小規模（1-100）/ <strong>中規模（100-10,000）</strong> / 大規模（10,000+）</td></tr>
+<tr><td><strong>影響範疇</strong></td><td>ARCH 可擴展性設計、SCHEMA 分表策略、EDD 容量規劃、Colyseus 單/多節點決策</td></tr>
+</table>
+<h3>Q5 — 其他補充說明（動態追問）</h3>
+<table>
+<tr><th>欄位</th><th>內容</th></tr>
+<tr><td><strong>回答</strong></td><td>使用者草稿額外指定：UI 風格可為「像素風」或「CASINO 21點風」，需有主角、布景、豐富互動</td></tr>
+<tr><td><strong>追問觸發原因</strong></td><td>使用者已主動提供 UI/UX 風格偏好</td></tr>
+<tr><td><strong>影響範疇</strong></td><td>Art Direction、§4.4 RACI Art、§5.3 MVP UI 範圍、Beta A/B 測試計畫</td></tr>
+</table>
+<h3>原始 IDEA（使用者輸入原文，逐字保留）</h3>
+<pre><code class="">三公遊戲（Cocos + Colyseus）開發草稿
+
+一、專案目標
+打造一款即時多人三公（3-card poker / Sam Gong）遊戲，採用：
+Client（Cocos Creator）：負責 UI、動畫、玩家操作
+Server（Colyseus / Node.js）：負責遊戲邏輯、狀態同步（authoritative）
+核心原則：
+🎯 Server authoritative，Client 只做展示與輸入
+
+二、核心玩法（簡述）
+每位玩家發 3 張牌
+根據三公規則比大小（點數 / 公牌）
+支援下注（betting）
+最終結算輸贏
+（規則細節可後補或做成 config）
+
+三、系統架構
+1️⃣ Client（Cocos）
+負責：
+- UI（桌面、玩家位置、籌碼）
+- 動畫（發牌動畫、翻牌動畫、結算動畫）
+- 要有豐富UI設計互動，主角，布景相關，要有專業UI/UX設計，像素風格，CASINO 21點風格都可以
+- 玩家操作（下注、比牌、準備）
+- 狀態呈現（從 server sync）
+👉 不做任何結果計算（避免作弊）
+
+2️⃣ Server（Colyseus）
+負責：
+- 洗牌（shuffle）
+- 發牌（deal）
+- 比牌（compare）
+- 結算（settlement）
+- 遊戲流程控制（state machine）
+- 玩家狀態同步（room state）</code></pre>
+<p><em>保留原文供未來 ECR（Engineering Change Request）審查時比對，確認需求變更屬 BUG 修正還是範圍擴充。</em></p>
+<hr>
+<h2>7. Market &amp; Competitive Intelligence（市場與競品情報）</h2>
+<h3>7.1 競品 / 參考資源</h3>
+<table>
+<tr><th>競品 / 工具</th><th>核心定位</th><th>優勢</th><th>劣勢</th><th>我們的差異</th></tr>
+<tr><td>colyseus-2d-multiplayer-card-game-templates（GitHub）</td><td>Colyseus 卡牌模板（Unity/Phaser/Defold/Godot）</td><td>可直接參考 room state 設計</td><td>無 Cocos Creator 範例；非三公專用</td><td>以 Cocos + 三公玩法補足生態</td></tr>
+<tr><td>Colyseus 官方 UNO 範例</td><td>Turn-based 卡牌官方範例</td><td>完整 Schema + Command Pattern 示範</td><td>英文 UI、非三公</td><td>本土化 + 品類差異</td></tr>
+<tr><td>Riffle（GitHub）</td><td>Angular + Colyseus web 卡牌</td><td>Web client 整合實例</td><td>Web only、非三公</td><td>跨平台 + 三公</td></tr>
+<tr><td>既有三公手機 App（數十款）</td><td>單機或 P2P 三公</td><td>已有華人用戶認知</td><td>Client-side 計算、美術差、作弊疑慮</td><td>Server authoritative + 專業美術</td></tr>
+<tr><td>Zynga Poker / PokerStars</td><td>國際撲克 App</td><td>成熟變現、強社交</td><td>非三公、華人親切度低</td><td>聚焦華人原生玩法</td></tr>
+</table>
+<h3>7.2 技術生態建議</h3>
+<table>
+<tr><th>層次</th><th>建議方案</th><th>選擇理由</th></tr>
+<tr><td>Client 引擎</td><td>Cocos Creator 3.x（使用者指定）</td><td>華人開發社群成熟、跨平台能力完整</td></tr>
+<tr><td>Client 語言</td><td>TypeScript</td><td>與 Colyseus SDK 一致、型別安全</td></tr>
+<tr><td>Server 框架</td><td>Colyseus 0.15+（使用者指定）</td><td>官方 Cocos SDK、Schema-based sync、MIT license</td></tr>
+<tr><td>Server 語言</td><td>Node.js + TypeScript</td><td>與 Client 共用 Schema type</td></tr>
+<tr><td>持久層</td><td>PostgreSQL + Redis</td><td>PG 存玩家/牌局；Redis 做 matchmaking queue + presence</td></tr>
+<tr><td>部署</td><td>Colyseus Cloud（省維運）或自建 k8s（彈性高）</td><td>EDD 階段決策</td></tr>
+<tr><td>反作弊</td><td>Server 速率限制 + Schema 變更審計</td><td>Schema 改動只發生 Server 端，天然防 Client 作弊</td></tr>
+</table>
+<h3>7.3 研究來源</h3>
+<table>
+<tr><th>搜尋關鍵字</th><th>主要發現</th><th>可信度</th></tr>
+<tr><td>&quot;sam gong 3-card poker multiplayer colyseus github&quot;</td><td>未找到 Sam Gong 專屬實作；找到多款 Colyseus 卡牌模板</td><td>高</td></tr>
+<tr><td>&quot;Colyseus Cocos Creator best practices 2026&quot;</td><td>官方已提供 Cocos SDK；Schema Class 應只含欄位、邏輯走 Command Pattern</td><td>高</td></tr>
+<tr><td>&quot;online card game anti-cheat gambling regulation Taiwan&quot;</td><td>台灣《刑法》賭博罪；《詐欺犯罪危害防制條例》規管線上遊戲；罰鍰 NT$10 萬-200 萬</td><td>高</td></tr>
+</table>
+<hr>
+<h2>8. Initial Risk Assessment（初始風險評估）</h2>
+<h3>8.1 風險矩陣</h3>
+<table>
+<tr><th>#</th><th>風險描述</th><th>類型</th><th>可能性</th><th>影響</th><th>風險等級</th><th>初步緩解策略</th></tr>
+<tr><td>R1</td><td>台灣刑法賭博罪定位</td><td>法規</td><td>MEDIUM</td><td>HIGH</td><td>🔴 HIGH</td><td>虛擬籌碼不可兌換 + 律師意見書</td></tr>
+<tr><td>R2</td><td>Client 外掛 / 自動化作弊</td><td>安全</td><td>HIGH</td><td>MEDIUM</td><td>🟡 MEDIUM</td><td>Server 速率限制 + 異常偵測</td></tr>
+<tr><td>R3</td><td>Colyseus 單節點承載不足</td><td>技術</td><td>MEDIUM</td><td>HIGH</td><td>🔴 HIGH</td><td>Redis Presence 水平擴展 PoC</td></tr>
+<tr><td>R4</td><td>美術雙軌（像素/賭場）成本超支</td><td>產品</td><td>MEDIUM</td><td>MEDIUM</td><td>🟡 MEDIUM</td><td>先做一套主打，另一套做關鍵畫面</td></tr>
+<tr><td>R5</td><td>Google Play / App Store 審查駁回</td><td>商業</td><td>MEDIUM</td><td>HIGH</td><td>🔴 HIGH</td><td>強調娛樂性 + 預審</td></tr>
+<tr><td>R6</td><td>籌碼經濟通膨 / 崩盤</td><td>遊戲設計</td><td>MEDIUM</td><td>HIGH</td><td>🔴 HIGH</td><td>發放/回收曲線模擬 + 每日上限</td></tr>
+</table>
+<h3>8.2 Kill Conditions（專案終止條件）</h3>
+<table>
+<tr><th>終止條件</th><th>觸發閾值</th><th>檢查時機</th></tr>
+<tr><td>法務風險無解</td><td>律師明確指出無合規路徑</td><td>BRD 核准前</td></tr>
+<tr><td>技術不可行</td><td>2 週 PoC 無法跑通 1 桌 4 人基本對戰</td><td>Discovery Week 3</td></tr>
+<tr><td>使用者不關心公平性</td><td>訪談 &lt; 40% 視為選擇因素</td><td>BRD 審查前</td></tr>
+<tr><td>Beta 留存崩壞</td><td>7 日留存 &lt; 10%</td><td>Beta Week 4</td></tr>
+<tr><td>平台雙拒</td><td>Google / Apple 均駁回上架</td><td>Pre-launch</td></tr>
+</table>
+<h3>8.3 Pre-mortem Exercise（失敗前情境模擬）</h3>
+<blockquote><p><strong>想象 12 個月後，這個專案已徹底失敗。最可能的失敗原因：</strong></p></blockquote>
+<table>
+<tr><th>#</th><th>失敗情境</th><th>根本原因</th><th>預防措施</th><th>早期預警訊號</th></tr>
+<tr><td>F1</td><td>被平台下架或遭政府調查</td><td>被認定觸犯賭博罪</td><td>早期律師意見書 + 虛擬籌碼不可兌換 + 平台預審</td><td>律師回覆保留、平台初審拒絕</td></tr>
+<tr><td>F2</td><td>同時在線數 &lt; 100，配對失敗率高</td><td>獲客成本過高或美術未達預期</td><td>Beta 封測質感驗收 + FB/Google 小額廣告測 CAC</td><td>Beta 留存 &lt; 15%</td></tr>
+<tr><td>F3</td><td>競品（大廠）2-3 個月內跟進推出</td><td>技術門檻其實不高</td><td>建立品牌認知護城河 + 快速迭代新品類</td><td>大廠公告進入華人撲克市場</td></tr>
+<tr><td>F4</td><td>Client 被外掛 / 反編譯破解自動化下注</td><td>Server 速率限制與異常偵測不足</td><td>反作弊系統早期介入 + 關鍵邏輯 Server 驗證</td><td>異常帳號投訴激增</td></tr>
+<tr><td>F5</td><td>Cocos + Colyseus 整合遇 SDK Bug 延期</td><td>技術選型冒險</td><td>2 週 PoC + 備案（自研 WebSocket）</td><td>PoC 超 2 週仍未完成</td></tr>
+<tr><td>F6</td><td>籌碼經濟崩盤（通膨或通縮）</td><td>發放/回收曲線未測試</td><td>Game Designer 模擬 + 每日上限 + 回收機制</td><td>玩家抱怨「沒籌碼玩」或「籌碼太多沒用」</td></tr>
+</table>
+<p><strong>Pre-mortem 結論：</strong> 最可能的失敗路徑是 <strong>F1（法規風險）</strong>，需在 BRD 階段優先設計合規邊界與律師意見書；次要風險是 <strong>F4（作弊）</strong>，需在 EDD 階段納入反作弊設計。</p>
+<hr>
+<h2>9. Business Potential（初步商業潛力）</h2>
+<h3>9.1 商業模式假說</h3>
+<table>
+<tr><th>項目</th><th>初步假設</th></tr>
+<tr><td>收入來源</td><td>虛擬籌碼 IAP（主）+ VIP 訂閱（次）+ 獎勵廣告（免費用戶觀看）</td></tr>
+<tr><td>主要定價策略</td><td>Freemium：免費遊玩 + 每日贈送 + 付費加速 / 桌限擴大</td></tr>
+<tr><td>主要成本驅動因子</td><td>一次性開發 NT$ 450 萬；月維運 NT$ 20 萬；CAC NT$ 150-300/人</td></tr>
+<tr><td>核心資源</td><td>Cocos + Colyseus 技術棧、華人美術、反作弊演算法、KYC 整合</td></tr>
+<tr><td>獲客管道</td><td>Facebook 華人社團、YouTube 華人頻道贊助、Google UAC、商店 SEO</td></tr>
+</table>
+<h3>9.2 戰略對齊</h3>
+<table>
+<tr><th>公司策略目標</th><th>本 IDEA 的貢獻方式</th><th>對齊強度</th></tr>
+<tr><td>建立華人市場休閒遊戲 IP 組合</td><td>三公為首發，複製至其他撲克品類</td><td>強</td></tr>
+<tr><td>累積多人遊戲後端能力</td><td>Colyseus + Cocos 可複用</td><td>強</td></tr>
+<tr><td>合規營運模式探索</td><td>建立可跨境複製的合規 playbook</td><td>中</td></tr>
+</table>
+<hr>
+<h2>10. Executive Sponsorship &amp; Stakeholder Alignment</h2>
+<h3>10.1 Executive Sponsor</h3>
+<table>
+<tr><th>欄位</th><th>內容</th></tr>
+<tr><td><strong>贊助人</strong></td><td>（待指定，建議 Sayyo Games 創辦人或 CPO）</td></tr>
+<tr><td><strong>贊助原因</strong></td><td>華人休閒博弈市場驗證 + 多人遊戲能力建設</td></tr>
+<tr><td><strong>授權範圍</strong></td><td>預算 NT$ 450 萬開發 + NT$ 240 萬首年維運；法規邊界不可妥協</td></tr>
+<tr><td><strong>核可日期</strong></td><td>（待填）</td></tr>
+<tr><td><strong>升級路徑</strong></td><td>法務或技術重大阻塞 → 升級至董事會</td></tr>
+</table>
+<h3>10.2 Stakeholder Pre-alignment Matrix</h3>
+<table>
+<tr><th>利害關係人</th><th>角色</th><th>對本 IDEA 的態度</th><th>主要顧慮</th><th>對齊策略</th><th>對齊期限</th></tr>
+<tr><td>Product Lead</td><td>PM</td><td>支持</td><td>玩家留存、變現</td><td>BRD 審查會議</td><td>BRD 前</td></tr>
+<tr><td>Engineering Lead</td><td>Tech</td><td>中立→支持</td><td>Cocos+Colyseus 整合風險</td><td>2 週 PoC</td><td>Discovery Week 3</td></tr>
+<tr><td>Legal</td><td>法務</td><td>謹慎</td><td>賭博罪風險</td><td>提早意見書</td><td>BRD 前</td></tr>
+<tr><td>Art Director</td><td>美術</td><td>興奮</td><td>雙軌成本</td><td>擇一主打</td><td>PRD 時</td></tr>
+<tr><td>Game Designer</td><td>設計</td><td>支持</td><td>規則/平衡</td><td>早期籌碼模擬</td><td>EDD 前</td></tr>
+</table>
+<h3>10.3 Communication Plan</h3>
+<table>
+<tr><th>里程碑</th><th>溝通對象</th><th>溝通形式</th><th>期限</th></tr>
+<tr><td>IDEA 核准</td><td>Executive Sponsor</td><td>1-pager + 簡報</td><td>BRD 前</td></tr>
+<tr><td>BRD 完成</td><td>All Stakeholders</td><td>文件分享 + 審查會議</td><td>BRD 完成後</td></tr>
+<tr><td>PoC 結果</td><td>Eng + PM</td><td>Demo + 技術報告</td><td>Discovery Week 3</td></tr>
+<tr><td>Beta 結果</td><td>All Stakeholders</td><td>Data Review</td><td>Beta 結束</td></tr>
+</table>
+<hr>
+<h2>11. IDEA Quality Score（構想品質評分）</h2>
+<p><strong>整體評分</strong>：★★★☆☆（3/5）</p>
+<table>
+<tr><th>評分維度</th><th>分數</th><th>評估說明</th><th>改進建議</th></tr>
+<tr><td>目標清晰度</td><td>1.0 / 1</td><td>核心目標明確：Server-authoritative 三公多人遊戲</td><td>—</td></tr>
+<tr><td>使用者具體度</td><td>0.5 / 1</td><td>使用者草稿未明示目標玩家，AI 推斷華人市場</td><td>訪談 N ≥ 10 確認目標玩家輪廓</td></tr>
+<tr><td>痛點可量化</td><td>0.3 / 1</td><td>草稿聚焦技術架構，未量化玩家痛點</td><td>問卷量化作弊疑慮、美術偏好</td></tr>
+<tr><td>範圍邊界明確</td><td>0.5 / 1</td><td>Client/Server 分工清楚，但 Out of Scope 未明示</td><td>明確列出本版不做項目</td></tr>
+<tr><td>技術可行性初判</td><td>1.0 / 1</td><td>Cocos + Colyseus 技術棧成熟，官方 SDK 可用</td><td>—</td></tr>
+</table>
+<pre><code class="">【IDEA 品質評分】★★★☆☆（3/5）
+  + 目標清晰：✅ Server-authoritative 三公多人遊戲
+  + 可行性：✅ 技術棧成熟（Cocos + Colyseus 官方整合）
+  △ 使用者具體度：AI 推斷華人市場，需訪談確認
+  △ 範圍邊界：AI 已補齊 Out of Scope，建議 PRD 階段細化
+  - 痛點量化：草稿聚焦技術而非玩家行為，建議訪談量化</code></pre>
+<hr>
+<h2>12. Critical Assumptions（關鍵假設清單）</h2>
+<table>
+<tr><th>#</th><th>假設陳述</th><th>影響層級</th><th>不確定性</th><th>驗證方式</th><th>驗證期限</th></tr>
+<tr><td>A1</td><td>虛擬籌碼不可兌換模式在台灣合法</td><td>HIGH</td><td>HIGH</td><td>律師意見書</td><td>BRD 前 4 週</td></tr>
+<tr><td>A2</td><td>Cocos + Colyseus SDK 整合無重大阻塞</td><td>HIGH</td><td>MEDIUM</td><td>2 週 PoC</td><td>Discovery Week 3</td></tr>
+<tr><td>A3</td><td>華人玩家重視公平性 &gt; 方便性</td><td>HIGH</td><td>MEDIUM</td><td>訪談 N ≥ 10</td><td>BRD 前</td></tr>
+<tr><td>A4</td><td>單節點 Colyseus 可承載 500 CCU + &lt;100ms latency</td><td>MEDIUM</td><td>MEDIUM</td><td>壓測</td><td>EDD 後</td></tr>
+<tr><td>A5</td><td>付費率 3% 為華人休閒博弈合理預期</td><td>MEDIUM</td><td>HIGH</td><td>Benchmark + 封測</td><td>Beta</td></tr>
+<tr><td>A6</td><td>像素 or 賭場風格被華人玩家接受</td><td>MEDIUM</td><td>MEDIUM</td><td>Beta A/B</td><td>Beta</td></tr>
+<tr><td>A7</td><td>Google Play / App Store 審查可通過</td><td>HIGH</td><td>MEDIUM</td><td>平台預審 + 文案審查</td><td>Pre-launch</td></tr>
+</table>
+<hr>
+<h2>13. Open Questions（待解問題）</h2>
+<table>
+<tr><th>#</th><th>問題</th><th>影響層級</th><th>若不解決的後果</th><th>負責人</th><th>狀態</th></tr>
+<tr><td>OQ1</td><td>虛擬籌碼是否可由玩家用現金購買？定位如何釐清？</td><td>策略</td><td>商業模式鎖不住</td><td>Legal</td><td>🔲 OPEN</td></tr>
+<tr><td>OQ2</td><td>三公「公牌」規則採用哪一地區版本？</td><td>範圍</td><td>規則不確定性影響開發</td><td>Game Designer</td><td>🔲 OPEN</td></tr>
+<tr><td>OQ3</td><td>是否需要實名 KYC？還是簡訊驗證即可？</td><td>法規</td><td>影響註冊轉換與合規</td><td>Legal + Product</td><td>🔲 OPEN</td></tr>
+<tr><td>OQ4</td><td>美術風格最終採一套或雙主題？</td><td>產品</td><td>影響美術預算與上線時程</td><td>Art + PM</td><td>🔲 OPEN</td></tr>
+<tr><td>OQ5</td><td>Colyseus Cloud vs 自建 k8s？</td><td>技術</td><td>影響月維運成本與彈性</td><td>Eng Lead</td><td>🔲 OPEN</td></tr>
+<tr><td>OQ6</td><td>是否支援觀戰模式？</td><td>範圍</td><td>影響 Schema 複雜度與社交</td><td>PM</td><td>🔲 OPEN</td></tr>
+</table>
+<hr>
+<h2>14. IDEA → BRD Handoff Checklist</h2>
+<table>
+<tr><th>#</th><th>Checklist 項目</th><th>狀態</th><th>負責人</th></tr>
+<tr><td>C1</td><td>一句話描述（§1.1）已清晰表達，無模糊詞</td><td>✅</td><td>PM</td></tr>
+<tr><td>C2</td><td>核心假說（§1.2）符合可測試格式</td><td>✅</td><td>PM</td></tr>
+<tr><td>C3</td><td>Q1 使用者描述具體（非「所有人」）</td><td>✅</td><td>PM</td></tr>
+<tr><td>C4</td><td>Q2 痛點已量化（或有驗證計畫）</td><td>🔲 待訪談</td><td>PM</td></tr>
+<tr><td>C5</td><td>Q4 規模已選定（影響架構決策）</td><td>✅</td><td>PM</td></tr>
+<tr><td>C6</td><td>至少 1 個競品在 §7 已識別</td><td>✅</td><td>PM</td></tr>
+<tr><td>C7</td><td>至少 3 項風險在 §8 已識別</td><td>✅</td><td>PM</td></tr>
+<tr><td>C8</td><td>Kill Conditions（§8.2）已定義</td><td>✅</td><td>PM</td></tr>
+<tr><td>C9</td><td>關鍵假設 A1（§12）已識別並有驗證計畫</td><td>✅</td><td>PM</td></tr>
+<tr><td>C10</td><td>IDEA Quality Score ≥ 3</td><td>✅（3/5）</td><td>AI</td></tr>
+<tr><td>C11</td><td>原始 IDEA 原文已逐字保留（§6 末段）</td><td>✅</td><td>AI</td></tr>
+<tr><td>C12</td><td>Open Questions 中無 P0 級別未解技術問題</td><td>✅</td><td>Engineering</td></tr>
+</table>
+<hr>
+<h2>15. Traceability Note（溯源說明）</h2>
+<p><em>此文件是需求鏈的起點，扮演「原始意圖記錄者」的角色。</em></p>
+<p><strong>向下追溯（Forward）：</strong></p>
+<pre><code class="">IDEA.md （本文件）
+  └─► BRD.md       ← /devsop-idea 已自動生成
+        └─► PRD.md      ← /devsop-gen-prd 待生成
+              └─► PDD.md      ← /devsop-gen-pdd
+                    └─► EDD.md      ← /devsop-gen-edd
+                          └─► ARCH / API / SCHEMA / BDD → 實作</code></pre>
+<p><strong>需求變更判斷準則：</strong></p>
+<table>
+<tr><th>場景</th><th>對比依據</th><th>分類</th></tr>
+<tr><td>功能行為與原始 IDEA Q1/Q2/Q3 一致但實作有誤</td><td>IDEA §6 原文</td><td><strong>BUG</strong>（修正，不需 ECR）</td></tr>
+<tr><td>功能需求超出原始三公玩法或 Client/Server 分工描述</td><td>IDEA §6 原文</td><td><strong>ECR</strong>（需 /devsop-change）</td></tr>
+<tr><td>Client 開始做結果計算（違反 Server authoritative）</td><td>IDEA §6 「👉 不做任何結果計算」</td><td><strong>嚴重 ECR</strong>（違反核心原則）</td></tr>
+<tr><td>技術棧偏離 Cocos + Colyseus</td><td>IDEA §6 Q3</td><td><strong>ECR 或 ADR</strong>（需決策依據）</td></tr>
+<tr><td>新增「真實金錢兌換」功能</td><td>IDEA §5.3 Out of Scope</td><td><strong>法務阻擋 + 嚴重 ECR</strong></td></tr>
+</table>
+<hr>
+<h2>Appendix A：Research Raw Data（研究原始資料）</h2>
+<h3>搜尋 1：競品與開源專案</h3>
+<pre><code class="">查詢：sam gong 3-card poker 三公 multiplayer card game colyseus open source github
+結果摘要：
+- 無 Sam Gong / 三公 專屬的 Colyseus 開源實作
+- sominator/colyseus-2d-multiplayer-card-game-templates：4 引擎卡牌模板
+- Ronan-H/riffle：Angular + Colyseus Web 卡牌
+- Colyseus 官方 UNO 範例
+- Colyseus Cocos Creator 官方 SDK 已就緒
+結論：有成熟 framework 與參考實作，但無 Sam Gong 專屬範本，需自行實作</code></pre>
+<h3>搜尋 2：技術最佳實踐</h3>
+<pre><code class="">查詢：Colyseus Cocos Creator multiplayer card game server authoritative state sync best practices 2026
+結果摘要：
+- Colyseus 使用 Schema-based state sync，Server 負責 mutate，Client 訂閱變更
+- Best practice：Schema class 僅含欄位定義；遊戲邏輯走 Command Pattern，獨立於 Schema
+- patchRate 優化：Colyseus 追蹤 property-level 變動，只發送最新值降低頻寬
+- Cocos Creator SDK 使用方式與 JS/TS SDK 一致
+- Colyseus UNO 範例為 turn-based 卡牌官方實作參考
+結論：架構路線清楚，Command Pattern 管遊戲流程，Schema 管同步</code></pre>
+<h3>搜尋 3：合規與反作弊</h3>
+<pre><code class="">查詢：online multiplayer card game anti-cheat server authoritative pitfalls gambling regulation Taiwan
+結果摘要：
+- 台灣《刑法》第 266 條：凡以財物或可兌換財物之物為賭注即違法
+- 《詐欺犯罪危害防制條例》明確將線上遊戲經營者納入規管，罰鍰 NT$10 萬-200 萬
+- 數位部為主管機關，須配合身份驗證、可疑交易通報
+- 反作弊：Server-authoritative 為基本功，但 Client 仍可能有自動化外掛
+- 研究：SecureTCG（P2P 卡牌反作弊協定）可參考思路
+結論：法規風險為最高風險；技術上 Server-authoritative 足以擋 Client 直接作弊，但需補強行為分析</code></pre>
+<hr>
+<h2>Appendix B：Document History</h2>
+<table>
+<tr><th>版本</th><th>日期</th><th>作者</th><th>修改摘要</th></tr>
+<tr><td>v0.1-capture</td><td>2026-04-21</td><td>/devsop-idea</td><td>初始捕捉，AI 自動填入模式</td></tr>
+</table>
+<hr>
+<h2>Appendix C：Attached Materials（附件與素材）</h2>
+<p><em>以下素材由使用者於 /devsop-idea 呼叫時提供，已自動存入 <code>docs/req/</code> 目錄。</em></p>
+<p>（目前無附件。若後續需補充素材——例如三公詳細規則文件、美術風格參考圖、競品截圖——請將檔案複製至 <code>docs/req/</code> 目錄，更新此清單後，gen-* skills 即可自動讀取。）</p>
+<hr>
+<p><em>此 IDEA.md 由 /devsop-idea 自動保留，記錄需求探索過程中的所有原始輸入與假設。</em></p>
+<p><em>若未來需求發生變化，可對照此文件確認原始意圖，判斷屬 BUG 修正或 ECR（需求變更）。</em></p></main>
+  </div>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({startOnLoad:true,theme:'default',
+      flowchart:{curve:'basis',nodeSpacing:60,rankSpacing:80},
+      er:{layoutDirection:'TD',minEntityWidth:100,fontSize:12},
+      sequence:{actorMargin:60,messageMargin:30}});
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-yaml.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-json.min.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>
