@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>產品設計文件 (PDD) — sam-gong-game</title>
+  <title>產品設計文件 (PDD) — thirsty-goldstine-ac0278</title>
   <link rel="stylesheet" href="assets/style.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
 </head>
 <body>
   <header class="top-nav">
-    <a href="index.html" class="nav-brand">sam-gong-game</a>
+    <a href="index.html" class="nav-brand">thirsty-goldstine-ac0278</a>
     <div class="nav-controls">
       <div class="search-wrap">
         <input class="search-input" type="search" placeholder="搜尋文件...">
@@ -20,7 +20,7 @@
     </div>
   </header>
   <div class="doc-page-banner">
-    <p class="banner-breadcrumb"><a href="index.html">sam-gong-game</a> › 產品設計文件 (PDD)</p>
+    <p class="banner-breadcrumb"><a href="index.html">thirsty-goldstine-ac0278</a> › 產品設計文件 (PDD)</p>
     <h1 class="banner-title">產品設計文件 (PDD)</h1>
   </div>
   <div class="page-wrapper">
@@ -340,6 +340,23 @@ const phaseText = i18n.t(phaseKey); // e.g., &#x27;莊家下注中&#x27;</code><
 </table>
 <p><strong>救濟籌碼補發通知（Rescue Chips Notification）：</strong></p>
 <ul><li>樣式：底部 Toast 通知；高度 48pt；背景 <code>#27AE60</code>；圓角 8pt；顯示 3 秒後自動消失</li><li>文字：<code>rescue_chips.awarded</code>（zh-TW: 「您的籌碼已不足，系統已補發 1,000 救濟籌碼」）</li></ul>
+<hr>
+<h3>CMP-012：Betting Panel（押注 / 跟注面板）</h3>
+<table>
+<tr><th>屬性</th><th>規格</th></tr>
+<tr><td><strong>元件 ID</strong></td><td>CMP-012</td></tr>
+<tr><td><strong>元件名稱</strong></td><td>BettingPanelComponent（整合 CMP-004 + CMP-005 + 自動押注 Toggle + 3s 倒數進度條）</td></tr>
+<tr><td><strong>顯示條件</strong></td><td><code>phase === &#x27;banker-bet&#x27;</code>（莊家押注模式）或 <code>phase === &#x27;player-bet&#x27;</code> 且本地玩家為當前輪次（跟注模式）</td></tr>
+</table>
+<p><strong>Auto-Act Toggle（自動押注 / 自動跟注）：</strong></p>
+<ul><li>元件型別：<code>cc.Toggle</code>（Cocos Creator checkbox）</li><li><strong>預設值：<code>isChecked = false</code>（未勾選）</strong> — 無論玩家如何加入房間（開局前加入 / 中途加入 / 重連 / 切換廳別），Toggle 於 <code>onLoad</code> / 進入 <code>showBankerMode</code> / 進入 <code>showPlayerMode</code> 時必須主動設為 <code>false</code>，不得依賴 Cocos Editor Prefab 預設值</li><li><strong>行為：</strong> 未勾選 → 玩家必須手動點擊「確認下注」或「跟注」；勾選 → 3 秒倒數後自動送出 <code>banker_bet</code> 或 <code>call</code></li><li><strong>每次新 phase 進入時強制重置</strong>：避免上一局勾選狀態延續至下一局（玩家需每局重新決定是否啟用自動）</li><li><strong>i18n：</strong> <code>game.autoBet</code>（莊家模式，zh-TW: 「自動押注」）、<code>game.autoCall</code>（閒家模式，zh-TW: 「自動跟注」）</li><li><strong>可存取性：</strong> Toggle 加上 <code>aria-label</code>（i18n: <code>a11y.auto_bet_toggle</code> / <code>a11y.auto_call_toggle</code>），螢幕閱讀器須朗讀當前狀態（checked / unchecked）</li></ul>
+<p><strong>狀態：</strong></p>
+<table>
+<tr><th>狀態</th><th>視覺</th></tr>
+<tr><td>Default</td><td>Toggle 未勾選；進度條隱藏</td></tr>
+<tr><td>Checked（用戶主動勾選）</td><td>Toggle 勾選；進度條顯示並開始 3s 倒數；倒數到 0 時自動執行 action</td></tr>
+<tr><td>Cancelled（倒數中取消）</td><td>點擊 Toggle 取消勾選 或 點擊「確認下注」/「跟注」手動送出 → 進度條隱藏；倒數計時器清除</td></tr>
+</table>
 <hr>
 <h2>5. Screen Wireframes（詳細佈局規格）</h2>
 <h3>SCR-001：Splash / Loading</h3>
@@ -1583,7 +1600,11 @@ room.state.settlement.winners.forEach((winner) =&gt; {
 <hr>
 <p><em>PDD 文件結束。下一步：STEP-06 ARCH（架構設計文件）或 STEP-07 EDD（工程設計文件）。</em></p>
 <hr>
-<blockquote><p><strong>文件維護聲明：</strong> 本 PDD 由 /devsop-autodev STEP-05 自動生成，依據 PRD v0.14-draft 及 BRD v0.12-draft。Client 設計嚴格遵循 Server-authoritative 原則；所有遊戲邏輯計算均由 Colyseus Server 執行，Client 僅為渲染顯示層。</p></blockquote></main>
+<blockquote><p><strong>文件維護聲明：</strong> 本 PDD 由 /devsop-autodev STEP-05 自動生成，依據 PRD v0.14-draft 及 BRD v0.12-draft。Client 設計嚴格遵循 Server-authoritative 原則；所有遊戲邏輯計算均由 Colyseus Server 執行，Client 僅為渲染顯示層。</p></blockquote>
+<hr>
+<h2>變更追蹤</h2>
+<h3>BUG-20260422-001：押注/跟注 CMP-012 自動押注 checkbox 預設不勾選</h3>
+<ul><li><strong>狀態</strong>：✅ DONE</li><li><strong>分類</strong>：BUG / 工程</li><li><strong>日期</strong>：2026-04-22</li><li><strong>描述</strong>：全部人不管怎麼加入房間（一開始加入 / 中途加入）, 預設不能打開押注或跟注, CHECKBOX DEFAULT 是不打勾</li><li><strong>影響範圍</strong>：CMP-012 BettingPanelComponent — 自動押注 Toggle 初始值；進入 banker-bet / player-bet 時重置為未勾選</li><li><strong>修正/實作內容</strong>：PDD §4 新增 CMP-012 Betting Panel 正式元件規格（auto-bet Toggle <code>isChecked=false</code> 預設 + 每次 phase 進入強制重置 + 必須手動勾選才啟用自動動作）；<code>BettingPanelComponent.onLoad</code> / <code>showBankerMode</code> / <code>showPlayerMode</code> 全部顯式設 <code>toggleAutoBet.isChecked = false</code> 並呼叫 <code>_cancelAutoAct()</code>；features/client/game_table.feature 4 個 Scenario 改寫 / 新增驗證預設未勾選行為；client-cocos jest 4 個單元測試證明無隱式自動動作。</li><li><strong>commit</strong>：<code>7031a2b</code> docs + <code>6cb702f</code> client + <code>43ba640</code> tests</li><li><strong>完成日期</strong>：2026-04-22</li></ul></main>
   </div>
   <script type="module">
     import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
