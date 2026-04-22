@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sam-gong-config
+  namespace: sam-gong-local
+  labels:
+    env: local
+data:
+  NODE_ENV: "development"
+  LOG_LEVEL: "debug"
+  TZ: "Asia/Taipei"
+
+  PORT: "2567"
+  API_PORT: "3000"
+  DB_PORT: "5432"
+  REDIS_PORT: "6379"
+
+  # In-cluster DNS names (local namespace)
+  DB_HOST: "postgres-service.sam-gong-local.svc.cluster.local"
+  DB_NAME: "sam_gong"
+  DB_USER: "sam_gong_app"
+
+  REDIS_HOST: "redis-service.sam-gong-local.svc.cluster.local"
+
+  # Enable Colyseus monitor for local debugging
+  COLYSEUS_MONITOR_ENABLED: "true"
+  GAME_ROOMS_MAX: "10"
+
+  ANTI_ADDICTION_ENABLED: "true"
+  RAKE_RATE: "0.05"
+  RAKE_MIN: "1"
