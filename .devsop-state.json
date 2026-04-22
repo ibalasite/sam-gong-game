@@ -4,7 +4,7 @@
   "project_slug": "sam-gong-game",
   "created_by": "/devsop-idea",
   "created_at": "2026-04-21",
-  "current_step": "24",
+  "current_step": "25",
   "completed_steps": [
     "01",
     "02",
@@ -29,7 +29,8 @@
     "21",
     "22",
     "23",
-    "24"
+    "24",
+    "25"
   ],
   "last_updated": "2026-04-22T16:00:00Z",
   "lang_stack": "Cocos Creator 3.8.x + Colyseus 0.15.x + Node.js 22.x + TypeScript 5.4.x + PostgreSQL 16.x + Redis 7.x"
