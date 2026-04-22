@@ -2211,10 +2211,11 @@ room.state.settlement.winners.forEach((winner) => {
 ## 變更追蹤
 
 ### BUG-20260422-001：押注/跟注 CMP-012 自動押注 checkbox 預設不勾選
-- **狀態**：⏳ PENDING
+- **狀態**：✅ DONE
 - **分類**：BUG / 工程
 - **日期**：2026-04-22
 - **描述**：全部人不管怎麼加入房間（一開始加入 / 中途加入）, 預設不能打開押注或跟注, CHECKBOX DEFAULT 是不打勾
 - **影響範圍**：CMP-012 BettingPanelComponent — 自動押注 Toggle 初始值；進入 banker-bet / player-bet 時重置為未勾選
-- **修正/實作內容**：（待完成後填入）
-- **commit**：—
+- **修正/實作內容**：PDD §4 新增 CMP-012 Betting Panel 正式元件規格（auto-bet Toggle `isChecked=false` 預設 + 每次 phase 進入強制重置 + 必須手動勾選才啟用自動動作）；`BettingPanelComponent.onLoad` / `showBankerMode` / `showPlayerMode` 全部顯式設 `toggleAutoBet.isChecked = false` 並呼叫 `_cancelAutoAct()`；features/client/game_table.feature 4 個 Scenario 改寫 / 新增驗證預設未勾選行為；client-cocos jest 4 個單元測試證明無隱式自動動作。
+- **commit**：`7031a2b` docs + `6cb702f` client + `43ba640` tests
+- **完成日期**：2026-04-22

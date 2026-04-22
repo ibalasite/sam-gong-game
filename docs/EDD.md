@@ -2321,10 +2321,11 @@ APM：
 ## 變更追蹤
 
 ### BUG-20260422-001：SamGongRoom 不再於 startNewRound 鎖房 + PlayerState 新增 is_waiting_next_round
-- **狀態**：⏳ PENDING
+- **狀態**：✅ DONE
 - **分類**：BUG / 工程
 - **日期**：2026-04-22
 - **描述**：既有 `this.lock()` 於遊戲開始時阻擋新玩家加入，與 PRD §5.0.3「中途加入：遊戲進行中加入的玩家排隊等待下一局」不一致。移除 `this.lock()`，改以 PlayerState 上的 `is_waiting_next_round` 旗標，讓中途加入者不入當前局的發牌 / 下注 / 輪莊序列，待 `resetForNextRound` 清除旗標後正式加入下一局。
 - **影響範圍**：§3 SamGongRoom 設計（onJoin / startNewRound / resetForNextRound / getNextPlayerToAct / BankerRotation）、PlayerState Schema 新增 `is_waiting_next_round` 欄位
-- **修正/實作內容**：（待完成後填入）
-- **commit**：—
+- **修正/實作內容**：EDD §3.1 onJoin 新增 mid-game join 判定流程（phase ≠ waiting 時設 `is_waiting_next_round=true`）並明確禁止於 `startNewRound` 呼叫 `this.lock()`；EDD §3.2 PlayerState Schema 新增 `@type('boolean') is_waiting_next_round: boolean = false`；EDD §3.6 resetForNextRound 補充清除此旗標的邏輯；`src/rooms/SamGongRoom.ts` 移除 `this.lock()` 呼叫、`onJoin` 設旗標、`startNewRound` / `getNextPlayerToAct` 過濾排隊者、`handleBankerBet` / `handleCall` / `handleFold` 以 `waiting_next_round` error 拒絕；`src/schema/SamGongState.ts` 加欄位並於 `broadcastRoomState` 廣播；jest 單元測試 TC-ROOM-007/008 驗證欄位存在與預設值；skipped TC-ROOM-021..024 標記後續 `@colyseus/testing` 整合測試待補。
+- **commit**：`7031a2b` docs + `0c61349` server + `43ba640` tests
+- **完成日期**：2026-04-22

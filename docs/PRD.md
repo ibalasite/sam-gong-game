@@ -1159,10 +1159,11 @@ Web 首次載入：
 ## 變更追蹤
 
 ### BUG-20260422-001：房間開局後仍應允許加入 + 押注/跟注 checkbox 預設不勾選
-- **狀態**：⏳ PENDING
+- **狀態**：✅ DONE
 - **分類**：BUG / 工程
 - **日期**：2026-04-22
 - **描述**：房間就算有位置, 一但開始遊戲, 就不能加入了, 應該開放加入；全部人不管怎麼加入房間, 預設不能打開押注或跟注, CHECKBOX DEFAULT 是不打勾
 - **影響範圍**：§5.0 莊家機制（第 3 點 — 中途加入）、§5.1 牌局流程（開局時房間不得鎖定）、押注/跟注介面自動押注 checkbox 預設值
-- **修正/實作內容**：（待完成後填入）
-- **commit**：—
+- **修正/實作內容**：PRD §5.0.3 改寫為「房間未滿即允許加入；中途加入者排隊等待下一局，本局不發牌 / 不下注 / 不跟注 / 不棄牌 / 不參與輪莊，resetForNextRound 後正式入局」；PDD §4 新增 CMP-012 Betting Panel 元件規格（auto-bet Toggle `isChecked=false` 預設 + phase 進入時強制重置）；EDD §3.1 onJoin 新增 mid-game join 判定邏輯並移除 `this.lock()` 呼叫；EDD §3.2 PlayerState 新增 `is_waiting_next_round` 欄位；EDD §3.6 resetForNextRound 清除此旗標。
+- **commit**：`7031a2b` docs + `0c61349` server + `6cb702f` client + `43ba640` tests
+- **完成日期**：2026-04-22
