@@ -1216,6 +1216,9 @@ export class SamGongRoom extends Room<SamGongState> {
       current_player_turn_seat: this.state.current_player_turn_seat,
       banker_bet_amount: this.state.banker_bet_amount,
       banker_seat_index: this.state.banker_seat_index,
+      // BUG-20260422-011：action_deadline_timestamp 必須下發，
+      // Client 才能畫遊戲開始倒數 + 輪到誰的頭頂計時器
+      action_deadline_timestamp: this.state.action_deadline_timestamp,
       min_bet: this.state.min_bet,
       max_bet: this.state.max_bet,
       hall_name: this.state.tier_config?.tier_name || '青銅廳',
