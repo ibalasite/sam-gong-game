@@ -557,20 +557,47 @@ export class SamGongRoom extends Room<SamGongState> {
       this.state.phase = 'settled';
 
       // 更新每位玩家籌碼（含莊家）
-      const allResults = [
+      //
+      // ── 重要：chip_balance 已在下注時扣除 escrow ──
+      // 閒家下注/跟注時：chip_balance -= called_bet（escrow 預扣）
+      // 莊家下注時：chip_balance -= banker_bet_amount（escrow 預扣）
+      //
+      // 閒家（非莊家）：使用 payout_amount（總返回額）直接加回
+      //   - 贏家：payout_amount = called_bet + N×banker_bet → 返回本金+盈餘
+      //   - 輸家：payout_amount = 0 → 不返還（escrow 已扣，無需再扣）
+      //   - 平手：payout_amount = called_bet → 返回本金
+      //   - 棄牌：payout_amount = 0, bet_amount = 0 → 無任何扣除，不返還
+      //   - InsolventWinner：payout_amount = 0 → 不返還（escrow 已扣）
+      //
+      // 莊家：使用 net_chips（相對 post-escrow 的增減）
+      //   - net_chips = pot - rake - winner_payouts + insolvent_bets
+      const bankerSeat = this.state.banker_seat_index;
+
+      const nonBankerResults = [
         ...result.winners,
         ...result.losers,
         ...result.ties,
         ...result.folders,
         ...result.insolvent_winners,
-        result.banker_settlement,
       ];
 
-      for (const r of allResults) {
+      for (const r of nonBankerResults) {
         const playerState = players.find((p) => p.seat_index === r.seat_index);
         if (playerState) {
-          playerState.chip_balance += r.net_chips;
+          playerState.chip_balance += r.payout_amount;
         }
+      }
+
+      // 莊家 chip_balance 以 (banker_bet_amount + net_chips) 調整
+      // 原因：chip_balance 已是 post-escrow 狀態（-banker_bet_amount 已扣）
+      //   delta = banker_bet_amount + net_chips
+      //   = 退回 escrow + 純損益
+      //   - 全員棄牌：banker_bet_amount + 0 = 返還 escrow
+      //   - 莊家贏：banker_bet_amount + bankerNetChips（>0）= 返還 escrow + 盈餘
+      //   - 莊家輸：banker_bet_amount + bankerNetChips（<0）= 返還部分 escrow + 淨損失
+      const bankerState = players.find((p) => p.seat_index === bankerSeat);
+      if (bankerState) {
+        bankerState.chip_balance += this.state.banker_bet_amount + result.banker_settlement.net_chips;
       }
 
       // 5s 後自動開始下一局

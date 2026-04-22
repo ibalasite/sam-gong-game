@@ -191,14 +191,14 @@ describe('NetworkManager', () => {
   });
 
   describe('sendChat()', () => {
-    it('TC-NM-17: type="chat", payload={ message }', () => {
+    it('TC-NM-17: type="send_chat", payload={ text }', () => {
       nm.sendChat('Hello World');
-      expect(mockRoom.sent[0]).toEqual({ type: 'chat', payload: { message: 'Hello World' } });
+      expect(mockRoom.sent[0]).toEqual({ type: 'send_chat', payload: { text: 'Hello World' } });
     });
 
     it('TC-NM-18: 空字串也正常送出', () => {
       nm.sendChat('');
-      expect(mockRoom.sent[0]?.payload).toEqual({ message: '' });
+      expect(mockRoom.sent[0]?.payload).toEqual({ text: '' });
     });
   });
 

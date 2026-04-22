@@ -143,16 +143,16 @@ describe('BetValidator', () => {
   // ── 邊界條件 ─────────────────────────────────────────────────────────────
 
   describe('邊界條件', () => {
-    it('TC-18: amount=0 → BELOW_MIN', () => {
+    it('TC-18: amount=0 → NOT_INTEGER（零不是正整數）', () => {
       const result = validator.validate(0, 100, 500, 10_000);
       expect(result.valid).toBe(false);
-      expect(result.error).toBe('BELOW_MIN');
+      expect(result.error).toBe('NOT_INTEGER');
     });
 
-    it('TC-19: amount 負數 → BELOW_MIN', () => {
+    it('TC-19: amount 負數 → NOT_INTEGER（負數不是正整數）', () => {
       const result = validator.validate(-100, 100, 500, 10_000);
       expect(result.valid).toBe(false);
-      expect(result.error).toBe('BELOW_MIN');
+      expect(result.error).toBe('NOT_INTEGER');
     });
 
     it('TC-20: amount=minBet=maxBet, balance=minBet → valid (廳別只有一個合法值)', () => {

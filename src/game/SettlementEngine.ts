@@ -128,7 +128,7 @@ export class SettlementEngine {
     const allFolded = nonBankerPlayers.every((p) => p.is_folded);
 
     if (allFolded) {
-      return this.settleAllFold(bankerDTO, nonBankerPlayers, banker_bet_amount);
+      return this.settleAllFold(bankerDTO, nonBankerPlayers, banker_bet_amount, banker_chip_balance);
     }
 
     // ── 評估每位閒家手牌（相對莊家） ──
@@ -325,11 +325,14 @@ export class SettlementEngine {
    * - pot=0, rake=0
    * - 莊家 escrow 退回（net_chips=0）
    * - 所有閒家 net_chips=0
+   *
+   * @param banker_chip_balance 莊家 escrow 扣除後的籌碼餘額（用於計算 banker_remaining_chips）
    */
   private settleAllFold(
     bankerDTO: PlayerSettlementDTO,
     nonBankerPlayers: PlayerSettlementDTO[],
     banker_bet_amount: number,
+    banker_chip_balance: number,
   ): SettlementOutput {
     const folderResults: SettlementResultDTO[] = nonBankerPlayers.map((p) => ({
       player_id: p.player_id,
@@ -372,7 +375,8 @@ export class SettlementEngine {
       rake_amount: 0,
       pot_amount: 0,
       banker_insolvent: false,
-      banker_remaining_chips: bankerDTO.called_bet + banker_bet_amount,
+      // escrow 已扣除後餘額 + 退回的 escrow = 莊家最終籌碼總額
+      banker_remaining_chips: banker_chip_balance + banker_bet_amount,
       all_fold: true,
     };
   }
