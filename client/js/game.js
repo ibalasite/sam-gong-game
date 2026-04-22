@@ -822,8 +822,10 @@ function refreshQBetHighlight() {
 }
 
 // ── Auto-act helpers ──────────────────────────────────────
+// BUG-20260422-001：無論玩家如何加入房間，自動行動預設關閉，
+// 必須玩家主動勾選 checkbox 才啟用（修正前預設為 true，玩家未同意就自動下注）。
 function isAutoActEnabled() {
-  return $('auto-act-chk')?.checked !== false;
+  return $('auto-act-chk')?.checked === true;
 }
 function cancelAutoAct() {
   if (_autoActTimer) { clearTimeout(_autoActTimer); _autoActTimer = null; }
