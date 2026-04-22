@@ -180,6 +180,8 @@ graph TB
 
 ### 3.1 Room Design
 
+**私人房間加入流程：** Client 使用 `POST /api/v1/rooms/private` 取得 room_code，REST API 回傳 `{room_code, colyseus_room_id}`；Client 再呼叫 `client.joinById(colyseus_room_id)` 連線至 Colyseus 房間。其他玩家可使用 `GET /api/v1/rooms/private/{room_code}` 查詢 `colyseus_room_id` 後加入。
+
 **SamGongRoom 繼承自 Colyseus `Room<SamGongState>`，實現以下生命週期方法：**
 
 ```typescript
@@ -203,16 +205,37 @@ export class SamGongRoom extends Room<SamGongState> {
   private disconnectTimers: Map<string, ReturnType<typeof setTimeout>>;
 
   // onCreate: 房間建立，初始化 State 與模組
-  async onCreate(options: RoomOptions): Promise<void>;
+  // 注意：Colyseus 0.15.x 使用 this.onMessage<T>('type', handler) 於 onCreate 內註冊，
+  // 不支援單一 onMessage override
+  async onCreate(options: RoomOptions): Promise<void> {
+    // ... 初始化 State、模組 ...
+
+    // 註冊個別訊息 Handler（Colyseus 0.15.x API）
+    this.onMessage<BankerBetMessage>('banker_bet', (client, message) => {
+      this.handleBankerBet(client, message);
+    });
+    this.onMessage<CallFoldMessage>('call', (client, message) => {
+      this.handleCall(client, message);
+    });
+    this.onMessage<CallFoldMessage>('fold', (client, message) => {
+      this.handleFold(client, message);
+    });
+    this.onMessage<SeeCardsMessage>('see_cards', (client, message) => {
+      this.handleSeeCards(client, message);
+    });
+    this.onMessage<ChatMessage>('send_chat', (client, message) => {
+      this.handleChat(client, message);
+    });
+    this.onMessage<ReportMessage>('report_player', (client, message) => {
+      this.handleReport(client, message);
+    });
+  }
 
   // onJoin: 玩家加入，驗證 JWT、籌碼門檻、分配座位
   async onJoin(client: Client, options: JoinOptions): Promise<void>;
 
   // onLeave: 玩家離開，啟動 30s 重連窗口或直接 Fold
   async onLeave(client: Client, consented: boolean): Promise<void>;
-
-  // onMessage: 處理 Client 訊息（banker_bet, call, fold, see_cards, send_chat, report_player）
-  onMessage(client: Client, message: ClientMessage): void;
 
   // onDispose: 房間銷毀，清理計時器、釋放資源、寫入 game_sessions 記錄
   async onDispose(): Promise<void>;
@@ -269,8 +292,8 @@ export class Card extends Schema {
 // ──── 結算子物件 ────
 export class SettlementEntry extends Schema {
   @type('string') player_id: string;
-  @type('string') seat_index: string;
-  @type('number') net_chips: number;     // 整數，正=贏, 負=輸, 0=Fold/平手
+  @type('number') seat_index: number;
+  @type('number') net_chips: number;     // 整數，正=贏, 負=輸, 0=Fold/平手；insolvent_winner 情境：net_chips = -called_bet（非零）
   @type('number') bet_amount: number;
   @type('number') payout_amount: number; // (1+N) × bet_amount（贏家）；0（輸家/Fold/平手）
   @type('string') result: string;        // 'win'|'lose'|'fold'|'tie'|'insolvent_win'
@@ -283,7 +306,7 @@ export class SettlementState extends Schema {
   @type([SettlementEntry]) losers = new ArraySchema<SettlementEntry>();
   @type([SettlementEntry]) ties = new ArraySchema<SettlementEntry>();
   @type([SettlementEntry]) folders = new ArraySchema<SettlementEntry>();
-  @type([SettlementEntry]) insolvent_winners = new ArraySchema<SettlementEntry>(); // 莊家破產後得零
+  @type([SettlementEntry]) insolvent_winners = new ArraySchema<SettlementEntry>(); // 莊家破產後未獲支付；net_chips = -called_bet（莊家破產後未獲支付；扣除已投入之 called_bet）
   @type('number') rake_amount: number = 0;
   @type('number') pot_amount: number = 0;          // 輸家下注額加總（抽水底數）
   @type('boolean') banker_insolvent: boolean = false;
@@ -314,7 +337,9 @@ export class TierConfig extends Schema {
   @type('number') entry_chips: number;  // 進場最低籌碼
   @type('number') min_bet: number;      // 最低下注
   @type('number') max_bet: number;      // 最高下注
-  @type([{ map: 'number' }]) quick_bet_amounts = new ArraySchema<number>(); // 快捷下注金額（Client 不硬編碼）
+  @type(['number']) quick_bet_amounts = new ArraySchema<number>(); // 快捷下注金額（Client 不硬編碼）
+  // 注意：quick_bet_amounts 為建議快速下注顯示值（UI hint）。Server 在處理實際下注時獨立驗證
+  // `banker_bet ∈ [min_bet, max_bet]`，不信任 Client 傳入的快速下注金額。
 }
 
 // ──── 配對狀態 ────
@@ -533,7 +558,7 @@ export interface SettlementOutput {
   losers: SettlementResultDTO[];
   ties: SettlementResultDTO[];
   folders: SettlementResultDTO[];
-  insolvent_winners: SettlementResultDTO[]; // 莊家破產後得零的贏家
+  insolvent_winners: SettlementResultDTO[]; // 莊家破產後未獲支付的贏家；net_chips = -called_bet（非零）
   rake_amount: number;             // floor(pot × 0.05)，底池 > 0 時最少 1
   pot_amount: number;              // 輸家閒家下注額加總
   banker_insolvent: boolean;
@@ -545,7 +570,10 @@ export interface SettlementOutput {
 export class SettlementEngine {
   settle(input: SettlementInput): SettlementOutput {
     // ── Step 6a：確認結果與底池構成 ──
-    // 底池 = 莊家勝的閒家下注額加總
+    // **底池定義（重要）：** `pot_amount` = 所有輸家（losers）的 `called_bet` 加總（已放棄的下注）。
+    // 贏家的 `called_bet` **不進入底池**（留在贏家手中，莊家須額外從自身籌碼支付 N×banker_bet 給每位贏家）。
+    // 抽水（rake）計算基礎為此 `pot_amount`：`rake = Math.floor(pot_amount × 0.05)`，
+    // `pot_amount > 0` 時最少 1 籌碼。
     // Fold 閒家 bet=0，不入底池
     // 平手閒家不入底池
 
@@ -575,6 +603,11 @@ export class SettlementEngine {
     // ── 籌碼守恆驗證 ──
     // assert: sum(net_chips) + rake_amount === 0
     // 失敗：回滾事務 + CRITICAL log + PagerDuty
+
+    // ── Rake 帳目記錄 ──
+    // 每局結算後，若 rake_amount > 0，於 chip_transactions 新增一筆 tx_type='rake' 的紀錄
+    // （user_id = NULL 或系統帳戶 UUID，amount = rake_amount）以維持完整帳目稽核。
+    // rake 交易因 user_id = NULL，自然不計入排行榜（REQ-006 AC-8）。
   }
 }
 ```
@@ -595,6 +628,10 @@ export class AntiAddictionManager {
 
   // 計算台灣午夜 Unix ms（UTC+8 次日 00:00）
   getTaiwanMidnightTimestamp(): number;
+
+  // Timer Persistence：每局 settled 後將計時資料寫透至 PostgreSQL（users.daily_play_seconds, users.session_play_seconds）
+  // Redis 為 write-through cache；Redis 重啟後從 PostgreSQL 回填，避免 Sentinel 切換時遺失計時資料。
+  persistTimers(playerId: string): Promise<void>;
 }
 ```
 
@@ -665,9 +702,14 @@ export class BankerRotation {
 | POST | `/api/v1/kyc/submit` | KYC 資料提交 | JWT | 60/min/user |
 | GET | `/api/v1/kyc/status` | KYC 驗證狀態 | JWT | 60/min/user |
 | GET | `/api/v1/player/chip-transactions` | 籌碼交易記錄（分頁）| JWT | 60/min/user |
+| POST | `/api/v1/player/cookie-consent` | 提交 Cookie 同意（REQ-016）；接受 `{analytics_consent: boolean, marketing_consent: boolean, consent_version: string}`，存入 cookie_consents 表 | JWT optional | N/A | 200/400 |
+| POST | `/api/v1/player/ad-reward` | AdMob 廣告觀看獎勵（REQ-020a）；接受 `{ad_view_token: string}`（冪等 by token），插入 chip_transaction tx_type='ad_reward' | JWT required | ≤5/min/user | 200/429 |
+| POST | `/api/v1/rooms/private` | 建立私人房間（返回 room_code）| JWT required | general | 201/400 |
+| GET | `/api/v1/rooms/private/{room_code}` | 查詢房間資訊（給 Colyseus joinById 使用）| JWT required | general | 200/404 |
 | POST | `/api/v1/admin/ban` | 封鎖帳號（Admin only）| Admin JWT | 內網 VPN |
 | GET | `/api/v1/admin/audit-log` | 稽核日誌查詢（Admin only）| Admin JWT | 內網 VPN |
 | GET | `/api/v1/health` | 健康檢查（k8s liveness probe）| 無 | 無限 |
+| GET | `/api/v1/health/ready` | 就緒探針（DB + Redis 連線檢查）| None | N/A | 200/503 |
 | GET | `/api/v1/config` | 用戶端設定（伺服器域名、廳別設定等）| 無 | 300/min/IP |
 
 ### 4.2 Authentication Flow
@@ -713,10 +755,13 @@ sequenceDiagram
 
 **60 秒 Block-to-Expire 機制（NFR-17）：**
 
+> **帳號封禁即時效果：** 當封禁用戶時，除了設定 `SETEX block:{player_id} 60 1`，必須同時執行 `DEL session:{player_id}` 使 session 快取失效。下次 API 請求將強制從 PostgreSQL 重新讀取 `is_banned=true` 狀態，避免長達 1h 的快取過期視窗造成被封禁用戶仍可操作。
+
 ```
 封號時：
   1. 更新 DB accounts.is_banned = true
   2. SETEX block:{player_id} 60 "1"  ← Redis TTL 60s
+  3. DEL session:{player_id}           ← 強制 Session Cache 失效，避免 1h 快取視窗
 
 Token 驗證時：
   1. 驗證 JWT 簽名 + TTL（正常）
@@ -992,17 +1037,18 @@ CREATE INDEX idx_users_is_banned ON users(is_banned) WHERE is_banned = TRUE;
 -- 財務記錄保留 7 年（REQ-019；匿名化處理）
 -- tx_type 合法枚舉（REQ-006 AC-8）：
 --   game_win | game_lose | daily_gift | rescue | iap | task_reward
---   ad_reward | refund | tutorial | admin_adjustment
+--   ad_reward | refund | tutorial | admin_adjustment | rake
+-- 注意：rake 交易 user_id = NULL（系統帳戶），不計入排行榜
 -- ────────────────────────────────
 CREATE TYPE tx_type_enum AS ENUM (
     'game_win', 'game_lose', 'daily_gift', 'rescue', 'iap',
-    'task_reward', 'ad_reward', 'refund', 'tutorial', 'admin_adjustment'
+    'task_reward', 'ad_reward', 'refund', 'tutorial', 'admin_adjustment', 'rake'
 );
 
 CREATE TABLE chip_transactions (
     id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id           UUID NOT NULL REFERENCES users(id) ON DELETE SET NULL,
-                      -- 帳號刪除後 user_id 設 NULL（匿名化，保留 7 年記錄）
+    user_id           UUID REFERENCES users(id) ON DELETE SET NULL,
+                      -- 帳號刪除後 user_id 設 NULL（匿名化，保留 7 年記錄）；不加 NOT NULL 以允許 ON DELETE SET NULL
     game_session_id   UUID REFERENCES game_sessions(id) ON DELETE SET NULL,
     tx_type           tx_type_enum NOT NULL,
     amount            BIGINT NOT NULL,            -- 正=增加, 負=減少
@@ -1106,6 +1152,70 @@ CREATE TABLE refresh_tokens (
 
 CREATE INDEX idx_refresh_tokens_user ON refresh_tokens(user_id, expires_at DESC)
     WHERE revoked = FALSE;
+
+-- ────────────────────────────────
+-- Table: game_rooms（遊戲房間）
+-- ────────────────────────────────
+CREATE TABLE game_rooms (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  room_code VARCHAR(6) UNIQUE, -- NULL for matchmaking rooms; 6-char alphanumeric for private
+  tier VARCHAR(20) NOT NULL CHECK (tier IN ('青銅廳','白銀廳','黃金廳','鉑金廳','鑽石廳')),
+  room_type VARCHAR(20) NOT NULL DEFAULT 'matchmaking' CHECK (room_type IN ('matchmaking','private')),
+  colyseus_room_id VARCHAR(100) UNIQUE, -- Colyseus internal room ID
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  closed_at TIMESTAMPTZ,
+  status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active','closed'))
+);
+CREATE INDEX idx_game_rooms_status ON game_rooms(status) WHERE status = 'active';
+CREATE INDEX idx_game_rooms_code ON game_rooms(room_code) WHERE room_code IS NOT NULL;
+
+-- ────────────────────────────────
+-- Table: cookie_consents（Cookie 同意記錄）
+-- ────────────────────────────────
+CREATE TABLE cookie_consents (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  session_id VARCHAR(100), -- for pre-login consent
+  consent_version VARCHAR(20) NOT NULL,
+  analytics_consent BOOLEAN NOT NULL DEFAULT false,
+  marketing_consent BOOLEAN NOT NULL DEFAULT false,
+  consented_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  ip_address INET,
+  user_agent TEXT
+);
+CREATE INDEX idx_cookie_consents_user ON cookie_consents(user_id);
+
+-- ────────────────────────────────
+-- Table: chat_messages（聊天訊息；7 日自動清除）
+-- ephemeral; soft-stored for moderation review, auto-purge after 7 days
+-- ────────────────────────────────
+CREATE TABLE chat_messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  room_id UUID REFERENCES game_rooms(id) ON DELETE CASCADE,
+  sender_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  content TEXT NOT NULL CHECK (char_length(content) <= 200),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  is_filtered BOOLEAN NOT NULL DEFAULT false
+);
+CREATE INDEX idx_chat_messages_room ON chat_messages(room_id, created_at DESC);
+-- Auto-purge: pg_partman or cron DELETE WHERE created_at < NOW() - INTERVAL '7 days'
+
+-- ────────────────────────────────
+-- Table: player_reports（玩家舉報）
+-- ────────────────────────────────
+CREATE TABLE player_reports (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  reporter_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  reported_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  room_id UUID REFERENCES game_rooms(id) ON DELETE SET NULL,
+  message_id UUID REFERENCES chat_messages(id) ON DELETE SET NULL,
+  reason VARCHAR(50) NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','reviewed','resolved','dismissed')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  reviewed_at TIMESTAMPTZ,
+  reviewer_notes TEXT
+);
+CREATE INDEX idx_player_reports_status ON player_reports(status) WHERE status = 'pending';
 ```
 
 ### 5.3 Redis Usage
@@ -1122,7 +1232,7 @@ CREATE INDEX idx_refresh_tokens_user ON refresh_tokens(user_id, expires_at DESC)
 | Matchmaking Queue | `mm:queue:{tier_name}` | List / Sorted Set | 90s（隊列項目）| 配對等待佇列 |
 | Colyseus Room Presence | `colyseus:presence:{room_id}` | Hash | 由 Colyseus 管理 | 跨節點房間狀態協調 |
 | OTP 每日計數 | `otp:daily:{phone_hash}:{date}` | String（計數）| 24h | 每手機號每日 ≤ 5 次 OTP |
-| Anti-Addiction Session | `aa:session:{player_id}` | Hash（seconds）| 24h | 連續遊玩計時（Server-side） |
+| Anti-Addiction Session | `aa:session:{player_id}` | Hash（seconds）| 24h | 連續遊玩計時（Server-side）；寫透策略（Write-Through）：每局 settled 後同步更新 users 表的 `daily_play_seconds` 和 `session_play_seconds` 欄位；Redis 為 write-through cache，Redis 重啟後從 PostgreSQL 回填，避免 Sentinel 切換時遺失計時資料。 |
 
 ### 5.4 Data Retention & Compliance
 
@@ -1140,7 +1250,8 @@ CREATE INDEX idx_refresh_tokens_user ON refresh_tokens(user_id, expires_at DESC)
 
 **REQ-006 AC-8 — 排行榜計入 tx_type 範圍：**
 - 計入：`game_win`、`game_lose`
-- 不計入：`daily_gift`、`rescue`、`iap`、`task_reward`、`ad_reward`、`refund`、`tutorial`、`admin_adjustment`
+- 不計入：`daily_gift`、`rescue`、`iap`、`task_reward`、`ad_reward`、`refund`、`tutorial`、`admin_adjustment`、`rake`
+- 注意：`rake` 交易的 `user_id = NULL`（系統帳戶），自然排除於排行榜聚合之外（REQ-006 AC-8）
 
 ---
 
@@ -1261,10 +1372,8 @@ Read（SELECT）：Read Replica 節點
 
 | NFR | 指標 | 目標值 | 測試方式 |
 |-----|------|--------|---------|
-| NFR-01 | 遊戲操作至 Server 確認延遲（P95）| ≤ 100ms | k6 / Colyseus Load Test（500 CCU，10min） |
-| NFR-01 | WebSocket 訊息延遲（P99）| ≤ 500ms | k6 Load Test |
-| NFR-02 | 單節點支援 CCU | ≥ 500（83 個 6 人房間）| Artillery 壓測 |
-| NFR-02 | 水平擴展後 CCU | ≥ 2,000（4 節點）| k8s 4 節點壓測 |
+| NFR-02 | 遊戲操作至 Server 確認延遲（P95）| ≤ 100ms | k6 / Colyseus Load Test（500 CCU，10min） |
+| NFR-02 | WebSocket 訊息延遲（P99）| ≤ 50ms | k6 Load Test |
 | NFR-03 | 整體服務 SLA（end-to-end）| ≥ 99.5% / 月 | Uptime Robot |
 | NFR-03 | 各組件獨立可用性 | 各 ≥ 99.9%（串聯 0.999^4 ≈ 99.6%）| 組件獨立 Health Check |
 | NFR-12 | Web 端首屏載入 | ≤ 5s（4G, 1MB/s）| Lighthouse |
