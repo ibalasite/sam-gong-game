@@ -929,10 +929,10 @@ function startDealAnimation(onComplete) {
   const bankerEl = elForSeat(bankerSeat);
   if (!bankerEl) { if (onComplete) onComplete(); return; }
 
-  // BUG-20260422-010：中途加入排隊者（is_waiting_next_round）不參與本局，
-  // 不要把牌飛到他們的座位
+  // BUG-20260422-010 + 013：中途加入排隊者（is_waiting_next_round）與
+  // 觀察者（is_spectator）都不參與本局，不要把牌飛到他們的座位
   const bySeat = all.slice()
-    .filter(p => !p.is_waiting_next_round)
+    .filter(p => !p.is_waiting_next_round && !p.is_spectator)
     .sort((a, b) => a.seat_index - b.seat_index);
   if (bySeat.length === 0) { if (onComplete) onComplete(); return; }
   const startPos = bySeat.findIndex(p => p.seat_index === bankerSeat);
