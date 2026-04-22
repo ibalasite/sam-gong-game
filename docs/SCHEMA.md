@@ -10,8 +10,8 @@
 |------|------|
 | **DOC-ID** | SCHEMA-SAM-GONG-GAME-20260422 |
 | **專案名稱** | 三公遊戲（Sam Gong 3-Card Poker）即時多人線上平台 |
-| **文件版本** | v1.0 |
-| **狀態** | DRAFT（STEP-09 自動生成，依 EDD v1.4-draft §5） |
+| **文件版本** | v1.1 |
+| **狀態** | DRAFT（STEP-12 Review Round 1 完成，9 findings 已修復） |
 | **作者** | Evans Tseng（由 STEP-09 自動生成） |
 | **日期** | 2026-04-22 |
 | **來源 EDD** | EDD-SAM-GONG-GAME-20260422 v1.4-draft §5.1 / §5.2 / §5.3 / §5.4 |
@@ -24,6 +24,7 @@
 | 版本 | 日期 | 作者 | 變更摘要 |
 |------|------|------|---------|
 | v1.0 | 2026-04-22 | STEP-09 | 初稿；依 EDD v1.4-draft §5 生成；涵蓋所有 DDL、索引、Enum、分區策略、保留政策、遷移策略 |
+| v1.1 | 2026-04-22 | STEP-12 Review Round 1 | 修復 9 個 findings：F1 game_sessions.banker_bet_amount 補 CHECK >= 0；F2 game_sessions 補 idx_sessions_started_at 索引（稽核查詢）；F3 kyc_records 補 kyc_type 和 status CHECK 約束；F4 player_reports.reason 補 CHECK 約束；F5 cookie_consents.session_id 補部分索引；F6 users.music_volume/sfx_volume 補 BETWEEN 0 AND 100 CHECK；F7/F11 釐清 rake 記錄必須 user_id=NULL 而非 SYSTEM_ACCOUNT_UUID，更新範例與 Appendix C 說明；F10 chip_transactions 分頁策略從 OFFSET 改為 Keyset Pagination；F12 ERD 中 task_date 從 string 修正為 date；§4.2 補全所有手動 Enum CHECK 約束清單 |
 
 ---
 
@@ -177,7 +178,7 @@ erDiagram
         uuid id PK
         uuid user_id FK
         string task_id
-        string task_date
+        date task_date
         boolean completed
         bigint reward_chips
         timestamp completed_at
@@ -271,8 +272,8 @@ CREATE TABLE users (
     tutorial_completed      BOOLEAN NOT NULL DEFAULT FALSE,
     avatar_url              TEXT,
     -- 音效設定（0-100）
-    music_volume            SMALLINT NOT NULL DEFAULT 70,
-    sfx_volume              SMALLINT NOT NULL DEFAULT 80,
+    music_volume            SMALLINT NOT NULL DEFAULT 70 CHECK (music_volume BETWEEN 0 AND 100),
+    sfx_volume              SMALLINT NOT NULL DEFAULT 80 CHECK (sfx_volume BETWEEN 0 AND 100),
     vibration               BOOLEAN NOT NULL DEFAULT TRUE,
     -- 排行榜顯示旗標（FALSE 時同步 ZREM Redis ZSET）
     show_in_leaderboard     BOOLEAN NOT NULL DEFAULT TRUE,
@@ -363,9 +364,11 @@ CREATE TABLE kyc_records (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     -- KYC 類型：OTP 年齡驗證 vs 全 KYC 文件上傳
-    kyc_type        VARCHAR(32) NOT NULL,
+    kyc_type        VARCHAR(32) NOT NULL
+                    CHECK (kyc_type IN ('otp_age_verify', 'full_kyc')),
     -- 審核狀態
-    status          VARCHAR(16) NOT NULL,
+    status          VARCHAR(16) NOT NULL
+                    CHECK (status IN ('pending', 'approved', 'rejected')),
     -- KYC 文件內容（AES-256 加密；AWS KMS 金鑰）
     data_encrypted  BYTEA,
     submitted_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -446,7 +449,8 @@ CREATE TABLE game_sessions (
     started_at          TIMESTAMPTZ NOT NULL,
     ended_at            TIMESTAMPTZ,
     CONSTRAINT rake_non_negative CHECK (rake_amount >= 0),
-    CONSTRAINT pot_non_negative CHECK (pot_amount >= 0)
+    CONSTRAINT pot_non_negative CHECK (pot_amount >= 0),
+    CONSTRAINT banker_bet_non_negative CHECK (banker_bet_amount >= 0)
 );
 ```
 
@@ -478,6 +482,9 @@ CREATE INDEX idx_sessions_room_id ON game_sessions(room_id, round_number);
 
 -- 查詢莊家歷史記錄（依時間排序）
 CREATE INDEX idx_sessions_banker_id ON game_sessions(banker_id, ended_at DESC);
+
+-- 稽核查詢（依時間範圍查詢；7 年保留）
+CREATE INDEX idx_sessions_started_at ON game_sessions(started_at DESC);
 ```
 
 ---
@@ -551,16 +558,21 @@ VALUES (
     '{"hand_type": "9", "banker_bet_amount": 500, "multiplier": 1}'::jsonb
 );
 
--- Rake 記錄（系統帳戶；user_id = NULL）
+-- Rake 記錄（user_id = NULL；balance_consistency CHECK 豁免條件即為 user_id IS NULL）
+-- 注意：rake 記錄必須使用 user_id = NULL，而非 SYSTEM_ACCOUNT_UUID，
+-- 原因：balance_consistency CHECK (user_id IS NULL OR balance_before + amount = balance_after)
+-- 若使用 SYSTEM_ACCOUNT_UUID（非 NULL），則 0 + 25 ≠ 0 將觸發 CHECK 違反。
+-- Appendix C 的 SYSTEM_ACCOUNT_UUID 僅作為業務層識別常數，記錄於 metadata 供稽核用，
+-- 不作為 chip_transactions.user_id 的實際插入值。
 INSERT INTO chip_transactions (user_id, game_session_id, tx_type, amount, balance_before, balance_after, metadata)
 VALUES (
-    NULL,  -- 系統帳戶
+    NULL,  -- rake 記錄必須為 NULL（豁免 balance_consistency CHECK）
     'session-uuid',
     'rake',
     25,
     0,
-    0,
-    '{"pot_amount": 500, "rake_rate": 0.05}'::jsonb
+    25,  -- balance_after 對 NULL user_id 不受 CHECK 限制；建議設為累計 rake 金額或固定 0
+    '{"pot_amount": 500, "rake_rate": 0.05, "system_account": "00000000-0000-0000-0000-000000000001"}'::jsonb
 );
 ```
 
@@ -684,6 +696,10 @@ CREATE TABLE cookie_consents (
 ```sql
 -- 查詢玩家 Cookie 同意記錄
 CREATE INDEX idx_cookie_consents_user ON cookie_consents(user_id);
+
+-- 未登入前 Cookie 同意查詢（by session_id；部分索引）
+CREATE INDEX idx_cookie_consents_session ON cookie_consents(session_id)
+    WHERE session_id IS NOT NULL;
 ```
 
 ---
@@ -742,7 +758,8 @@ CREATE TABLE player_reports (
   room_id        UUID REFERENCES game_rooms(id) ON DELETE SET NULL,
   -- 關聯聊天訊息（可選；聊天訊息刪除後設 NULL）
   message_id     UUID REFERENCES chat_messages(id) ON DELETE SET NULL,
-  reason         VARCHAR(50) NOT NULL,
+  reason         VARCHAR(50) NOT NULL
+                 CHECK (reason IN ('cheating','inappropriate_language','harassment','spam')),
   status         VARCHAR(20) NOT NULL DEFAULT 'pending'
                  CHECK (status IN ('pending','reviewed','resolved','dismissed')),
   created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -816,11 +833,21 @@ CHECK (room_type IN ('matchmaking','private'))
 -- game_rooms.status
 CHECK (status IN ('active','closed'))
 
--- kyc_records.kyc_type：'otp_age_verify'|'full_kyc'
--- kyc_records.status：'pending'|'approved'|'rejected'
+-- kyc_records.kyc_type
+CHECK (kyc_type IN ('otp_age_verify', 'full_kyc'))
+
+-- kyc_records.status
+CHECK (status IN ('pending', 'approved', 'rejected'))
+
+-- player_reports.reason
+CHECK (reason IN ('cheating', 'inappropriate_language', 'harassment', 'spam'))
 
 -- player_reports.status
 CHECK (status IN ('pending','reviewed','resolved','dismissed'))
+
+-- users.music_volume, users.sfx_volume（0-100）
+CHECK (music_volume BETWEEN 0 AND 100)
+CHECK (sfx_volume BETWEEN 0 AND 100)
 ```
 
 ---
@@ -845,6 +872,8 @@ CHECK (status IN ('pending','reviewed','resolved','dismissed'))
 | `idx_game_rooms_status` | game_rooms | status WHERE active | 部分 B-tree | 活躍房間查詢（Matchmaking）|
 | `idx_game_rooms_code` | game_rooms | room_code WHERE NOT NULL | 部分 B-tree | 私人房間 room_code 查詢 |
 | `idx_cookie_consents_user` | cookie_consents | user_id | B-tree | 玩家 Cookie 同意查詢 |
+| `idx_cookie_consents_session` | cookie_consents | session_id WHERE NOT NULL | 部分 B-tree | 未登入前 Cookie 同意查詢 |
+| `idx_sessions_started_at` | game_sessions | started_at DESC | B-tree | 稽核時序查詢（7 年保留）|
 | `idx_chat_messages_room` | chat_messages | room_id, created_at DESC | B-tree | 房間聊天訊息分頁查詢 |
 | `idx_player_reports_status` | player_reports | status WHERE pending | 部分 B-tree | Admin 待審查舉報列表 |
 | `idx_player_reports_reported` | player_reports | reported_id | B-tree | 被舉報者舉報記錄 |
@@ -875,13 +904,26 @@ LIMIT 100;
 
 **玩家交易記錄分頁**：
 ```sql
--- 包含 created_at 範圍利用分區裁剪
-SELECT * FROM chip_transactions
+-- 建議使用 Keyset Pagination（Cursor-Based）取代 OFFSET，
+-- 避免大表（7 年、億筆記錄）OFFSET 掃描效能退化：
+-- 首頁：
+SELECT id, tx_type, amount, balance_before, balance_after, created_at
+FROM chip_transactions
 WHERE user_id = $1
   AND created_at BETWEEN $2 AND $3
 ORDER BY created_at DESC
-LIMIT $4 OFFSET $5;
--- 使用 idx_tx_user_id；Read Replica 執行
+LIMIT $4;
+
+-- 後續頁（使用上一頁最後一筆的 created_at 作為 cursor）：
+SELECT id, tx_type, amount, balance_before, balance_after, created_at
+FROM chip_transactions
+WHERE user_id = $1
+  AND created_at BETWEEN $2 AND $3
+  AND created_at < $cursor  -- cursor = 上一頁最後一筆的 created_at
+ORDER BY created_at DESC
+LIMIT $4;
+-- 使用 idx_tx_user_id；Read Replica 執行；分區裁剪利用 created_at 條件
+-- 注意：禁止使用 OFFSET 分頁，對 7 年財務大表有嚴重效能風險（O(N) 掃描）
 ```
 
 ---
@@ -1128,8 +1170,10 @@ CREATE TYPE tx_type_enum AS ENUM (
 
 | 常數 | 值 | 用途 |
 |------|---|------|
-| `SYSTEM_ACCOUNT_UUID` | `00000000-0000-0000-0000-000000000001` | rake 交易 user_id（不計入排行榜）|
+| `SYSTEM_ACCOUNT_UUID` | `00000000-0000-0000-0000-000000000001` | rake 交易稽核識別碼（記錄於 metadata.system_account 欄位，供業務層識別）|
+
+**重要說明**：`chip_transactions` 的 `rake` 記錄 **必須** 使用 `user_id = NULL`，而非 `SYSTEM_ACCOUNT_UUID`。原因：DDL 包含 `balance_consistency CHECK (user_id IS NULL OR balance_before + amount = balance_after)`，若 user_id 為非 NULL 的 UUID，則 rake 記錄的 `balance_before + amount ≠ balance_after`（系統不維護 rake 累計餘額）將觸發 CHECK 違反。`SYSTEM_ACCOUNT_UUID` 僅作為應用層業務常數，記錄於 `metadata.system_account` 欄位，不寫入 `user_id` 欄位。
 
 ---
 
-*文件版本 v1.0 — 依 EDD v1.4-draft §5 生成 — 2026-04-22*
+*文件版本 v1.1 — STEP-12 Review Round 1 修復 9 findings — 2026-04-22*
