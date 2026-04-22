@@ -640,8 +640,11 @@ export class SamGongRoom extends Room<SamGongState> {
   private handleAutoMinBet(): void {
     if (this.state.phase !== 'banker-bet') return;
 
+    // BUG-20260422-013 防禦：找現役莊家（理論上 rotateWithSkip 已過濾 spectator，
+    // 但保險起見在這裡也過濾一次）
     const bankerPlayer = (Array.from(this.state.players.values()) as PlayerState[])
-      .find((p) => p.seat_index === this.state.banker_seat_index);
+      .find((p) => p.seat_index === this.state.banker_seat_index
+        && !p.is_spectator && !p.is_waiting_next_round);
 
     if (!bankerPlayer) {
       // 莊家已離場，回到等待階段（避免以 banker_bet_amount=0 繼續遊戲）
@@ -963,11 +966,16 @@ export class SamGongRoom extends Room<SamGongState> {
 
     this.playerHands.clear();
 
-    // 輪莊
-    const players = Array.from(this.state.players.values()) as PlayerState[];
+    // BUG-20260422-013：輪莊只考慮「現役」玩家 —— 觀察者（is_spectator）與
+    // 中途加入排隊者（is_waiting_next_round）都不能被選為下一局的莊家，
+    // 否則會導致 banker_seat_index 指向一個沒有牌、不能下注的玩家，
+    // 整局卡住、settlement 找不到 banker。
+    const allPlayers = Array.from(this.state.players.values()) as PlayerState[];
+    const activePlayers = allPlayers.filter((p) => !p.is_spectator && !p.is_waiting_next_round);
+
     const nextBankerSeat = this.bankerRotation.rotateWithSkip(
       this.state.banker_seat_index,
-      players,
+      activePlayers,
       this.state.min_bet,
     );
 
@@ -979,7 +987,7 @@ export class SamGongRoom extends Room<SamGongState> {
 
     this.state.banker_seat_index = nextBankerSeat;
 
-    players.forEach((p) => {
+    allPlayers.forEach((p) => {
       p.is_banker = p.seat_index === nextBankerSeat;
     });
   }
