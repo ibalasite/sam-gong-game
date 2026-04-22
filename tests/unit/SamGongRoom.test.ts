@@ -26,6 +26,7 @@
  */
 
 import { SamGongRoom, TIER_CONFIGS, VALID_PHASES } from '../../src/rooms/SamGongRoom';
+import { PlayerState } from '../../src/schema/SamGongState';
 
 // ──────────────────────────────────────────────
 // Mock 設定（Colyseus 核心依賴）
@@ -148,6 +149,21 @@ describe('SamGongRoom', () => {
     });
   });
 
+  // BUG-20260422-001：中途加入排隊旗標
+  describe('PlayerState.is_waiting_next_round (BUG-20260422-001)', () => {
+    it('TC-ROOM-007: PlayerState 預設 is_waiting_next_round = false', () => {
+      const p = new PlayerState();
+      expect(p.is_waiting_next_round).toBe(false);
+    });
+
+    it('TC-ROOM-008: is_waiting_next_round 為 @type boolean 欄位（會被 Colyseus schema 廣播）', () => {
+      const p = new PlayerState();
+      p.is_waiting_next_round = true;
+      expect(typeof p.is_waiting_next_round).toBe('boolean');
+      expect(p.is_waiting_next_round).toBe(true);
+    });
+  });
+
   // ──────────────────────────────────────────────
   // TODO 項目（需整合 @colyseus/testing）
   // ──────────────────────────────────────────────
@@ -263,6 +279,47 @@ describe('SamGongRoom', () => {
      * Then: Server 推送 anti_addiction_warning { type: 'adult', session_minutes: 120 }
      */
     it('TC-ROOM-020: 成人 2h 防沉迷提醒', async () => {
+      // TODO
+    });
+
+    // BUG-20260422-001：中途加入行為
+    /**
+     * TC-ROOM-021: 遊戲中加入不再被 room.lock() 拒絕
+     * Given: phase==='player-bet'，房間未滿
+     * When: 新玩家使用有效 JWT 加入
+     * Then: onJoin 成功；PlayerState.is_waiting_next_round === true
+     */
+    it('TC-ROOM-021: 中途加入成功且標記 is_waiting_next_round=true', async () => {
+      // TODO: 使用 @colyseus/testing
+    });
+
+    /**
+     * TC-ROOM-022: 排隊玩家不參與當前局下注 / 跟注 / 輪莊
+     * Given: player.is_waiting_next_round === true
+     * When: 玩家送出 banker_bet / call / fold
+     * Then: Server 回傳 error { code: 'waiting_next_round' }
+     */
+    it('TC-ROOM-022: 排隊玩家送出行動被拒絕', async () => {
+      // TODO
+    });
+
+    /**
+     * TC-ROOM-023: resetForNextRound 清除 is_waiting_next_round
+     * Given: 排隊玩家 is_waiting_next_round=true
+     * When: 本局 settled → resetForNextRound() 被呼叫
+     * Then: player.is_waiting_next_round === false（下一局正式入局）
+     */
+    it('TC-ROOM-023: resetForNextRound 清除 is_waiting_next_round', async () => {
+      // TODO
+    });
+
+    /**
+     * TC-ROOM-024: 房間已滿時中途加入仍以 room_full 拒絕
+     * Given: players.size === maxClients (6)
+     * When: 第 7 位玩家嘗試加入（任何 phase）
+     * Then: onJoin 拋出 'room_full'
+     */
+    it('TC-ROOM-024: 房間滿時中途加入仍拒絕 room_full', async () => {
       // TODO
     });
   });

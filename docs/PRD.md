@@ -689,7 +689,7 @@ As a **Returning Player**, I want to optionally purchase more chips or watch ads
 
 1. 首局莊家選擇：持有籌碼最多的玩家擔任莊家；若同籌碼則按進入房間的順序（先進先莊）。
 2. 輪莊規則：每局結束後，莊家位置順時鐘移至下一位玩家（Fold玩家正常參與輪莊序列，不跳過）。
-3. 中途加入：遊戲進行中加入的玩家排隊等待下一局，不插隊搶莊家位。
+3. 中途加入：**只要房間未滿（< 6 人），任何 phase 都允許加入**（Server 不得於遊戲開始時鎖定房間）。中途加入者於當前局視為「排隊等待下一局」：不發牌、不下注、不跟注、不棄牌、不參與輪莊序列。待當前局結算並 `resetForNextRound` 後，排隊玩家才正式納入下一局並依規則參與輪莊（先進先莊 / 順時鐘輪替）。若房間已滿（6 人），仍依既有 `room_full` 處理（與 phase 無關）。
 4. 莊家籌碼不足（< 本廳最低下注額）：跳過本局輪莊，移至下一位玩家（見 D9）。
 
 ### 5.1 牌局流程（Server 執行順序）
@@ -1153,3 +1153,27 @@ Web 首次載入：
 ---
 
 > **文件維護聲明：** 本 PRD 由 /devsop-autodev STEP-03 自動生成，依據 BRD-SAM-GONG-GAME-20260421 v0.12-draft。所有財務預測數字（付費率、ARPPU、LTV、CAC 等）均為 AI 推斷假設，非來自可信第三方市場研究，不得作為投資決策或財務承諾依據。
+
+---
+
+## 變更追蹤
+
+### BUG-20260422-002：獎池（current_pot）語意錯誤 — 莊家下注不應入池
+- **狀態**：✅ DONE
+- **分類**：BUG / 工程
+- **日期**：2026-04-22
+- **描述**：三公規則中，「獎池」只應包含**閒家跟注**的錢；莊家下注屬莊家 escrow，不屬於桌面獎池。結算時：閒家贏 → 自己的 called_bet 從獎池退回 + 莊家另從口袋付 N× 賠率；閒家輸 → called_bet 從獎池流向莊家；平手 → called_bet 從獎池退回。當前 `current_pot` 錯把莊家下注加入，造成 UI 誤導。
+- **影響範圍**：§5.3 結算 UI 獎池顯示；EDD §3.2 `current_pot` 欄位語意（spec 已正確，實作不符）；結算動畫流向
+- **修正/實作內容**：`src/rooms/SamGongRoom.ts` 的 `handleAutoMinBet` 與 `handleBankerBet` 不再將莊家下注加入 `current_pot`（改純 escrow 扣款）；EDD §3.2 `current_pot` 註解改為「閒家跟注加總」；`client/js/game.js` 移除 banker→pot 金幣動畫（改播 coin drop 音效），`triggerSettleAnimation` 重寫為 5 階段依結果分流：輸家→莊家、平手/贏家→退回 called_bet、莊家→贏家付 N× 賠率、破產情境破碎動畫。256 server 測試 + 32 client 測試全通過。
+- **commit**：`d2b9465` docs + `e69ecc3` server+client
+- **完成日期**：2026-04-22
+
+### BUG-20260422-001：房間開局後仍應允許加入 + 押注/跟注 checkbox 預設不勾選
+- **狀態**：✅ DONE
+- **分類**：BUG / 工程
+- **日期**：2026-04-22
+- **描述**：房間就算有位置, 一但開始遊戲, 就不能加入了, 應該開放加入；全部人不管怎麼加入房間, 預設不能打開押注或跟注, CHECKBOX DEFAULT 是不打勾
+- **影響範圍**：§5.0 莊家機制（第 3 點 — 中途加入）、§5.1 牌局流程（開局時房間不得鎖定）、押注/跟注介面自動押注 checkbox 預設值
+- **修正/實作內容**：PRD §5.0.3 改寫為「房間未滿即允許加入；中途加入者排隊等待下一局，本局不發牌 / 不下注 / 不跟注 / 不棄牌 / 不參與輪莊，resetForNextRound 後正式入局」；PDD §4 新增 CMP-012 Betting Panel 元件規格（auto-bet Toggle `isChecked=false` 預設 + phase 進入時強制重置）；EDD §3.1 onJoin 新增 mid-game join 判定邏輯並移除 `this.lock()` 呼叫；EDD §3.2 PlayerState 新增 `is_waiting_next_round` 欄位；EDD §3.6 resetForNextRound 清除此旗標。
+- **commit**：`7031a2b` docs + `0c61349` server + `6cb702f` client + `43ba640` tests
+- **完成日期**：2026-04-22

@@ -57,6 +57,43 @@ Feature: Game Flow
     When 第 7 位玩家嘗試加入
     Then 第 7 位玩家被拒絕加入（code: "room_full"）
 
+  # ── 中途加入（BUG-20260422-001）──
+
+  Scenario: 中途加入 - 遊戲進行中允許加入並排隊至下一局
+    Given state.phase = "player-bet"（2 位玩家正在對局）
+    And 房間尚有座位（players.size < maxClients）
+    When 第 3 位玩家使用有效 JWT 加入房間
+    Then onJoin 成功（不拋出 ServerError）
+    And PlayerState.is_waiting_next_round = true
+    And PlayerState.has_acted = true
+    And 第 3 位玩家不收到 myHand 私人訊息
+    And 該玩家不出現於 getNextPlayerToAct 結果中
+    And room_state 廣播包含第 3 位玩家的 is_waiting_next_round = true
+
+  Scenario: 中途加入 - 排隊玩家送出 banker_bet 被拒絕
+    Given 玩家已中途加入且 is_waiting_next_round = true
+    When 該玩家送出 banker_bet { amount: 200 }
+    Then Server 回傳 error（code: "waiting_next_round"）
+    And state.banker_bet_amount 不改變
+
+  Scenario: 中途加入 - 排隊玩家送出 call 被拒絕
+    Given 玩家已中途加入且 is_waiting_next_round = true
+    When 該玩家送出 call
+    Then Server 回傳 error（code: "waiting_next_round"）
+    And current_pot 不改變
+
+  Scenario: 中途加入 - 下一局開始後排隊玩家正式入局
+    Given 玩家已中途加入且 is_waiting_next_round = true
+    When state.phase 由 "settled" 轉換至 "dealing" 且 resetForNextRound 執行
+    Then PlayerState.is_waiting_next_round = false
+    And 該玩家進入新局的發牌範圍
+    And 該玩家依先進先莊規則不搶莊家位（當局由輪莊規則決定）
+
+  Scenario: 中途加入 - 房間已滿仍以 room_full 拒絕（與 phase 無關）
+    Given 房間已有 6 位玩家且 state.phase = "player-bet"
+    When 第 7 位玩家嘗試加入
+    Then 第 7 位玩家被拒絕加入（code: "room_full"）
+
   # ── Phase 轉換 ──
 
   Scenario: Phase 轉換 - dealing → banker-bet

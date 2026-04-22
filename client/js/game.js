@@ -37,6 +37,44 @@ let _prevPot        = 0;
 let _prevActedSeats = new Set();
 let _prevPhase      = '';
 let _lastBetAnimAt  = 0;   // timestamp of last coin-to-pot animation (ms)
+// BUG-20260422-003：發牌動畫狀態
+// _dealAnim.inProgress：動畫中（隱藏手牌，依序飛入）
+// _dealAnim.dealtForSeat：{seat_index: 已飛到的張數（0-3）}，用於逐張呈現
+let _dealAnim = { inProgress: false, dealtForSeat: {} };
+let _myHandRevealedCount = 0;   // 自己手牌已翻面的張數（0-3）
+// BUG-20260422-009 / 010：倒數 ticker — 每秒 re-render，涵蓋：
+//  1) waiting phase：遊戲開始倒數（2 人就緒後 3 秒）
+//  2) banker-bet phase：莊家下注倒數（30 秒，輪到莊家的頭上顯示）
+//  3) player-bet phase：閒家行動倒數（30 秒，輪到誰就誰的頭上顯示）
+let _countdownTicker = null;
+function startCountdownTicker() {
+  if (_countdownTicker) return;
+  _countdownTicker = setInterval(() => {
+    if (!_state) { stopCountdownTicker(); return; }
+    const phase = _state.phase;
+    const dl = Number(_state.action_deadline_timestamp || 0);
+    // BUG-20260422-013：也要在有觀察者時 tick，以更新加入按鈕的 60 秒倒數
+    const hasSpectator = Array.isArray(_state.players) && _state.players.some(p => p.is_spectator);
+    const shouldTick = ((phase === 'waiting' || phase === 'banker-bet' || phase === 'player-bet') && dl > 0)
+      || hasSpectator;
+    if (!shouldTick) { stopCountdownTicker(); return; }
+    renderState(_state);
+  }, 500);
+}
+function stopCountdownTicker() {
+  if (_countdownTicker) { clearInterval(_countdownTicker); _countdownTicker = null; }
+}
+// BUG-20260422-005：座位相對映射（圓桌邏輯）— 每次 render 更新
+let _seatPosMap = null;   // { offsetToPos:string[], mySeat:number, seatAtOffset:array }
+function seatOffsetOf(seatIndex) {
+  if (!_seatPosMap || typeof seatIndex !== 'number') return -1;
+  return ((seatIndex - _seatPosMap.mySeat) % 6 + 6) % 6;
+}
+function elForSeat(seatIndex) {
+  const offset = seatOffsetOf(seatIndex);
+  if (offset < 0) return null;
+  return $(_seatPosMap.offsetToPos[offset]);
+}
 // Auto-act (auto-call / auto-min-bet)
 let _autoActTimer   = null;
 let _autoActAt      = 0;   // ms timestamp when auto-act countdown started
@@ -151,12 +189,20 @@ function cardHTML(str, back) {
   const red = suit==='♥'||suit==='♦';
   return `<div class="card ${red?'r':'b'}"><span>${rank}</span><span>${suit}</span></div>`;
 }
-function handHTML(cards, reveal) {
+// BUG-20260422-003：handHTML 支援 dealtCount（發牌動畫用）
+// dealtCount = undefined → 一律顯示 3 張（原有行為）
+// dealtCount = 0..3 → 前 dealtCount 張顯示（視 reveal 決定正反面），後面顯示 ghost 佔位
+function handHTML(cards, reveal, dealtCount) {
   const list = Array.isArray(cards) ? cards : [];
+  const shown = (typeof dealtCount === 'number') ? dealtCount : 3;
   let h = '';
   for (let i=0; i<3; i++) {
-    const str = list[i] ? cardToStr(list[i]) : null;
-    h += cardHTML(str, !reveal || !str);
+    if (i >= shown) {
+      h += '<div class="card ghost"></div>';  // 尚未發到這張
+    } else {
+      const str = list[i] ? cardToStr(list[i]) : null;
+      h += cardHTML(str, !reveal || !str);
+    }
   }
   return h;
 }
@@ -174,13 +220,16 @@ async function joinGame(forceRoomId) {
     if (!window.Colyseus) throw new Error('Colyseus SDK 未載入');
     _client = new Colyseus.Client('ws://'+WS_HOST);
     if (roomIdInput) {
+      // 有填房間代號 → 加入指定房間
       _room = await _client.joinById(roomIdInput, { nickname:_nick, token:'dev' });
     } else {
-      _room = await _client.joinOrCreate('sam_gong', { nickname:_nick, token:'dev' });
+      // BUG：無房間代號 → 永遠建立新房間（避免 joinOrCreate 把剛離開的房又配回來）
+      _room = await _client.create('sam_gong', { nickname:_nick, token:'dev' });
     }
     _myId   = _room.sessionId;
     _myHand = [];
     _revealedHands = {};
+    _actionsSig = null;   // 清掉上一房間的 memo
     // Reset local state
     _state = { phase:'waiting', current_pot:0, players:[], hall_name:'青銅廳',
                min_bet:100, max_bet:5000, quick_bet_amounts:[],
@@ -204,8 +253,19 @@ async function joinGame(forceRoomId) {
 
     // Private hand — {cards:[{value,suit,point},…]}
     _room.onMessage('myHand', d => {
-      _myHand = d.cards || [];
-      renderState(_state);
+      const newHand = d.cards || [];
+      // BUG-20260422-003：僅當這是新一局的新手牌時觸發發牌動畫
+      // 動畫中收到 myHand（極罕見 race condition）不重啟動畫
+      const isFreshDeal = !_dealAnim.inProgress
+        && newHand.length === 3
+        && (_myHand.length === 0 || newHand.some((c, i) => !_myHand[i] || cardToStr(c) !== cardToStr(_myHand[i])));
+      _myHand = newHand;
+      if (isFreshDeal && _state && Array.isArray(_state.players) && _state.players.length >= 2) {
+        startDealAnimation();
+      } else {
+        _myHandRevealedCount = 3;
+        renderState(_state);
+      }
     });
 
     // Showdown reveal — {hands:{…}, hand_types:{…}}
@@ -226,10 +286,36 @@ async function joinGame(forceRoomId) {
     _room.onMessage('send_message_rejected', () => toast('訊息被拒絕','red'));
     _room.onMessage('anti_addiction_warning', d => { toast('⚠️ 防沉迷提示','red',6000); addLog('⚠️ 防沉迷警告','sys'); });
     _room.onMessage('error', d => { toast('❌ '+(d.message||'錯誤'),'red'); addLog('❌ '+(d.message||d.code||''),'sys'); });
+    // BUG-20260422-013：觀察者 60 秒沒按加入 → 被踢出
+    _room.onMessage('kicked', d => {
+      toast('⏰ ' + (d.message || '已被踢出房間'), 'red', 4000);
+      addLog('⏰ 已被踢出房間：' + (d.message || d.reason || ''), 'sys');
+    });
 
     // Schema onStateChange kept only for connection awareness (schema sync unreliable)
     _room.onStateChange(() => { /* state comes via room_state message */ });
-    _room.onLeave(code => { setConn(false); addLog('已離線 ('+code+')','sys'); if(code!==1000) toast('已斷線','red'); });
+    // BUG-20260422-015：被踢出 / 斷線 → 回到登入畫面，而不是卡在遊戲畫面
+    _room.onLeave(code => {
+      setConn(false);
+      addLog('已離線 ('+code+')','sys');
+      const isKicked = (code === 4050);
+      const msg = isKicked ? '60 秒未按加入遊戲，已被踢出房間'
+                : (code !== 1000 ? '已斷線或房間已關閉' : '已離開');
+      toast('⏰ ' + msg, isKicked || code !== 1000 ? 'red' : 'green', 3500);
+      _room = null;
+      // 1 秒後回到登入畫面（讓 toast 有時間看到）
+      setTimeout(() => {
+        history.replaceState(null, '', location.pathname);
+        const roomInp = $('room-join-id');
+        if (roomInp) roomInp.value = '';
+        const sb = $('share-box'); if (sb) sb.style.display = 'none';
+        $('game').style.display = 'none';
+        $('login').style.display = 'flex';
+        const jb = $('joinbtn'); if (jb) { jb.disabled = false; jb.textContent = '🎴 建立／加入遊戲'; }
+        const em = $('errmsg');
+        if (em) { em.style.color = isKicked ? '#ef9a9a' : '#80cbc4'; em.textContent = msg; }
+      }, 1000);
+    });
     _room.onError((c,m) => { toast('WS錯誤 '+c,'red'); addLog('WS錯誤: '+m,'sys'); });
 
     // Show game screen
@@ -289,7 +375,11 @@ function renderState(s) {
   const hallName = s.hall_name || '青銅廳';
 
   setText('c-phase', PHASE_NAMES[phase]||phase);
-  setText('c-pot',   pot > 0 ? pot.toLocaleString() : '—');
+  // 結算動畫時獎池裡的錢會「飛出去」給贏家/莊家，視覺上獎池應立刻歸 0，
+  // 避免中央數字與飛幣動畫語意不一致。Server 在 resetForNextRound（~5 秒後）
+  // 才把 current_pot 重置，這裡 Client 提早顯示「—」對齊使用者直覺。
+  const potShown = (phase === 'settled') ? 0 : pot;
+  setText('c-pot',   potShown > 0 ? potShown.toLocaleString() : '—');
   setText('c-hall',  hallName);
 
   // Collect players (plain array from room_state message)
@@ -318,6 +408,24 @@ function renderState(s) {
     } else {
       resEl.textContent = '';
     }
+  }
+
+  // BUG-20260422-010 + 013：任何計時器（頭頂倒數 / 觀察者 60 秒 / waiting 3 秒）都用同一 ticker
+  if ((phase === 'banker-bet' || phase === 'player-bet') && Number(s.action_deadline_timestamp || 0) > Date.now()) {
+    startCountdownTicker();
+  }
+  if (Array.isArray(s.players) && s.players.some(p => p.is_spectator)) {
+    startCountdownTicker();
+  }
+
+  // BUG-20260422-015：若我的 spectator 倒數已過期，Server 可能因 pod 重啟丟失 kick timer，
+  // Client 主動離開回到登入畫面，避免永遠卡在觀察者狀態
+  if (me?.is_spectator && me.spectator_deadline_timestamp > 0
+      && me.spectator_deadline_timestamp + 2000 < Date.now()   // 2 秒寬限避免 clock drift
+      && _room) {
+    const r = _room; _room = null;
+    try { r.leave(true); } catch (_) { /* ignore */ }
+    // onLeave 會接手切回登入畫面
   }
 
   // 第一次進入 settled：金幣飛入 + 收銀機聲
@@ -351,15 +459,35 @@ function renderState(s) {
   }
 
   // ── 6 seats ────────────────────────────────────────────────
-  const positions = ['s-bot','s-bl','s-tl','s-top','s-tr','s-br'];
+  // BUG-20260422-005：座位依「我」為原點做圓桌相對位置映射。
+  // seat_index 逆增方向 = 順時鐘繞桌（從我看出去，右手邊），
+  // 所以相對位移 offset = (other_seat - my_seat + 6) % 6；
+  // 螢幕 offset → position 對照表（我永遠在 s-bot；右手邊 s-br 起順時鐘繞回左手邊 s-bl）
+  const offsetToPos = ['s-bot', 's-br', 's-tr', 's-top', 's-tl', 's-bl'];
+  const mySeat = me ? me.seat_index : 0;
+  const seatAtOffset = new Array(6).fill(null);
+  if (me) seatAtOffset[0] = me;
+  all.forEach(p => {
+    if (p === me) return;
+    const offset = ((p.seat_index - mySeat) % 6 + 6) % 6;
+    // 若某 offset 已有玩家（理論上不會，因 seat_index 唯一），避免覆蓋
+    if (!seatAtOffset[offset]) seatAtOffset[offset] = p;
+  });
+
+  // 供發牌 / 結算動畫共用
+  _seatPosMap = { offsetToPos, mySeat, seatAtOffset };
+
   // Find seat index of the most recently revealed seat (for flipping animation)
   const sdSorted = [..._sdRevealedSet].sort((a,b) => b-a);
   const sdLatest  = sdSorted[0] ?? -1;
 
+  // 向下相容：ordered / positions 在動畫模組仍被用到
+  const positions = offsetToPos;
+
   for (let i=0; i<6; i++) {
     const box = $(positions[i]);
     if (!box) continue;
-    const p = ordered[i];
+    const p = seatAtOffset[i];
     if (!p) {
       box.innerHTML = '<div class="av empty">💺</div><div class="sname muted">空位</div>';
       continue;
@@ -374,6 +502,8 @@ function renderState(s) {
 
     // Card visibility logic
     let cards = [], reveal = false;
+    // BUG-20260422-003：發牌動畫中，每個座位只顯示已飛到的張數
+    let dealtCount; // undefined = 顯示 3 張（原行為）
     if (phase === 'showdown') {
       if (revealed && _revealedHands[String(seatIdx)]) {
         cards = _revealedHands[String(seatIdx)]; reveal = true;
@@ -391,6 +521,29 @@ function renderState(s) {
       if (isMe && _myHand.length > 0) { cards = _myHand; reveal = true; }
     }
 
+    // 發牌動畫：限制此座位顯示張數
+    if (_dealAnim.inProgress) {
+      const arrived = _dealAnim.dealtForSeat[seatIdx] || 0;
+      dealtCount = arrived;
+      if (isMe) {
+        // 自己：只顯示已翻面的張數為「face-up」，其餘先不渲染（等動畫飛到才出現）
+        cards = (_myHand || []).slice(0, _myHandRevealedCount);
+        reveal = true;
+        dealtCount = _myHandRevealedCount;
+      } else {
+        // 其他玩家：顯示 arrived 張 face-down（由 cardHTML back 處理）
+        cards = new Array(arrived).fill(null);
+        reveal = false;
+      }
+    }
+
+    // BUG-20260422-010 + 013：中途加入排隊者 / 觀察者不在本局 —— 任何 phase 都不顯示牌
+    if (p.is_waiting_next_round || p.is_spectator) {
+      cards = [];
+      reveal = false;
+      dealtCount = 0;
+    }
+
     // Hand-type label — 放在頭像上方
     // active = 正在亮牌（大字閃亮）；done = 已亮（縮小）；pending = 尚未亮
     let evalLbl = '';
@@ -406,7 +559,11 @@ function renderState(s) {
 
     // Badge
     let badge = '';
-    if (p.is_folded) {
+    if (p.is_spectator) {
+      badge = '<span class="bdg spectator">👁 觀察中</span>';   // BUG-20260422-013
+    } else if (p.is_waiting_next_round) {
+      badge = '<span class="bdg wait">⏳ 等待下一局</span>';   // BUG-20260422-010
+    } else if (p.is_folded) {
       badge = '<span class="bdg fold">棄牌</span>';
     } else if (p.has_acted && !p.is_banker && p.bet_amount > 0) {
       badge = `<span class="bdg call">跟 ${(p.bet_amount||0).toLocaleString()}</span>`;
@@ -414,6 +571,34 @@ function renderState(s) {
       badge = `<span class="bdg bnk">莊 ${(p.bet_amount||0).toLocaleString()}</span>`;
     } else if (isBanker) {
       badge = '<span class="bdg bnk">莊</span>';
+    }
+
+    // BUG-20260422-010：輪到的人頭上顯示明顯倒數（大家都看得到，知道在等誰）
+    let turnTimer = '';
+    const isMyTurn = !p.is_waiting_next_round && !p.is_spectator && !p.is_folded && (
+      (phase === 'banker-bet' && p.is_banker) ||
+      (phase === 'player-bet' && seatIdx === s.current_player_turn_seat && !p.has_acted)
+    );
+    if (isMyTurn) {
+      const dl = Number(s.action_deadline_timestamp || 0);
+      if (dl > 0) {
+        const secsLeft = Math.max(0, Math.ceil((dl - Date.now()) / 1000));
+        const urgent = secsLeft <= 5 ? ' urgent' : '';
+        turnTimer = `<div class="turn-timer${urgent}">⏱ ${secsLeft}</div>`;
+      }
+    }
+
+    // BUG-20260422-013：觀察者（當下是「我」才顯示可點擊按鈕；其他人看到發光提示）
+    let joinBtn = '';
+    if (p.is_spectator) {
+      const sd = Number(p.spectator_deadline_timestamp || 0);
+      const secs = sd > 0 ? Math.max(0, Math.ceil((sd - Date.now()) / 1000)) : 60;
+      const urgent = secs <= 10 ? ' urgent' : '';
+      if (isMe) {
+        joinBtn = `<button class="join-btn${urgent}" data-join-me="1">🟡 按我加入遊戲 <span class="join-secs">(${secs})</span></button>`;
+      } else {
+        joinBtn = `<div class="join-btn${urgent}" style="cursor:default">🟡 觀察中 <span class="join-secs">(${secs})</span></div>`;
+      }
     }
 
     // 結算泡泡
@@ -435,42 +620,107 @@ function renderState(s) {
 
     box.innerHTML = `
       ${bubble}
+      ${turnTimer}
       ${evalLbl}
-      <div class="av${isBanker?' bnkav':''}${isMe?' meav':''}">${isBanker?'👑':isMe?'😊':'👤'}</div>
+      <div class="av${isBanker?' bnkav':''}${isMe?' meav':''}${p.is_spectator?' spectator':''}">${p.is_spectator?'👁':isBanker?'👑':isMe?'😊':'👤'}</div>
       <div class="sname">${esc(p.display_name||'玩家')}</div>
       <div class="schips">🪙 ${(p.chip_balance||0).toLocaleString()}</div>
-      <div class="hand">${handHTML(cards, reveal)}</div>
-      <div class="sbdg">${badge}</div>`;
+      <div class="hand">${handHTML(cards, reveal, dealtCount)}</div>
+      <div class="sbdg">${badge}</div>
+      ${joinBtn}`;
+
+    // 綁定「加入遊戲」按鈕（僅在 isMe 且 is_spectator 時渲染為 button）
+    if (p.is_spectator && isMe) {
+      const btn = box.querySelector('.join-btn[data-join-me]');
+      if (btn) btn.addEventListener('click', () => { _room?.send('join_as_player'); });
+    }
   }
 
   renderActions(s, me);
+  updateActionMarquee(s, me);
+
+  // BUG-20260422-016：依目前 state 更新離開按鈕的可用性與視覺
+  const leaveBtn = document.querySelector('.leavebtn');
+  if (leaveBtn) {
+    const allowed = canLeaveRoom();
+    leaveBtn.disabled = !allowed;
+    leaveBtn.style.opacity = allowed ? '1' : '.35';
+    leaveBtn.style.cursor = allowed ? 'pointer' : 'not-allowed';
+    leaveBtn.title = allowed ? '離開房間' : '籌碼押注中，結算後才能離開';
+  }
+}
+
+// 更新操作面板收合時的跑馬燈文字 — 把本局關鍵訊息濃縮成一行滾動
+function updateActionMarquee(s, me) {
+  const el = $('action-marquee');
+  if (!el) return;
+  const phase = s?.phase || 'waiting';
+  const bits = [];
+
+  if (me?.is_waiting_next_round) {
+    bits.push('⏳ 您中途加入，等待下一局');
+  } else if (phase === 'waiting') {
+    const cnt = Array.isArray(s.players) ? s.players.length : 0;
+    const dl = Number(s.action_deadline_timestamp || 0);
+    const secsLeft = dl > 0 ? Math.max(0, Math.ceil((dl - Date.now()) / 1000)) : 0;
+    if (cnt < 2) bits.push(`⏳ 等待更多玩家（${cnt}/6）`);
+    else if (secsLeft > 0) bits.push(`🎬 遊戲 ${secsLeft} 秒後開始`);
+    else bits.push(`✅ ${cnt} 名玩家就緒，即將發牌`);
+  } else if (phase === 'dealing') {
+    bits.push('🎴 發牌中...');
+  } else if (phase === 'banker-bet') {
+    const iAmBanker = me?.is_banker;
+    bits.push(iAmBanker ? `👑 您是莊家，請下注（${s.min_bet}–${s.max_bet}）` : '👑 莊家下注中...');
+  } else if (phase === 'player-bet') {
+    const myTurn = me && me.seat_index === s.current_player_turn_seat && !me.has_acted && !me.is_banker;
+    if (me?.is_folded) bits.push('🚫 已棄牌，等待本局結算');
+    else if (myTurn) bits.push(`▶ 輪到您跟注 ${s.banker_bet_amount} 或棄牌`);
+    else {
+      const cur = (s.players || []).find(p => p.seat_index === s.current_player_turn_seat);
+      bits.push(cur ? `⏱ 輪到 ${cur.display_name || '玩家'} 行動` : '⏱ 閒家下注中...');
+    }
+  } else if (phase === 'showdown') {
+    bits.push('🃏 開牌中...');
+  } else if (phase === 'settled') {
+    bits.push('✅ 本局結束，等待下一局自動開始');
+  }
+
+  // 本局獎池 + 房間代號（結算時錢已飛出去，獎池不再顯示金額）
+  if (phase !== 'settled' && typeof s.current_pot === 'number' && s.current_pot > 0) {
+    bits.push(`🪙 獎池 ${s.current_pot.toLocaleString()}`);
+  }
+  const rid = (_room && _room.id) ? _room.id : null;
+  if (rid) bits.push(`🏠 ${rid}`);
+
+  const text = bits.join('  ·  ');
+  if (el.textContent !== text) el.textContent = text;
 }
 
 // ── Bet transition → coins fly to pot ────────────────────
 function checkBetTransitions(newS) {
-  const positions = ['s-bot','s-bl','s-tl','s-top','s-tr','s-br'];
   const potEl = $('c-pot');
   if (!potEl) return;
 
-  // Helper: ordered array for new state
-  const allP   = Array.isArray(newS.players) ? newS.players.slice() : [];
-  const meP    = _myPid ? allP.find(p => p.player_id === _myPid) : allP[0] || null;
-  const ordP   = meP ? [meP, ...allP.filter(p => p !== meP)] : [...allP];
+  const allP = Array.isArray(newS.players) ? newS.players.slice() : [];
 
-  // 莊家剛下注：phase 剛變成 player-bet，pot 從 0 增加
-  if (newS.phase === 'player-bet' && _prevPhase === 'banker-bet' && (newS.current_pot||0) > _prevPot) {
-    const bankerIdx = ordP.findIndex(p => p.seat_index === newS.banker_seat_index);
-    const fromEl = bankerIdx >= 0 ? $(positions[bankerIdx]) : null;
-    if (fromEl) setTimeout(() => { flyCoins(fromEl, potEl, 6); playCoinDrop(); }, 0);
+  // BUG-20260422-002：莊家下注不入獎池（屬 escrow），不再觸發 banker→pot 動畫。
+  // 莊家下注改為在莊家座位上播放 coin drop 音效作為視覺提示。
+  if (newS.phase === 'player-bet' && _prevPhase === 'banker-bet') {
+    playCoinDrop();
   }
 
   // 閒家剛跟注：has_acted 從 false → true
   // 同時涵蓋「最後一位跟注直接觸發 showdown」的情境（此時 newS.phase 已是 showdown）
   if (newS.phase === 'player-bet' || _prevPhase === 'player-bet') {
     allP.forEach(p => {
+      // BUG-20260422-017：觀察者 / 排隊者 has_acted 被 server 強制設 true 以避開輪次，
+      //                  那個 state flip 不代表真的跟注 → 不該觸發金幣飛到獎池動畫
+      if (p.is_spectator || p.is_waiting_next_round) {
+        _prevActedSeats.add(p.seat_index);   // 標記已見過，避免之後誤觸
+        return;
+      }
       if (!p.is_banker && p.has_acted && !_prevActedSeats.has(p.seat_index)) {
-        const idx = ordP.findIndex(q => q.seat_index === p.seat_index);
-        const fromEl = idx >= 0 ? $(positions[idx]) : null;
+        const fromEl = elForSeat(p.seat_index);  // BUG-20260422-005：用相對映射
         if (fromEl) {
           setTimeout(() => { flyCoins(fromEl, potEl, 6); playCoinDrop(); }, 80);
           _lastBetAnimAt = Date.now(); // 記錄最後一次押注動畫時間
@@ -496,7 +746,13 @@ function startShowdownSequence() {
   _sdDone = false;
   _sdWinnerSeats = new Set();
 
-  const seats = Object.keys(_revealedHands).map(Number).sort((a, b) => a - b);
+  // BUG-20260422-003：閒家先依座位順序亮牌，莊家最後亮牌決定輸贏（增加刺激感）
+  const bankerSeat = _state?.banker_seat_index;
+  const allSeats = Object.keys(_revealedHands).map(Number);
+  const playerSeats = allSeats.filter(s => s !== bankerSeat).sort((a, b) => a - b);
+  const seats = bankerSeat != null && allSeats.includes(bankerSeat)
+    ? [...playerSeats, bankerSeat]
+    : playerSeats;
   if (!seats.length) { _sdDone = true; renderState(_state); return; }
 
   const interval = Math.min(1300, 3000 / seats.length);
@@ -548,34 +804,76 @@ function markWinners() {
 }
 
 // ── Settle animation: coins fly + sound ──────────────────
-function triggerSettleAnimation(s, ordered) {
-  const positions = ['s-bot','s-bl','s-tl','s-top','s-tr','s-br'];
+// BUG-20260422-002：精準依三公規則演示資金流向
+//   1) 輸家：獎池內的 called_bet → 莊家（抽水後歸莊家）
+//   2) 平手：獎池內的 called_bet → 玩家（退回）
+//   3) 贏家 called_bet 退回：獎池 → 贏家
+//   4) 贏家賠付：莊家 → 贏家（N × banker_bet，從莊家籌碼支付）
+//   5) 莊家破產情境：少量破碎動畫，象徵未獲得支付
+function triggerSettleAnimation(s, _ordered) {
   const potEl = $('c-pot');
   if (!potEl) return;
 
-  // 先播收銀機聲
   playCashRegister();
 
-  // 決定金幣飛向誰：player winners → 飛到各贏家；沒有 → 莊家贏，飛到莊家
-  const playerWinners = s.settlement?.winners || [];
-  let targets = [];
+  // BUG-20260422-005：一律用 elForSeat（依「我」為原點的相對位置映射）
+  const seatElOf = (seatIndex) => elForSeat(seatIndex);
+  const bankerEl = seatElOf(s.banker_seat_index);
 
-  if (playerWinners.length > 0) {
-    playerWinners.forEach((w, i) => {
-      const idx = ordered.findIndex(p => p.seat_index === w.seat_index);
-      if (idx >= 0) targets.push({ idx, delay: i * 180 });
+  const sett = s.settlement || {};
+  const winners         = sett.winners || [];
+  const losers          = sett.losers  || [];
+  const ties            = sett.ties    || [];
+  const insolventWinners = sett.insolvent_winners || [];
+
+  let t = 0;
+
+  // 1) 輸家的 called_bet：獎池 → 莊家（每位輸家 6 枚金幣，依順序）
+  if (bankerEl) {
+    losers.forEach((l, i) => {
+      setTimeout(() => flyCoins(potEl, bankerEl, 6), t + i * 90);
     });
-  } else {
-    // 莊家贏
-    const bankerIdx = ordered.findIndex(p => p.seat_index === s.banker_seat_index);
-    if (bankerIdx >= 0) targets.push({ idx: bankerIdx, delay: 0 });
+  }
+  if (losers.length > 0) t += losers.length * 90 + 180;
+
+  // 2) 平手的 called_bet：獎池 → 玩家（退回）
+  ties.forEach((tie, i) => {
+    const seatEl = seatElOf(tie.seat_index);
+    if (seatEl) setTimeout(() => flyCoins(potEl, seatEl, 5), t + i * 90);
+  });
+  if (ties.length > 0) t += ties.length * 90 + 180;
+
+  // 3) 贏家的 called_bet：獎池 → 贏家（退回本金）
+  winners.forEach((w, i) => {
+    const seatEl = seatElOf(w.seat_index);
+    if (seatEl) setTimeout(() => flyCoins(potEl, seatEl, 5), t + i * 90);
+  });
+  // insolvent winners 的 called_bet 也從獎池退回（根據 PRD：本金退回後再檢查能否支付賠付）
+  insolventWinners.forEach((iw, i) => {
+    const seatEl = seatElOf(iw.seat_index);
+    if (seatEl) setTimeout(() => flyCoins(potEl, seatEl, 3), t + (winners.length + i) * 90);
+  });
+  if (winners.length + insolventWinners.length > 0) t += (winners.length + insolventWinners.length) * 90 + 200;
+
+  // 4) 贏家賠付：莊家 → 贏家（N × banker_bet 從莊家口袋飛出）
+  if (bankerEl) {
+    winners.forEach((w, i) => {
+      const seatEl = seatElOf(w.seat_index);
+      const n = w.payout_multiplier || 1;
+      if (seatEl) setTimeout(() => flyCoins(bankerEl, seatEl, 6 + n * 2), t + i * 120);
+    });
   }
 
-  targets.forEach(({ idx, delay }) => {
-    const seatEl = $(positions[idx]);
-    if (!seatEl) return;
-    setTimeout(() => flyCoins(potEl, seatEl, 12), delay);
-  });
+  // 5) 莊家破產的贏家：只有 1~2 枚破碎金幣從莊家出發，象徵未能取得支付
+  if (bankerEl && insolventWinners.length > 0) {
+    insolventWinners.forEach((iw, i) => {
+      const seatEl = seatElOf(iw.seat_index);
+      if (seatEl) setTimeout(() => flyCoins(bankerEl, seatEl, 2), t + (winners.length + i) * 120 + 300);
+    });
+  }
+
+  // 若全無 losers / winners / ties / insolventWinners（例如全員 Fold），
+  // 莊家從 §8.0 規則拿回底注，但 current_pot=0 所以無動畫需要。
 }
 
 function flyCoins(fromEl, toEl, count) {
@@ -621,6 +919,124 @@ function flyCoins(fromEl, toEl, count) {
   }
 }
 
+// BUG-20260422-003：發牌動畫 — 從莊家位置飛一張撲克牌到目標位置
+function flyCard(fromEl, toEl, onLand) {
+  if (!fromEl || !toEl) { if (onLand) setTimeout(onLand, 0); return; }
+  const fr = fromEl.getBoundingClientRect();
+  const tr = toEl.getBoundingClientRect();
+  if (!fr.width || !tr.width) { if (onLand) setTimeout(onLand, 0); return; }
+
+  const fx = fr.left + fr.width / 2;
+  const fy = fr.top  + fr.height / 2;
+  const tx = tr.left + tr.width / 2;
+  const ty = tr.top  + tr.height / 2;
+
+  const card = document.createElement('div');
+  card.className = 'fly-card';
+  card.textContent = '🂠';
+  card.style.cssText = `position:fixed;left:${fx}px;top:${fy}px;`;
+  document.body.appendChild(card);
+
+  // BUG-20260422-006：發牌節奏 1 秒一張，飛行時間延長為 750ms（留 250ms 緩衝給下一張）
+  const dur = 750;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    card.style.transition = `transform ${dur}ms cubic-bezier(.25,.46,.45,.94), opacity 200ms ease ${dur - 200}ms`;
+    card.style.transform = `translate(${tx-fx}px,${ty-fy}px) rotate(380deg) scale(.65)`;
+    card.style.opacity = '0';
+  }));
+  setTimeout(() => { card.remove(); if (onLand) onLand(); }, dur + 20);
+}
+
+// BUG-20260422-003：開始發牌動畫
+// - 從莊家座位順時鐘發牌（banker+1, banker+2, ..., banker 自己最後）
+// - 每位玩家共 3 張，分 3 輪；每張間隔 CARD_DELAY ms
+// - 牌飛到自己座位時，自己對應的手牌翻面（revealedCount++）
+// - 動畫結束後 _dealAnim.inProgress = false；後續渲染恢復完整
+function startDealAnimation(onComplete) {
+  if (!_state || !Array.isArray(_state.players) || _state.players.length === 0) {
+    if (onComplete) onComplete();
+    return;
+  }
+  const bankerSeat = _state.banker_seat_index;
+  const all = _state.players.slice();
+
+  // 先建 _seatPosMap（若 render 還沒跑過）— 發牌時可能早於第一次 renderState
+  if (!_seatPosMap) {
+    const meP = _myPid ? all.find(p => p.player_id === _myPid) : all[0] || null;
+    const mySeat = meP ? meP.seat_index : 0;
+    const seatAtOffset = new Array(6).fill(null);
+    if (meP) seatAtOffset[0] = meP;
+    all.forEach(p => {
+      if (p === meP) return;
+      const offset = ((p.seat_index - mySeat) % 6 + 6) % 6;
+      if (!seatAtOffset[offset]) seatAtOffset[offset] = p;
+    });
+    _seatPosMap = { offsetToPos: ['s-bot','s-br','s-tr','s-top','s-tl','s-bl'], mySeat, seatAtOffset };
+  }
+
+  const bankerEl = elForSeat(bankerSeat);
+  if (!bankerEl) { if (onComplete) onComplete(); return; }
+
+  // BUG-20260422-010 + 013：中途加入排隊者（is_waiting_next_round）與
+  // 觀察者（is_spectator）都不參與本局，不要把牌飛到他們的座位
+  const bySeat = all.slice()
+    .filter(p => !p.is_waiting_next_round && !p.is_spectator)
+    .sort((a, b) => a.seat_index - b.seat_index);
+  if (bySeat.length === 0) { if (onComplete) onComplete(); return; }
+  const startPos = bySeat.findIndex(p => p.seat_index === bankerSeat);
+  const dealQueue = [];
+  for (let i = 1; i <= bySeat.length; i++) {
+    dealQueue.push(bySeat[(startPos + i) % bySeat.length]);
+  }
+  // dealQueue 最後一位 = 莊家
+
+  _dealAnim.inProgress = true;
+  _dealAnim.dealtForSeat = {};
+  bySeat.forEach(p => { _dealAnim.dealtForSeat[p.seat_index] = 0; });
+  _myHandRevealedCount = 0;
+  renderState(_state);
+
+  // BUG-20260422-006 / 007：前兩張 1 秒，第 3 張（每人最後一張）2 秒增加緊張感
+  const CARD_DELAY      = 1000;
+  const CARD_DELAY_LAST = 2000;
+  const total = dealQueue.length * 3;
+  let dealt = 0;
+
+  // 累積時序：round 0 + round 1 用 CARD_DELAY，round 2 用 CARD_DELAY_LAST
+  let cumDelay = 0;
+  const schedule = [];
+  for (let round = 0; round < 3; round++) {
+    const perCard = (round === 2) ? CARD_DELAY_LAST : CARD_DELAY;
+    dealQueue.forEach((player) => {
+      schedule.push({ player, at: cumDelay });
+      cumDelay += perCard;
+    });
+  }
+
+  schedule.forEach(({ player, at: delay }) => {
+    const toEl = elForSeat(player.seat_index);  // 依相對座位映射
+    setTimeout(() => {
+      flyCard(bankerEl, toEl, () => {
+        _dealAnim.dealtForSeat[player.seat_index] = (_dealAnim.dealtForSeat[player.seat_index] || 0) + 1;
+        if (player.player_id === _myPid) {
+          _myHandRevealedCount = Math.min(3, _myHandRevealedCount + 1);
+          playCoinDrop();  // 自己翻牌時有聲效
+        }
+        renderState(_state);
+        dealt++;
+        if (dealt === total) {
+          setTimeout(() => {
+            _dealAnim.inProgress = false;
+            _myHandRevealedCount = 3;
+            renderState(_state);
+            if (onComplete) onComplete();
+          }, 400);
+        }
+      });
+    }, delay);
+  });
+}
+
 function playCashRegister() {
   try {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -657,9 +1073,13 @@ function playCashRegister() {
 // showResult removed — result shown in oval (.oresult #c-result) without locking screen
 
 // ── Action panel ──────────────────────────────────────────
+// BUG-20260422-018：memoize 依 state signature，避免 500ms 倒數 ticker
+// 反覆重建跟注 / 確認下注 / 棄牌按鈕 DOM 導致點擊事件遺失（要按 2-3 下才有反應）。
+// 只有 signature 有變（真正影響按鈕內容的欄位）才重新 innerHTML。
+let _actionsSig = null;
 function renderActions(s, me) {
   const box = $('actions'); if (!box) return;
-  box.innerHTML = '';
+
   const phase    = s.phase||'waiting';
   const isBanker = me?.is_banker === true;
   const minBet   = s.min_bet || 100;
@@ -674,6 +1094,21 @@ function renderActions(s, me) {
   // 不是我的行動回合 → 取消任何進行中的自動行動
   if (!isMyActionTurn) cancelAutoAct();
 
+  // 計算 signature —— 只要下列任一變動才需要重建按鈕
+  const sig = [
+    phase, isBanker, me?.has_acted ? 1 : 0, me?.is_folded ? 1 : 0,
+    me?.is_spectator ? 1 : 0, me?.is_waiting_next_round ? 1 : 0,
+    s.current_player_turn_seat, s.banker_bet_amount,
+    minBet, maxBet, _selectedBetAmt,
+    _autoActTimer ? 1 : 0,
+    Array.isArray(s.players) ? s.players.length : 0,
+    Array.isArray(s.players) ? s.players.filter(p => !p.is_spectator && !p.is_waiting_next_round).length : 0,
+  ].join('|');
+  if (sig === _actionsSig) return;
+  _actionsSig = sig;
+
+  box.innerHTML = '';
+
   if (!me) {
     box.innerHTML = '<p class="hint">觀看中（等待下一局可加入）</p>';
     return;
@@ -685,9 +1120,17 @@ function renderActions(s, me) {
 
   if (phase === 'waiting') {
     const cnt = Array.isArray(s.players) ? s.players.length : 0;
-    box.innerHTML = cnt < 2
-      ? `<p class="hint">等待更多玩家加入（${cnt}/6）<br><small style="font-size:.7rem;color:#555">需 2 人自動開始</small></p>`
-      : `<p class="hint gold">✅ ${cnt} 名玩家就緒<br>遊戲即將開始...</p>`;
+    // BUG-20260422-009：≥ 2 人時 Server 啟動 3 秒倒數，Client 顯示「N 秒後開始」
+    const deadline = Number(s.action_deadline_timestamp || 0);
+    const secsLeft = deadline > 0 ? Math.max(0, Math.ceil((deadline - Date.now()) / 1000)) : 0;
+    if (cnt < 2) {
+      box.innerHTML = `<p class="hint">等待更多玩家加入（${cnt}/6）<br><small style="font-size:.7rem;color:#555">需 2 人自動開始</small></p>`;
+    } else if (secsLeft > 0) {
+      box.innerHTML = `<p class="hint gold">🎬 遊戲將在 <span style="font-size:1.6rem;font-weight:900">${secsLeft}</span> 秒後開始</p>`;
+      startCountdownTicker();
+    } else {
+      box.innerHTML = `<p class="hint gold">✅ ${cnt} 名玩家就緒<br>即將發牌...</p>`;
+    }
     return;
   }
 
@@ -822,8 +1265,10 @@ function refreshQBetHighlight() {
 }
 
 // ── Auto-act helpers ──────────────────────────────────────
+// BUG-20260422-001：無論玩家如何加入房間，自動行動預設關閉，
+// 必須玩家主動勾選 checkbox 才啟用（修正前預設為 true，玩家未同意就自動下注）。
 function isAutoActEnabled() {
-  return $('auto-act-chk')?.checked !== false;
+  return $('auto-act-chk')?.checked === true;
 }
 function cancelAutoAct() {
   if (_autoActTimer) { clearTimeout(_autoActTimer); _autoActTimer = null; }
@@ -865,16 +1310,36 @@ function sendChat() {
 }
 
 // ── Leave ─────────────────────────────────────────────────
+// BUG-20260422-016：規則 — 只有「自己沒有出錢 OR 沒有莊家下注」時才能離開。
+// 籌碼押注中離開會造成棄牌損失，且對其他玩家不禮貌。
+// 特例：phase='settled' 也允許離開（本局已結算，錢已分配）
+function canLeaveRoom() {
+  if (!_room || !_state) return true;
+  const phase = _state.phase;
+  if (phase === 'waiting' || phase === 'settled') return true;
+  const me = _myPid ? (_state.players || []).find(p => p.player_id === _myPid) : null;
+  if (!me) return true;
+  // 自己沒有出錢 或 莊家還沒下注 → 可安全離開
+  return (me.bet_amount || 0) === 0 || (_state.banker_bet_amount || 0) === 0;
+}
+
 function leaveGame() {
+  if (!canLeaveRoom()) {
+    toast('❌ 籌碼押注中，結算後才能離開', 'red', 2500);
+    return;
+  }
   if (!confirm('確定離開房間？')) return;
+  cancelAutoAct();   // BUG-20260422-016：取消任何進行中的自動行動
   _room?.leave(); _room=null;
   _myHand=[]; _revealedHands={};
   _state = { phase:'waiting', current_pot:0, players:[], hall_name:'青銅廳',
              min_bet:100, max_bet:5000, quick_bet_amounts:[],
              current_player_turn_seat:-1, banker_seat_index:-1,
              banker_bet_amount:0, settlement:null };
-  // 清除 URL 房間參數
+  // 清除 URL 房間參數 + 清空輸入框（避免下次建立/加入又回到同一房間）
   history.replaceState(null, '', location.pathname);
+  const roomInp = $('room-join-id');
+  if (roomInp) roomInp.value = '';
   const sb = $('share-box'); if (sb) sb.style.display = 'none';
   $('game').style.display='none';
   $('login').style.display='flex';
@@ -884,10 +1349,55 @@ function leaveGame() {
 }
 
 // ── Init ──────────────────────────────────────────────────
+// BUG-20260422-008：頁面關閉 / 換網址 / 重整時，明確送 consented leave
+// （Colyseus 預設 room.leave() 即 consented=true，Server 立即移除玩家，
+//  不走 30 秒重連視窗；否則該玩家座位會被保留到 reconnectTimeout 超時）
+function tryLeaveOnUnload() {
+  try { _room?.leave(true); } catch (_) { /* ignore */ }
+  _room = null;
+}
+window.addEventListener('beforeunload', tryLeaveOnUnload);
+// pagehide 對手機 Safari 更可靠（bfcache 場景）
+window.addEventListener('pagehide', tryLeaveOnUnload);
+
 document.addEventListener('DOMContentLoaded', () => {
   fetch('http://'+API_HOST+'/api/v1/health')
     .then(r=>r.json()).then(()=>{ $('apistatus').textContent='✅ 伺服器正常'; })
     .catch(()=>{ $('apistatus').textContent='⚠️ API無回應（port-forward是否開啟？）'; });
+
+  // 聊天室縮小 / 還原（state 存 localStorage，重整後保留）
+  const chatPanel = $('chat-panel');
+  const chatToggle = $('chat-toggle');
+  if (chatPanel && chatToggle) {
+    const applyChatState = (minimized) => {
+      chatPanel.classList.toggle('minimized', minimized);
+      chatToggle.textContent = minimized ? '+' : '−';
+      chatToggle.setAttribute('aria-label', minimized ? '展開聊天室' : '縮小聊天室');
+    };
+    applyChatState(localStorage.getItem('chat_minimized') === '1');
+    chatToggle.addEventListener('click', () => {
+      const nowMin = !chatPanel.classList.contains('minimized');
+      applyChatState(nowMin);
+      localStorage.setItem('chat_minimized', nowMin ? '1' : '0');
+    });
+  }
+
+  // 操作面板縮小 / 還原（收合時以跑馬燈顯示本局關鍵訊息）
+  const actionPanel = $('action-panel');
+  const actionToggle = $('action-toggle');
+  if (actionPanel && actionToggle) {
+    const applyActionState = (minimized) => {
+      actionPanel.classList.toggle('minimized', minimized);
+      actionToggle.textContent = minimized ? '+' : '−';
+      actionToggle.setAttribute('aria-label', minimized ? '展開操作面板' : '縮小操作面板');
+    };
+    applyActionState(localStorage.getItem('action_minimized') === '1');
+    actionToggle.addEventListener('click', () => {
+      const nowMin = !actionPanel.classList.contains('minimized');
+      applyActionState(nowMin);
+      localStorage.setItem('action_minimized', nowMin ? '1' : '0');
+    });
+  }
 
   // 從 URL ?room= 自動帶入房間號碼
   const urlRoom = new URLSearchParams(location.search).get('room');

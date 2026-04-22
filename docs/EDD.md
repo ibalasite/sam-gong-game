@@ -262,12 +262,16 @@ onJoin（每位玩家）
   → 驗證 JWT token（RS256/ES256）
   → 驗證 chip_balance ≥ tier entry_chips
   → 預扣 entry escrow（如適用）
-  → 分配 seat_index
+  → 分配 seat_index（若 >= maxClients 拒絕 room_full；與 phase 無關）
   → 初始化 PlayerState
+  → **Mid-game join 判定（BUG-20260422-001）**：若當前 `phase !== 'waiting'`（遊戲進行中），
+    設 `PlayerState.is_waiting_next_round = true`；此玩家本局不發牌、不下注、不跟注、
+    不棄牌、不參與輪莊序列，直至 `resetForNextRound()` 清除旗標正式入局下一局。
+    Server **不得**於 `startNewRound()` 呼叫 `this.lock()`；房間開放加入到 `maxClients` 上限為止。
   → **年齡路由**：讀取 `player_session.is_minor`（來自 JWT payload 或 DB 查詢）；
     - `is_minor === true` → `antiAddiction.trackUnderageDaily(playerId)` （2h 每日上限）
     - `is_minor === false` → `antiAddiction.trackAdultSession(playerId)` （2h 重複提醒）
-  → ≥ 2 人時啟動遊戲循環
+  → ≥ 2 人且 phase === 'waiting' 時啟動遊戲循環（`startNewRound()`）
 
 onLeave（玩家離開）
   → consented=true：即時 Fold（如遊戲進行中）
@@ -347,6 +351,10 @@ export class PlayerState extends Schema {
   @type('boolean') is_folded: boolean = false;
   @type('boolean') has_acted: boolean = false;  // 本輪是否已行動
   @type('boolean') is_banker: boolean = false;
+  @type('boolean') is_waiting_next_round: boolean = false;
+  // BUG-20260422-001：true 表示此玩家在當前局進行中加入（mid-game join），
+  // 本局不發牌、不下注、不跟注、不棄牌、不進輪莊序列；
+  // resetForNextRound() 清除旗標後正式納入下一局（依先進先莊 / 順時鐘輪莊規則）。
   @type('string') display_name: string;
   @type('string') avatar_url: string;
   // 手牌僅透過 filterBy 或私人訊息發送，不放入公開 Schema
@@ -385,7 +393,7 @@ export class SamGongState extends Schema {
   @type('number') banker_bet_amount: number = 0;    // 莊家本局底注（閒家 Call 用）
   @type('number') min_bet: number = 0;               // 來自 TierConfig
   @type('number') max_bet: number = 0;               // 來自 TierConfig
-  @type('number') current_pot: number = 0;           // 即時底池（輸家下注額加總）
+  @type('number') current_pot: number = 0;           // 即時底池（閒家跟注加總；莊家下注屬 escrow 不入池；BUG-20260422-002）
 
   // ── 計時器 ──
   @type('number') action_deadline_timestamp: number = 0; // Server Unix ms（Client 以此計算剩餘時間）
@@ -814,6 +822,8 @@ private resetForNextRound(): void {
     player.bet_amount = 0;
     player.has_acted = false;
     player.is_folded = false;
+    // BUG-20260422-001：清除 mid-game join 旗標，使排隊玩家於下一局正式入局
+    player.is_waiting_next_round = false;
     player.hand = new ArraySchema<string>(); // 清空手牌（Server-only 欄位）
   });
 
@@ -825,6 +835,8 @@ private resetForNextRound(): void {
   this.state.settlement = new SettlementState(); // 清空結算結果
 
   // 輪莊（由 BankerRotation.rotate() 計算，統一使用 rotate() API）
+  // BankerRotation 過濾 is_waiting_next_round 與 insolvent 玩家，剛解鎖的排隊玩家
+  // 首次參與不搶莊家位（依 PRD §5.0.3 先進先莊規則）
   this.state.banker_seat_index = this.bankerRotation.rotate(
     this.state.banker_seat_index,
     Array.from(this.state.players.values())
@@ -2303,3 +2315,37 @@ APM：
 *本文件由 /devsop-autodev STEP-07 依 PRD v0.14-draft + BRD v0.12-draft + PDD v0.2-draft 自動生成。*
 *所有架構決策須由 Engineering Lead 審查確認後方可執行。*
 *開放問題（§11）須於各截止日前決策，否則影響 Alpha（2026-06-21）里程碑。*
+
+---
+
+## 變更追蹤
+
+### BUG-20260422-003：結算亮牌順序 + 發牌動畫 + 自己手牌逐張翻開（Client only）
+- **狀態**：✅ DONE
+- **分類**：BUG / 工程（純 Client UX）
+- **日期**：2026-04-22
+- **描述**：使用者回報 (1) 開牌順序應為「閒家全部先亮牌後，莊家最後亮牌決定輸贏」；(2) 發牌不該牌直接出現，應有「莊家 round-table 逐張飛牌」動畫；(3) 自己的手牌該逐張翻面增加刺激感。原實作 `startShowdownSequence` 以 seat_index 升序亮牌，莊家順序不固定；發牌 `myHand` 訊息抵達即顯示 3 張 face-up，無過渡動畫。
+- **影響範圍**：純 Client — `client/js/game.js` showdown 排序、新增發牌動畫狀態機 / 飛牌函式 / 逐張翻面邏輯、`handHTML` 擴充；`client/css/style.css` 新增 `.fly-card` 與 `.card.ghost`。Server / Schema 不變（`myHand` 私訊時機不動，Client 端僅視覺包裝）。
+- **修正/實作內容**：(1) `startShowdownSequence` 排序改為「非莊家閒家 seat_index 升序 + 莊家最後」；(2) 新增 `flyCard(from, to, onLand)` 420ms 卡背飛行動畫 + `startDealAnimation()` 3 輪（每輪 N 座位，140ms / 張），由莊家座位順時鐘飛出，莊家自己最後收牌；(3) 自己的卡片飛抵時 `_myHandRevealedCount++` 並 `coinDrop` 音效；(4) `handHTML(cards, reveal, dealtCount)` 以 `.card.ghost` 佔位保留 layout；(5) `myHand` handler 判斷是否為新一局（比對前後手牌差異）才觸發動畫，重連不重播。
+- **commit**：`7e98bd9`
+- **完成日期**：2026-04-22
+
+### BUG-20260422-002：current_pot 實作違反 Schema 註解語意 — 修正為僅含閒家跟注
+- **狀態**：✅ DONE
+- **分類**：BUG / 工程
+- **日期**：2026-04-22
+- **描述**：`SamGongState.current_pot` Schema 註解寫「輸家下注額加總」，但實作於 `handleBankerBet` / `handleAutoMinBet` 先把莊家下注加入 `current_pot`，造成 UI 顯示包含莊家投注，與三公規則及 PRD §5.3 不一致。修正：莊家下注只扣莊家籌碼（escrow），不進 current_pot；僅閒家 call 累加進池；結算後由 SettlementEngine 計算實際 losers_pot 作抽水底數。
+- **影響範圍**：§3.2 `SamGongState.current_pot` 語意說明（改為「閒家跟注加總」）；§3.3 `handleBankerBet` / `handleAutoMinBet` 不再寫入 current_pot；Client 端動畫邏輯配合調整
+- **修正/實作內容**：EDD §3.2 `current_pot` 註解更新為「閒家跟注加總；莊家下注屬 escrow 不入池」；`SamGongRoom.handleAutoMinBet` / `handleBankerBet` 移除 `current_pot = amount` 寫入（改純 escrow）；`client/js/game.js` 對應移除 banker→pot 動畫，`triggerSettleAnimation` 依規則精準分流 5 階段動畫。256 server + 32 client 測試全通過，tsc clean。
+- **commit**：`d2b9465` docs + `e69ecc3` server+client
+- **完成日期**：2026-04-22
+
+### BUG-20260422-001：SamGongRoom 不再於 startNewRound 鎖房 + PlayerState 新增 is_waiting_next_round
+- **狀態**：✅ DONE
+- **分類**：BUG / 工程
+- **日期**：2026-04-22
+- **描述**：既有 `this.lock()` 於遊戲開始時阻擋新玩家加入，與 PRD §5.0.3「中途加入：遊戲進行中加入的玩家排隊等待下一局」不一致。移除 `this.lock()`，改以 PlayerState 上的 `is_waiting_next_round` 旗標，讓中途加入者不入當前局的發牌 / 下注 / 輪莊序列，待 `resetForNextRound` 清除旗標後正式加入下一局。
+- **影響範圍**：§3 SamGongRoom 設計（onJoin / startNewRound / resetForNextRound / getNextPlayerToAct / BankerRotation）、PlayerState Schema 新增 `is_waiting_next_round` 欄位
+- **修正/實作內容**：EDD §3.1 onJoin 新增 mid-game join 判定流程（phase ≠ waiting 時設 `is_waiting_next_round=true`）並明確禁止於 `startNewRound` 呼叫 `this.lock()`；EDD §3.2 PlayerState Schema 新增 `@type('boolean') is_waiting_next_round: boolean = false`；EDD §3.6 resetForNextRound 補充清除此旗標的邏輯；`src/rooms/SamGongRoom.ts` 移除 `this.lock()` 呼叫、`onJoin` 設旗標、`startNewRound` / `getNextPlayerToAct` 過濾排隊者、`handleBankerBet` / `handleCall` / `handleFold` 以 `waiting_next_round` error 拒絕；`src/schema/SamGongState.ts` 加欄位並於 `broadcastRoomState` 廣播；jest 單元測試 TC-ROOM-007/008 驗證欄位存在與預設值；skipped TC-ROOM-021..024 標記後續 `@colyseus/testing` 整合測試待補。
+- **commit**：`7031a2b` docs + `0c61349` server + `43ba640` tests
+- **完成日期**：2026-04-22

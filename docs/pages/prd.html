@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>產品需求文件 (PRD) — sam-gong-game</title>
+  <title>產品需求文件 (PRD) — thirsty-goldstine-ac0278</title>
   <link rel="stylesheet" href="assets/style.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
 </head>
 <body>
   <header class="top-nav">
-    <a href="index.html" class="nav-brand">sam-gong-game</a>
+    <a href="index.html" class="nav-brand">thirsty-goldstine-ac0278</a>
     <div class="nav-controls">
       <div class="search-wrap">
         <input class="search-input" type="search" placeholder="搜尋文件...">
@@ -20,7 +20,7 @@
     </div>
   </header>
   <div class="doc-page-banner">
-    <p class="banner-breadcrumb"><a href="index.html">sam-gong-game</a> › 產品需求文件 (PRD)</p>
+    <p class="banner-breadcrumb"><a href="index.html">thirsty-goldstine-ac0278</a> › 產品需求文件 (PRD)</p>
     <h1 class="banner-title">產品需求文件 (PRD)</h1>
   </div>
   <div class="page-wrapper">
@@ -428,7 +428,7 @@
 <blockquote><p>本章為實作就緒（Implementation-Ready）的遊戲規則規格。所有遊戲邏輯以 Server 端 TypeScript 實作，Client 端不得包含任何規則計算邏輯。</p></blockquote>
 <h3>5.0 莊家機制（Banker Mechanism）</h3>
 <p><strong>莊家機制（來自 BRD D9, D11, D12）</strong></p>
-<ol><li>首局莊家選擇：持有籌碼最多的玩家擔任莊家；若同籌碼則按進入房間的順序（先進先莊）。</li><li>輪莊規則：每局結束後，莊家位置順時鐘移至下一位玩家（Fold玩家正常參與輪莊序列，不跳過）。</li><li>中途加入：遊戲進行中加入的玩家排隊等待下一局，不插隊搶莊家位。</li><li>莊家籌碼不足（&lt; 本廳最低下注額）：跳過本局輪莊，移至下一位玩家（見 D9）。</li></ol>
+<ol><li>首局莊家選擇：持有籌碼最多的玩家擔任莊家；若同籌碼則按進入房間的順序（先進先莊）。</li><li>輪莊規則：每局結束後，莊家位置順時鐘移至下一位玩家（Fold玩家正常參與輪莊序列，不跳過）。</li><li>中途加入：<strong>只要房間未滿（&lt; 6 人），任何 phase 都允許加入</strong>（Server 不得於遊戲開始時鎖定房間）。中途加入者於當前局視為「排隊等待下一局」：不發牌、不下注、不跟注、不棄牌、不參與輪莊序列。待當前局結算並 <code>resetForNextRound</code> 後，排隊玩家才正式納入下一局並依規則參與輪莊（先進先莊 / 順時鐘輪替）。若房間已滿（6 人），仍依既有 <code>room_full</code> 處理（與 phase 無關）。</li><li>莊家籌碼不足（&lt; 本廳最低下注額）：跳過本局輪莊，移至下一位玩家（見 D9）。</li></ol>
 <h3>5.1 牌局流程（Server 執行順序）</h3>
 <pre><code class="">Step 1: Server 洗牌（Fisher-Yates）
         → 發牌（每人 3 張暗牌，按座位順序）
@@ -812,7 +812,13 @@ Step 6: 三步驟結算（原子性執行，見 §5.3）
 <h2>Glossary</h2>
 <p>術語定義見 BRD §16 Glossary（docs/BRD.md）。PRD 不重複定義，請以 BRD §16 為準。</p>
 <hr>
-<blockquote><p><strong>文件維護聲明：</strong> 本 PRD 由 /devsop-autodev STEP-03 自動生成，依據 BRD-SAM-GONG-GAME-20260421 v0.12-draft。所有財務預測數字（付費率、ARPPU、LTV、CAC 等）均為 AI 推斷假設，非來自可信第三方市場研究，不得作為投資決策或財務承諾依據。</p></blockquote></main>
+<blockquote><p><strong>文件維護聲明：</strong> 本 PRD 由 /devsop-autodev STEP-03 自動生成，依據 BRD-SAM-GONG-GAME-20260421 v0.12-draft。所有財務預測數字（付費率、ARPPU、LTV、CAC 等）均為 AI 推斷假設，非來自可信第三方市場研究，不得作為投資決策或財務承諾依據。</p></blockquote>
+<hr>
+<h2>變更追蹤</h2>
+<h3>BUG-20260422-002：獎池（current_pot）語意錯誤 — 莊家下注不應入池</h3>
+<ul><li><strong>狀態</strong>：✅ DONE</li><li><strong>分類</strong>：BUG / 工程</li><li><strong>日期</strong>：2026-04-22</li><li><strong>描述</strong>：三公規則中，「獎池」只應包含<strong>閒家跟注</strong>的錢；莊家下注屬莊家 escrow，不屬於桌面獎池。結算時：閒家贏 → 自己的 called_bet 從獎池退回 + 莊家另從口袋付 N× 賠率；閒家輸 → called_bet 從獎池流向莊家；平手 → called_bet 從獎池退回。當前 <code>current_pot</code> 錯把莊家下注加入，造成 UI 誤導。</li><li><strong>影響範圍</strong>：§5.3 結算 UI 獎池顯示；EDD §3.2 <code>current_pot</code> 欄位語意（spec 已正確，實作不符）；結算動畫流向</li><li><strong>修正/實作內容</strong>：<code>src/rooms/SamGongRoom.ts</code> 的 <code>handleAutoMinBet</code> 與 <code>handleBankerBet</code> 不再將莊家下注加入 <code>current_pot</code>（改純 escrow 扣款）；EDD §3.2 <code>current_pot</code> 註解改為「閒家跟注加總」；<code>client/js/game.js</code> 移除 banker→pot 金幣動畫（改播 coin drop 音效），<code>triggerSettleAnimation</code> 重寫為 5 階段依結果分流：輸家→莊家、平手/贏家→退回 called_bet、莊家→贏家付 N× 賠率、破產情境破碎動畫。256 server 測試 + 32 client 測試全通過。</li><li><strong>commit</strong>：<code>d2b9465</code> docs + <code>e69ecc3</code> server+client</li><li><strong>完成日期</strong>：2026-04-22</li></ul>
+<h3>BUG-20260422-001：房間開局後仍應允許加入 + 押注/跟注 checkbox 預設不勾選</h3>
+<ul><li><strong>狀態</strong>：✅ DONE</li><li><strong>分類</strong>：BUG / 工程</li><li><strong>日期</strong>：2026-04-22</li><li><strong>描述</strong>：房間就算有位置, 一但開始遊戲, 就不能加入了, 應該開放加入；全部人不管怎麼加入房間, 預設不能打開押注或跟注, CHECKBOX DEFAULT 是不打勾</li><li><strong>影響範圍</strong>：§5.0 莊家機制（第 3 點 — 中途加入）、§5.1 牌局流程（開局時房間不得鎖定）、押注/跟注介面自動押注 checkbox 預設值</li><li><strong>修正/實作內容</strong>：PRD §5.0.3 改寫為「房間未滿即允許加入；中途加入者排隊等待下一局，本局不發牌 / 不下注 / 不跟注 / 不棄牌 / 不參與輪莊，resetForNextRound 後正式入局」；PDD §4 新增 CMP-012 Betting Panel 元件規格（auto-bet Toggle <code>isChecked=false</code> 預設 + phase 進入時強制重置）；EDD §3.1 onJoin 新增 mid-game join 判定邏輯並移除 <code>this.lock()</code> 呼叫；EDD §3.2 PlayerState 新增 <code>is_waiting_next_round</code> 欄位；EDD §3.6 resetForNextRound 清除此旗標。</li><li><strong>commit</strong>：<code>7031a2b</code> docs + <code>0c61349</code> server + <code>6cb702f</code> client + <code>43ba640</code> tests</li><li><strong>完成日期</strong>：2026-04-22</li></ul></main>
   </div>
   <script type="module">
     import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';

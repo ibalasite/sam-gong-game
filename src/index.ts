@@ -6,6 +6,7 @@ import http from 'http';
 import express from 'express';
 import { Server } from 'colyseus';
 import { SamGongRoom } from './rooms/SamGongRoom';
+import { initSchema } from './persistence/db';
 
 const PORT = parseInt(process.env['PORT'] ?? '2567', 10);
 
@@ -42,10 +43,13 @@ if (process.env['COLYSEUS_MONITOR_ENABLED'] === 'true') {
 }
 
 // ── Start ────────────────────────────────────────────────
-gameServer.listen(PORT).then(() => {
-  console.log(`[Server] ✅ Sam Gong game server running on ws://0.0.0.0:${PORT}`);
-  console.log(`[Server] Health: http://localhost:${PORT}/health`);
-}).catch((err: Error) => {
-  console.error('[Server] ❌ Failed to start:', err);
-  process.exit(1);
+// Stage 2：先初始化 DB schema（IF NOT EXISTS）；失敗不擋 server 啟動
+initSchema().finally(() => {
+  gameServer.listen(PORT).then(() => {
+    console.log(`[Server] ✅ Sam Gong game server running on ws://0.0.0.0:${PORT}`);
+    console.log(`[Server] Health: http://localhost:${PORT}/health`);
+  }).catch((err: Error) => {
+    console.error('[Server] ❌ Failed to start:', err);
+    process.exit(1);
+  });
 });

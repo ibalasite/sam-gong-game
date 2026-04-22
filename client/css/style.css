@@ -94,6 +94,71 @@ input:focus{border-color:var(--gold)}
 .bdg.bnk{background:rgba(240,192,64,.18);color:var(--gold)}
 .bdg.call{background:rgba(165,214,167,.18);color:#a5d6a7}
 .bdg.fold{background:rgba(239,154,154,.18);color:#ef9a9a}
+.bdg.wait{background:rgba(128,203,196,.15);color:#80cbc4;border:1px dashed rgba(128,203,196,.35)}
+.bdg.spectator{background:rgba(180,180,180,.2);color:#bbb;border:1px dashed rgba(200,200,200,.3)}
+/* 觀察者頭像稍微暗淡 */
+.av.spectator{opacity:.55;border-color:rgba(255,255,255,.2)}
+
+/* BUG-20260422-013：「按我加入遊戲」發光黃色按鈕 + 60 秒倒數 */
+.join-btn{
+  position:absolute; top:calc(100% + 4px); left:50%; transform:translateX(-50%);
+  padding:7px 14px; border-radius:20px;
+  background:linear-gradient(135deg,#ffeb3b,#fbc02d);
+  color:#1a1a1a;
+  border:2px solid #f9a825;
+  font-weight:900; font-size:.85rem;
+  white-space:nowrap; cursor:pointer; z-index:14;
+  box-shadow:0 2px 10px rgba(255,193,7,.55), 0 0 22px rgba(255,235,59,.45);
+  animation:joinGlow 1.2s ease-in-out infinite;
+  text-shadow:0 1px 2px rgba(255,255,255,.35);
+}
+.join-btn:hover{filter:brightness(1.08)}
+.join-btn .join-secs{font-size:.8rem;opacity:.85;margin-left:2px}
+.join-btn.urgent{
+  background:linear-gradient(135deg,#ff6b6b,#c0392b);
+  color:#fff;
+  border-color:#c0392b;
+  box-shadow:0 2px 12px rgba(192,57,43,.7), 0 0 28px rgba(255,107,107,.6);
+  animation:joinGlowUrgent .5s ease-in-out infinite;
+  text-shadow:0 1px 2px rgba(0,0,0,.4);
+}
+@keyframes joinGlow{
+  0%,100%{ box-shadow:0 2px 10px rgba(255,193,7,.55), 0 0 20px rgba(255,235,59,.45); }
+  50%    { box-shadow:0 2px 14px rgba(255,235,59,.85), 0 0 34px rgba(255,235,59,.8); }
+}
+@keyframes joinGlowUrgent{
+  0%,100%{ box-shadow:0 2px 12px rgba(192,57,43,.7), 0 0 28px rgba(255,107,107,.6); }
+  50%    { box-shadow:0 2px 16px rgba(255,107,107,1), 0 0 40px rgba(255,107,107,.9); }
+}
+
+/* BUG-20260422-010：輪到的人頭上顯示明顯倒數 — 金色脈動，<=5s 變紅色急促 */
+.turn-timer{
+  position:absolute; top:-38px; left:50%; transform:translateX(-50%);
+  background:linear-gradient(135deg,#f0c040,#d4af37);
+  color:#1a1a1a;
+  padding:5px 14px; border-radius:18px;
+  font-weight:900; font-size:1.1rem;
+  white-space:nowrap; z-index:15;
+  box-shadow:0 3px 12px rgba(240,192,64,.7), 0 0 28px rgba(240,192,64,.45);
+  animation:turnPulse 1s ease-in-out infinite;
+  pointer-events:none;
+  text-shadow:0 1px 2px rgba(255,255,255,.4);
+}
+.turn-timer.urgent{
+  background:linear-gradient(135deg,#ff6b6b,#c0392b);
+  color:#fff;
+  box-shadow:0 3px 12px rgba(192,57,43,.8), 0 0 32px rgba(255,107,107,.6);
+  animation:turnPulseUrgent .5s ease-in-out infinite;
+  text-shadow:0 1px 2px rgba(0,0,0,.5);
+}
+@keyframes turnPulse{
+  0%,100% { transform:translateX(-50%) scale(1); }
+  50%     { transform:translateX(-50%) scale(1.10); }
+}
+@keyframes turnPulseUrgent{
+  0%,100% { transform:translateX(-50%) scale(1); }
+  50%     { transform:translateX(-50%) scale(1.18); }
+}
 
 /* Cards */
 .hand{display:flex;gap:4px;margin-top:2px}
@@ -101,6 +166,21 @@ input:focus{border-color:var(--gold)}
       display:flex;flex-direction:column;align-items:center;justify-content:center;
       font-size:.8rem;font-weight:700;box-shadow:1px 2px 5px rgba(0,0,0,.5);user-select:none}
 .card.back{background:linear-gradient(135deg,#1a237e,#283593);border-color:#3949ab;font-size:1rem;color:#fff}
+/* BUG-20260422-003：發牌動畫用的飛牌（與 .card 同尺寸）*/
+.fly-card{
+  width:40px;height:56px;border:2px solid #3949ab;border-radius:6px;
+  background:linear-gradient(135deg,#1a237e,#283593);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.6rem;color:#fff;
+  pointer-events:none;z-index:350;will-change:transform,opacity;
+  transform:translate(-50%,-50%) rotate(0deg);
+  box-shadow:0 4px 14px rgba(0,0,0,.5);
+}
+/* 發牌動畫中尚未發到的卡片佔位（保留 layout 空間，不顯示）*/
+.card.ghost{
+  visibility:hidden;
+  /* 與 .card 相同尺寸即可；border/bg 透明 */
+}
 .card.r{color:#e53935}
 .card.b{color:#111}
 .card span{display:block;line-height:1.1}
@@ -116,10 +196,62 @@ input:focus{border-color:var(--gold)}
   box-shadow:0 4px 20px rgba(0,0,0,.6);
   overflow-y:auto;
 }
-.fpanel.left {left:10px}
+.fpanel.left {left:10px; top:auto; bottom:10px; max-height:48vh}
 .fpanel.right{right:10px}
+/* 堆疊容器：聊天室（左）+ 操作面板（右，聊天旁），並排於左下角 */
+.left-stack{
+  position:fixed; left:10px; bottom:10px;
+  display:flex; flex-direction:row; gap:10px; z-index:10;
+  align-items:flex-end;   /* 兩個面板高度不同時從底對齊 */
+  pointer-events:none;
+  max-width:calc(100vw - 20px);
+}
+.left-stack > .fpanel.stacked{
+  position:static; width:230px; top:auto; bottom:auto; left:auto; right:auto;
+  pointer-events:auto;
+  max-height:60vh;   /* 放寬為 60vh 確保下注按鈕可見 */
+}
+.left-stack > .fpanel.stacked.minimized{
+  max-height:44px;   /* 收合後只留標題 bar */
+}
 .ptitle{font-size:.75rem;font-weight:700;color:var(--gold);
-        border-bottom:1px solid var(--border);padding-bottom:6px;letter-spacing:.5px}
+        border-bottom:1px solid var(--border);padding-bottom:6px;letter-spacing:.5px;
+        display:flex;justify-content:space-between;align-items:center;gap:6px;
+        min-height:22px}
+.ptitle-name{flex-shrink:0}
+/* 跑馬燈：收合時才顯示 */
+.ptitle-marquee{display:none; flex:1; overflow:hidden; white-space:nowrap; min-width:0}
+.ptitle-marquee > span{
+  display:inline-block; padding-left:100%;
+  color:#d4af37; font-weight:600;
+  animation:marqueeScroll 14s linear infinite;
+}
+@keyframes marqueeScroll{
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+.fpanel.minimized .ptitle-name{display:none}
+.fpanel.minimized .ptitle-marquee{display:block}
+/* share-box 有 inline style="display:flex" 會蓋過非 !important 的規則；縮合時必須強制隱藏 */
+.fpanel.minimized .share-box{display:none !important}
+
+/* Panel minimize toggle */
+.panel-toggle{
+  background:transparent;border:1px solid var(--border);
+  color:var(--gold);font-size:.95rem;font-weight:700;line-height:1;
+  width:22px;height:22px;border-radius:5px;cursor:pointer;padding:0;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s,color .15s;
+}
+.panel-toggle:hover{background:rgba(240,192,64,.15);color:#fff}
+
+/* Minimized state: show only title bar */
+.fpanel.minimized{
+  max-height:none;padding:8px 12px;gap:0;overflow:visible;
+  min-height:0;
+}
+.fpanel.minimized .ptitle{border-bottom:none;padding-bottom:0}
+.fpanel.minimized > :not(.ptitle){display:none !important}
 
 /* Chat log */
 .clog{flex:1;overflow-y:auto;font-size:.75rem;line-height:1.5;min-height:120px;max-height:280px}

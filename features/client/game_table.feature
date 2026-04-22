@@ -15,25 +15,42 @@ Feature: 遊戲桌面 (SCR-007)
     Then 桌面獎池顯示 "獎池：🪙 5,000"
     And Client 不自行計算任何籌碼值
 
-  Scenario: 莊家押注階段顯示押注面板
+  Scenario: 莊家押注階段顯示押注面板（自動押注 checkbox 預設不勾選）
     When 伺服器廣播 phase="banker-bet"
     And 輪到我（莊家）
     Then 應顯示快速押注按鈕組
-    And 自動押注 checkbox 預設為勾選
-    And 進度條開始 3 秒倒數
+    And 自動押注 checkbox 預設為未勾選（BUG-20260422-001）
+    And 進度條隱藏（未啟動倒數）
+    And 玩家必須手動點擊「確認下注」才會送出 banker_bet
 
-  Scenario: 自動押注倒數後執行上一把金額
+  Scenario: 自動押注 checkbox 每次進入 banker-bet 都重置為未勾選
+    Given 上一局玩家曾勾選自動押注 checkbox
+    When 新一局 phase 進入 "banker-bet" 且 showBankerMode 被呼叫
+    Then 自動押注 checkbox 應自動回復為未勾選
+    And 進度條隱藏
+    And 不會自動發送 banker_bet
+
+  Scenario: 玩家主動勾選自動押注後倒數才執行上一把金額
     Given 莊家上一把押注金額為 1000
-    And 自動押注已開啟
+    And 玩家於本局主動勾選自動押注 checkbox
     When 3 秒倒數結束
     Then 自動發送 banker_bet 1000 至伺服器
     And 選中按鈕顏色應為主色（金色）
 
-  Scenario: 閒家跟注階段
+  Scenario: 閒家跟注階段（自動跟注 checkbox 預設不勾選）
     When 伺服器廣播 phase="player-bet"
     And 輪到我（閒家）
     Then 應顯示「跟注」和「棄牌」按鈕
-    And 自動跟注倒數 3 秒後自動執行
+    And 自動跟注 checkbox 預設為未勾選（BUG-20260422-001）
+    And 玩家必須手動點擊「跟注」或「棄牌」才會送出 call / fold
+
+  Scenario: 中途加入者暫不顯示操作按鈕（等待下一局）
+    Given 我於 phase="player-bet" 時加入房間
+    And room_state 顯示我的 is_waiting_next_round = true
+    When phase 仍為 "player-bet" 期間
+    Then 桌面顯示「等待下一局」提示
+    And 不顯示押注 / 跟注面板
+    And 我不會收到 myHand 私人訊息
 
   Scenario: 開牌動畫（顯示 Server 廣播的牌型）
     When 伺服器廣播 showdown_reveal 含各玩家手牌

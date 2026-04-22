@@ -31,6 +31,9 @@ export class BettingPanelComponent extends Component {
     this.btnConfirm.node.on('click', this._onConfirm, this);
     this.btnFold.node.on('click', this._onFold, this);
     this.toggleAutoBet.node.on('toggle', this._onAutoToggle, this);
+    // BUG-20260422-001：無論玩家如何加入房間，自動押注 / 自動跟注 Toggle
+    // 一律預設不勾選（不依賴 Cocos Editor Prefab 預設值）。
+    this.toggleAutoBet.isChecked = false;
   }
 
   onDestroy(): void { this._cancelAutoAct(); }
@@ -41,7 +44,10 @@ export class BettingPanelComponent extends Component {
     this.btnFold.node.active = false;
     this._renderQuickBets(minBet, maxBet);
     this._selectAmount(this._lastBetAmount > 0 ? this._lastBetAmount : minBet);
-    if (this.toggleAutoBet.isChecked) this._startAutoAct(() => this._onConfirm());
+    // BUG-20260422-001：每次進入下注 phase 強制重置 Toggle 為未勾選，
+    // 避免上局勾選狀態延續；玩家需每局重新決定是否啟用自動押注。
+    this.toggleAutoBet.isChecked = false;
+    this._cancelAutoAct();
   }
 
   /** 以閒家跟注模式展示 */
@@ -49,7 +55,9 @@ export class BettingPanelComponent extends Component {
     this._isBankerMode = false;
     this.btnFold.node.active = true;
     this.lblMinBet.string = t('game.bankerBet', { amount: bankerBet.toLocaleString() });
-    if (this.toggleAutoBet.isChecked) this._startAutoAct(() => this._onCall());
+    // BUG-20260422-001：每次進入跟注 phase 強制重置 Toggle 為未勾選
+    this.toggleAutoBet.isChecked = false;
+    this._cancelAutoAct();
   }
 
   private _renderQuickBets(min: number, max: number): void {

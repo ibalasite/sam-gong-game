@@ -455,6 +455,32 @@ const phaseText = i18n.t(phaseKey); // e.g., '莊家下注中'
 
 ---
 
+### CMP-012：Betting Panel（押注 / 跟注面板）
+
+| 屬性 | 規格 |
+|------|------|
+| **元件 ID** | CMP-012 |
+| **元件名稱** | BettingPanelComponent（整合 CMP-004 + CMP-005 + 自動押注 Toggle + 3s 倒數進度條）|
+| **顯示條件** | `phase === 'banker-bet'`（莊家押注模式）或 `phase === 'player-bet'` 且本地玩家為當前輪次（跟注模式）|
+
+**Auto-Act Toggle（自動押注 / 自動跟注）：**
+- 元件型別：`cc.Toggle`（Cocos Creator checkbox）
+- **預設值：`isChecked = false`（未勾選）** — 無論玩家如何加入房間（開局前加入 / 中途加入 / 重連 / 切換廳別），Toggle 於 `onLoad` / 進入 `showBankerMode` / 進入 `showPlayerMode` 時必須主動設為 `false`，不得依賴 Cocos Editor Prefab 預設值
+- **行為：** 未勾選 → 玩家必須手動點擊「確認下注」或「跟注」；勾選 → 3 秒倒數後自動送出 `banker_bet` 或 `call`
+- **每次新 phase 進入時強制重置**：避免上一局勾選狀態延續至下一局（玩家需每局重新決定是否啟用自動）
+- **i18n：** `game.autoBet`（莊家模式，zh-TW: 「自動押注」）、`game.autoCall`（閒家模式，zh-TW: 「自動跟注」）
+- **可存取性：** Toggle 加上 `aria-label`（i18n: `a11y.auto_bet_toggle` / `a11y.auto_call_toggle`），螢幕閱讀器須朗讀當前狀態（checked / unchecked）
+
+**狀態：**
+
+| 狀態 | 視覺 |
+|------|------|
+| Default | Toggle 未勾選；進度條隱藏 |
+| Checked（用戶主動勾選）| Toggle 勾選；進度條顯示並開始 3s 倒數；倒數到 0 時自動執行 action |
+| Cancelled（倒數中取消）| 點擊 Toggle 取消勾選 或 點擊「確認下注」/「跟注」手動送出 → 進度條隱藏；倒數計時器清除 |
+
+---
+
 ## 5. Screen Wireframes（詳細佈局規格）
 
 ### SCR-001：Splash / Loading
@@ -2179,3 +2205,36 @@ room.state.settlement.winners.forEach((winner) => {
 ---
 
 > **文件維護聲明：** 本 PDD 由 /devsop-autodev STEP-05 自動生成，依據 PRD v0.14-draft 及 BRD v0.12-draft。Client 設計嚴格遵循 Server-authoritative 原則；所有遊戲邏輯計算均由 Colyseus Server 執行，Client 僅為渲染顯示層。
+
+---
+
+## 變更追蹤
+
+### BUG-20260422-003：結算亮牌順序 + 發牌動畫 + 自己手牌逐張翻開
+- **狀態**：✅ DONE
+- **分類**：BUG / 工程
+- **日期**：2026-04-22
+- **描述**：
+  1. 結算開牌順序應為「閒家先全部開完後，莊家最後亮牌決定輸贏」，增加刺激感。之前 `startShowdownSequence` 以 seat_index 升序亮牌，莊家不一定最後。
+  2. 發牌階段應呈現「莊家依順時鐘逐張飛牌到每位閒家（含自己），共 3 輪」的 round-table 動畫，而非牌直接面朝下出現。
+  3. 自己的手牌要一張張飛進來後翻面，而非 3 張同時顯示。
+- **影響範圍**：`client/js/game.js` startShowdownSequence 排序；新增 `_dealAnim` 狀態、`flyCard`、`startDealAnimation`；`handHTML` 接受 `dealtCount` 參數；`myHand` 訊息處理；`client/css/style.css` 新增 `.fly-card` 與 `.card.ghost` 樣式
+- **修正/實作內容**：
+  1. `startShowdownSequence` 把莊家 seat 從排序中排出，再 append 至末；其他閒家照 seat_index 升序
+  2. 新增 `flyCard(fromEl, toEl, onLand)` — 從來源位置飛出 🂠 卡背，420ms 帶旋轉與淡出
+  3. 新增 `startDealAnimation()`：莊家為原點，依順時鐘（banker+1 開始，莊家最後）3 輪發牌；每張間隔 140ms；每位玩家累計 3 張；飛到「自己」座位時增加 `_myHandRevealedCount`（逐張翻面 + coin drop 音效）
+  4. `handHTML(cards, reveal, dealtCount)` — 支援限制顯示張數；未飛到的位置用 `.card.ghost` 佔位保留 layout 寬度
+  5. render 邏輯在 `_dealAnim.inProgress` 時：自己只顯示 `_myHandRevealedCount` 張 face-up，其他玩家顯示 `dealtForSeat[seat]` 張 face-down
+  6. `myHand` 訊息處理判斷是否為新一局（比對舊手牌不同）才觸發動畫；重連或 race condition 不會重播
+- **commit**：（此提交）
+- **完成日期**：2026-04-22
+
+### BUG-20260422-001：押注/跟注 CMP-012 自動押注 checkbox 預設不勾選
+- **狀態**：✅ DONE
+- **分類**：BUG / 工程
+- **日期**：2026-04-22
+- **描述**：全部人不管怎麼加入房間（一開始加入 / 中途加入）, 預設不能打開押注或跟注, CHECKBOX DEFAULT 是不打勾
+- **影響範圍**：CMP-012 BettingPanelComponent — 自動押注 Toggle 初始值；進入 banker-bet / player-bet 時重置為未勾選
+- **修正/實作內容**：PDD §4 新增 CMP-012 Betting Panel 正式元件規格（auto-bet Toggle `isChecked=false` 預設 + 每次 phase 進入強制重置 + 必須手動勾選才啟用自動動作）；`BettingPanelComponent.onLoad` / `showBankerMode` / `showPlayerMode` 全部顯式設 `toggleAutoBet.isChecked = false` 並呼叫 `_cancelAutoAct()`；features/client/game_table.feature 4 個 Scenario 改寫 / 新增驗證預設未勾選行為；client-cocos jest 4 個單元測試證明無隱式自動動作。
+- **commit**：`7031a2b` docs + `6cb702f` client + `43ba640` tests
+- **完成日期**：2026-04-22

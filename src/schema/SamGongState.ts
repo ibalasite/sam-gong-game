@@ -78,6 +78,19 @@ export class PlayerState extends Schema {
   @type('boolean') is_folded: boolean = false;
   @type('boolean') has_acted: boolean = false;
   @type('boolean') is_banker: boolean = false;
+  /**
+   * BUG-20260422-001：中途加入排隊旗標。
+   * true = 玩家在當前局進行中加入（phase !== 'waiting'），本局不參與發牌 / 下注 /
+   * 跟注 / 棄牌 / 輪莊；resetForNextRound() 清除旗標後於下一局正式入局。
+   */
+  @type('boolean') is_waiting_next_round: boolean = false;
+  /**
+   * BUG-20260422-013：觀察者旗標 — 進房預設 true，玩家需按「加入遊戲」按鈕才轉 false。
+   * 觀察者不發牌、不算遊戲人數、不參與輪莊；60 秒未按加入自動踢出。
+   */
+  @type('boolean') is_spectator: boolean = true;
+  /** 觀察者 60 秒踢出倒數截止時間（Unix ms）；按下加入後清 0。*/
+  @type('number') spectator_deadline_timestamp: number = 0;
   @type('string') display_name: string = '';
   @type('string') avatar_url: string = '';
 
