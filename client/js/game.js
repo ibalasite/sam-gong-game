@@ -488,6 +488,49 @@ function renderState(s) {
   }
 
   renderActions(s, me);
+  updateActionMarquee(s, me);
+}
+
+// 更新操作面板收合時的跑馬燈文字 — 把本局關鍵訊息濃縮成一行滾動
+function updateActionMarquee(s, me) {
+  const el = $('action-marquee');
+  if (!el) return;
+  const phase = s?.phase || 'waiting';
+  const bits = [];
+
+  if (me?.is_waiting_next_round) {
+    bits.push('⏳ 您中途加入，等待下一局');
+  } else if (phase === 'waiting') {
+    const cnt = Array.isArray(s.players) ? s.players.length : 0;
+    bits.push(cnt < 2 ? `⏳ 等待更多玩家（${cnt}/6）` : `✅ ${cnt} 名玩家就緒，即將開始`);
+  } else if (phase === 'dealing') {
+    bits.push('🎴 發牌中...');
+  } else if (phase === 'banker-bet') {
+    const iAmBanker = me?.is_banker;
+    bits.push(iAmBanker ? `👑 您是莊家，請下注（${s.min_bet}–${s.max_bet}）` : '👑 莊家下注中...');
+  } else if (phase === 'player-bet') {
+    const myTurn = me && me.seat_index === s.current_player_turn_seat && !me.has_acted && !me.is_banker;
+    if (me?.is_folded) bits.push('🚫 已棄牌，等待本局結算');
+    else if (myTurn) bits.push(`▶ 輪到您跟注 ${s.banker_bet_amount} 或棄牌`);
+    else {
+      const cur = (s.players || []).find(p => p.seat_index === s.current_player_turn_seat);
+      bits.push(cur ? `⏱ 輪到 ${cur.display_name || '玩家'} 行動` : '⏱ 閒家下注中...');
+    }
+  } else if (phase === 'showdown') {
+    bits.push('🃏 開牌中...');
+  } else if (phase === 'settled') {
+    bits.push('✅ 本局結束，等待下一局自動開始');
+  }
+
+  // 本局獎池 + 房間代號
+  if (typeof s.current_pot === 'number' && s.current_pot > 0) {
+    bits.push(`🪙 獎池 ${s.current_pot.toLocaleString()}`);
+  }
+  const rid = (_room && _room.id) ? _room.id : null;
+  if (rid) bits.push(`🏠 ${rid}`);
+
+  const text = bits.join('  ·  ');
+  if (el.textContent !== text) el.textContent = text;
 }
 
 // ── Bet transition → coins fly to pot ────────────────────
@@ -1096,6 +1139,23 @@ document.addEventListener('DOMContentLoaded', () => {
       const nowMin = !chatPanel.classList.contains('minimized');
       applyChatState(nowMin);
       localStorage.setItem('chat_minimized', nowMin ? '1' : '0');
+    });
+  }
+
+  // 操作面板縮小 / 還原（收合時以跑馬燈顯示本局關鍵訊息）
+  const actionPanel = $('action-panel');
+  const actionToggle = $('action-toggle');
+  if (actionPanel && actionToggle) {
+    const applyActionState = (minimized) => {
+      actionPanel.classList.toggle('minimized', minimized);
+      actionToggle.textContent = minimized ? '+' : '−';
+      actionToggle.setAttribute('aria-label', minimized ? '展開操作面板' : '縮小操作面板');
+    };
+    applyActionState(localStorage.getItem('action_minimized') === '1');
+    actionToggle.addEventListener('click', () => {
+      const nowMin = !actionPanel.classList.contains('minimized');
+      applyActionState(nowMin);
+      localStorage.setItem('action_minimized', nowMin ? '1' : '0');
     });
   }
 

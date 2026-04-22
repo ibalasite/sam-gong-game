@@ -133,9 +133,39 @@ input:focus{border-color:var(--gold)}
 }
 .fpanel.left {left:10px; top:auto; bottom:10px; max-height:48vh}
 .fpanel.right{right:10px}
+/* 堆疊容器：操作面板與聊天室共用左下角，操作在上、聊天在下 */
+.left-stack{
+  position:fixed; left:10px; bottom:10px; width:220px;
+  max-height:calc(100vh - 60px);
+  display:flex; flex-direction:column; gap:8px; z-index:10;
+  pointer-events:none;   /* 容器本身不吃事件，子面板各自吃 */
+}
+.left-stack > .fpanel.stacked{
+  position:static; width:100%; top:auto; bottom:auto; left:auto; right:auto;
+  pointer-events:auto;
+  max-height:40vh;   /* 每個面板最多 40vh，留空間給桌面 */
+}
+.left-stack > .fpanel.stacked.minimized{
+  max-height:44px;   /* 收合後只留標題 bar */
+}
 .ptitle{font-size:.75rem;font-weight:700;color:var(--gold);
         border-bottom:1px solid var(--border);padding-bottom:6px;letter-spacing:.5px;
-        display:flex;justify-content:space-between;align-items:center;gap:6px}
+        display:flex;justify-content:space-between;align-items:center;gap:6px;
+        min-height:22px}
+.ptitle-name{flex-shrink:0}
+/* 跑馬燈：收合時才顯示 */
+.ptitle-marquee{display:none; flex:1; overflow:hidden; white-space:nowrap; min-width:0}
+.ptitle-marquee > span{
+  display:inline-block; padding-left:100%;
+  color:#d4af37; font-weight:600;
+  animation:marqueeScroll 14s linear infinite;
+}
+@keyframes marqueeScroll{
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+.fpanel.minimized .ptitle-name{display:none}
+.fpanel.minimized .ptitle-marquee{display:block}
 
 /* Panel minimize toggle */
 .panel-toggle{
