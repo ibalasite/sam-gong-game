@@ -15,7 +15,6 @@ import {
   PlayerState,
   SettlementEntry,
   SettlementState,
-  TierConfig,
 } from '../schema/SamGongState';
 import { HandEvaluator, Card, makeCard } from '../game/HandEvaluator';
 import { SettlementEngine } from '../game/SettlementEngine';
@@ -241,7 +240,7 @@ export class SamGongRoom extends Room<SamGongState> {
    * - 初始化 PlayerState
    * - ≥ 2 人時啟動遊戲
    */
-  async onJoin(client: Client, options: JoinOptions): Promise<void> {
+  async onJoin(client: Client, _options: JoinOptions): Promise<void> {
     const auth = client.auth as AuthToken;
 
     if (!auth || !auth.player_id) {

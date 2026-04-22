@@ -32,7 +32,7 @@ gameServer.define('sam_gong', SamGongRoom);
 // ── Colyseus Monitor (dev only) ─────────────────────────
 if (process.env['COLYSEUS_MONITOR_ENABLED'] === 'true') {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { monitor } = require('@colyseus/monitor');
     app.use('/colyseus', monitor());
     console.log('[Server] Colyseus monitor enabled at /colyseus');
