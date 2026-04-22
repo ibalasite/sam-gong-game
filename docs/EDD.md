@@ -229,6 +229,9 @@ export class SamGongRoom extends Room<SamGongState> {
     this.onMessage<ReportMessage>('report_player', (client, message) => {
       this.handleReport(client, message);
     });
+    this.onMessage<{ player_id: string }>('confirm_anti_addiction', (client, message) => {
+      this.antiAddiction.onAdultWarningConfirmed(client.sessionId);
+    });
   }
 
   // onJoin: 玩家加入，驗證 JWT、籌碼門檻、分配座位
@@ -456,14 +459,14 @@ stateDiagram-v2
     waiting --> dealing : ≥ 2 玩家就緒，開始新局
     waiting --> [*] : 60s 無人加入，自動解散
 
-    dealing --> banker_bet : 發牌完成（每人 3 張）\n推送 myHand 至各玩家
+    dealing --> banker-bet : 發牌完成（每人 3 張）\n推送 myHand 至各玩家
     dealing --> waiting : 玩家數 < 2（中途離開）
 
-    banker_bet --> player_bet : 莊家下注確認（或 30s 超時自動最低下注）\n廣播 banker_bet_amount\n啟動閒家計時器
-    banker_bet --> dealing : 莊家籌碼 < min_bet（跳過當前莊家：banker_index += 1 mod N，輪至下一位後重新發牌；若所有人都不夠資格則回到 waiting）
+    banker-bet --> player-bet : 莊家下注確認（或 30s 超時自動最低下注）\n廣播 banker_bet_amount\n啟動閒家計時器
+    banker-bet --> dealing : 莊家籌碼 < min_bet（跳過當前莊家：banker_index += 1 mod N，輪至下一位後重新發牌；若所有人都不夠資格則回到 waiting）
 
-    player_bet --> showdown : 所有閒家行動完成（Call / Fold / 30s 超時 Fold）
-    player_bet --> showdown : 所有閒家均 Fold（all_fold 情境）
+    player-bet --> showdown : 所有閒家行動完成（Call / Fold / 30s 超時 Fold）
+    player-bet --> showdown : 所有閒家均 Fold（all_fold 情境）
 
     showdown --> settled : Server 比牌完成\n廣播 showdown_reveal（所有未 Fold 手牌）
     showdown --> settled : all_fold：直接進入結算（莊家底注退回）
@@ -477,13 +480,13 @@ stateDiagram-v2
         60s 超時解散
     end note
 
-    note right of banker_bet
+    note right of banker-bet
         莊家 30s 計時器
         see_cards 可選（D12）
         escrow: banker chip_balance -= bet
     end note
 
-    note right of player_bet
+    note right of player-bet
         閒家逐一 30s 計時
         Call: chip_balance -= banker_bet_amount
         Fold: bet=0, no chips deducted
@@ -599,12 +602,14 @@ export interface SettlementOutput {
   ties: SettlementResultDTO[];
   folders: SettlementResultDTO[];
   insolvent_winners: SettlementResultDTO[]; // 莊家破產後未獲支付的贏家；net_chips = -called_bet（非零）
+  banker_settlement: SettlementResultDTO;   // 莊家結算結果
+  // 莊家 net_chips = sum(losers' called_bets) - rake - sum(winners' N × banker_bet_amount)
   rake_amount: number;             // floor(pot × 0.05)，底池 > 0 時最少 1
   pot_amount: number;              // 輸家閒家下注額加總
   banker_insolvent: boolean;
   banker_remaining_chips: number;
   all_fold: boolean;
-  // 籌碼守恆驗證：sum(all net_chips) + rake_amount === 0
+  // 籌碼守恆驗證：sum(all participants' net_chips) + rake_amount === 0
 }
 
 export class SettlementEngine {
@@ -649,7 +654,7 @@ export class SettlementEngine {
     // 閒家勝：net_chips = N × banker_bet_amount（純利潤）
     //   payout_amount = called_bet + N × banker_bet_amount（總返回額）
     //   莊家破產檢查：chip_balance + escrow < 本次應付額 → 觸發 D13
-    // 閒家敗：bet_amount 入底池，底池扣 rake 後歸莊家
+    // 閒家敗：net_chips = -called_bet（escrow 已扣除，payout_amount = 0）；bet_amount 入底池，底池扣 rake 後歸莊家
     // Fold：net_chips = 0，籌碼無損失
     // 平手：退回 bet_amount，net_chips = 0
 
@@ -739,8 +744,11 @@ class TutorialScriptEngine {
   //
   // 精確牌面序列由 Q7（Open Question）確定後填入，暫定如下：
   // R1: banker=['K♠','Q♥','J♦']（三公=0pts, is_sam_gong=true）
-  // R2: banker=['5♠','A♥','9♦']（5pt）vs player=['3♣','K♠','Q♥']（3pt）
-  // R3: banker=['2♠','4♥','K♦']（6pt）vs player=['6♣','J♠','9♥']（6pt, force_tie）
+  //     player_hands: { 'P1': ['A♣','K♠','Q♥'] }（1+0+0=1pt）→ 展示三公 vs 1pt，banker_win
+  // R2: banker=['5♠','A♥','9♦']（5pt）
+  //     player_hands: { 'P1': ['3♣','K♠','Q♥'] }（3+0+0=3pt）→ 展示普通比點 5pt > 3pt，banker_win
+  // R3: banker=['2♠','4♥','K♦']（6pt）
+  //     player_hands: { 'P1': ['6♣','K♠','Q♥'] }（6+0+0=6pt, force_tie）→ 展示平局概念
 }
 ```
 
@@ -792,7 +800,7 @@ export class BankerRotation {
 | `showdown_reveal` | `{ hands: { [seat]: Card[] } }` | 所有未 Fold 玩家手牌（廣播，showdown phase） |
 | `anti_addiction_warning` | `{ type: 'adult', session_minutes: number }` | 成人 2h 連續遊玩提醒 |
 | `anti_addiction_signal` | `{ type: 'underage', daily_minutes_remaining: number, midnight_timestamp: number }` | 未成年每日 2h 硬停訊號 |
-| `rescue_chips` | `{ amount: 1000, new_balance: number }` | 結算後餘額 < 500 觸發救濟籌碼補發 |
+| `rescue_chips` | `{ amount: 1000, new_balance: number }` | 結算後餘額 < 500 觸發救濟籌碼補發。Server 偵測 chip_balance < 500 時，先查 daily_rescue_claimed_at（與 POST /api/v1/player/rescue-chip REST API 共用同一冪等判斷）。若今日未領取，則自動發放並推送 rescue_chips 通知；若已領取（無論透過 REST 或自動觸發），不重複發放，改推送 rescue_not_available 通知。 |
 | `rate_limit` | `{ error: 'rate_limit', retry_after_ms: number }` | 訊息速率超限回應 |
 | `error` | `{ code: string, message: string }` | 一般錯誤回應（非法操作、驗證失敗） |
 | `matchmaking_expanded` | `{ expanded_tiers: string[] }` | 配對擴展至相鄰廳別（30s 後） |
@@ -844,7 +852,7 @@ room.onLeave(async (code) => {
 | DELETE | `/api/v1/player/me` | 申請帳號刪除（7 工作日）| JWT | 60/min/user | 202/401 |
 | GET | `/api/v1/leaderboard` | 排行榜（weekly / chip type）| JWT（可選）| 60/min/user | 200/400 |
 | POST | `/api/v1/player/daily-chip` | 每日籌碼領取（冪等）| JWT | 5/min/user | 200/400/429 |
-| POST | `/api/v1/player/rescue-chip` | 申請救援籌碼（每日1次，帳戶≥0筒碼時拒絕）| Bearer JWT | ≤1/day/user | 200/400/403/429 |
+| POST | `/api/v1/player/rescue-chip` | 申請救援籌碼（每日1次，帳戶≥0筒碼時拒絕）| Bearer JWT | ≤1/day/user | 200/400/401/403/429 |
 | GET | `/api/v1/tasks` | 取得每日任務列表 | JWT | 60/min/user | 200/401 |
 | POST | `/api/v1/tasks/:id/complete` | 完成任務 + 發放獎勵 | JWT | 5/min/user | 200/400/401/404/429 |
 | POST | `/api/v1/kyc/submit` | KYC 資料提交 | JWT | 60/min/user | 200/400/401 |
@@ -1025,7 +1033,7 @@ erDiagram
         uuid user_id FK
         string kyc_type
         string status
-        jsonb data_encrypted
+        bytea data_encrypted
         timestamp submitted_at
         timestamp reviewed_at
         string reviewed_by
@@ -1871,16 +1879,16 @@ APM：
 | REQ-012 | 機器人（NPC）| 教學模式 SamGongBot（§3.1 Tutorial Room）；正式房不含 NPC |
 | REQ-013 | 法律免責聲明 | Client-side only（PDD §5 每個畫面 wireframe）；Server 不介入 |
 | REQ-014 | 個人資料/帳號管理 | §4.1 GET/PUT /api/v1/player/me, §5.2 users DDL |
-| REQ-015 | Cookie 同意 ⚠️ | §4.1 POST /api/v1/player/cookie-consent, §5.2 cookie_consents DDL |
-| REQ-016 | 隱私政策 | §4.1 POST /api/v1/player/cookie-consent（consent_version）|
+| REQ-015 | 防沉迷（成人 2h 提醒 + 未成年 2h 硬停）| §3.6 AntiAddictionManager, §5.3 Redis aa:session, §5.2 users（daily_play_seconds）, §6.3 Taiwan Compliance（REQ-015 AC-1 / AC-3 F20）|
+| REQ-016 | Cookie 同意 / 隱私政策 | §4.1 POST /api/v1/player/cookie-consent（consent_version）, §5.2 cookie_consents DDL |
 | REQ-017 | 速率限制 | §4.3 Rate Limiting（NFR-19 4層）|
 | REQ-018 | KYC/OTP 年齡驗證 | §4.1 POST /api/v1/auth/otp/verify, §6.3 Taiwan Compliance |
-| REQ-019 | 防沉迷 ⚠️ | §3.6 AntiAddictionManager, §5.3 Redis aa:session, §5.2 users（daily_play_seconds）|
+| REQ-019 | 財務記錄保留（chip_transactions 7 年）| §5.2 chip_transactions DDL, §5.4 Data Retention（REQ-019 + 台灣金融法規）|
 | REQ-020a | 廣告獎勵（AdMob）| §4.1 POST /api/v1/player/ad-reward |
 | REQ-020b | 籌碼商店（IAP）| §4.1 佔位（feature flag 2026-05-15 法律意見書後決定）|
 | REQ-021 | 教學關卡 | §3.1 Tutorial Room 設計（Tutorial SamGongRoom variant）|
 
-> ⚠️ **REQ 編號注意事項**：REQ 編號依 PRD 定義；若 PRD REQ-015=防沉迷，請以 PRD 為準重新對照本矩陣。目前依 EDD §6.3 Taiwan Compliance 表格：REQ-015=Cookie 同意、REQ-019=防沉迷。請於下次文件修訂時與 PRD 對照確認。
+> **REQ 編號說明**：REQ 編號依 §6.3 Taiwan Compliance 表格確認。REQ-015=防沉迷（AC-1 成人 2h 提醒 / AC-3 F20 未成年 2h 硬停）；REQ-016=Cookie 同意 / 隱私政策；REQ-019=財務記錄保留 7 年（台灣金融法規）。全文已統一。
 
 ---
 
