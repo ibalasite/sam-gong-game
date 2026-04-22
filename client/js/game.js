@@ -229,6 +229,7 @@ async function joinGame(forceRoomId) {
     _myId   = _room.sessionId;
     _myHand = [];
     _revealedHands = {};
+    _actionsSig = null;   // 清掉上一房間的 memo
     // Reset local state
     _state = { phase:'waiting', current_pot:0, players:[], hall_name:'青銅廳',
                min_bet:100, max_bet:5000, quick_bet_amounts:[],
@@ -1072,9 +1073,13 @@ function playCashRegister() {
 // showResult removed — result shown in oval (.oresult #c-result) without locking screen
 
 // ── Action panel ──────────────────────────────────────────
+// BUG-20260422-018：memoize 依 state signature，避免 500ms 倒數 ticker
+// 反覆重建跟注 / 確認下注 / 棄牌按鈕 DOM 導致點擊事件遺失（要按 2-3 下才有反應）。
+// 只有 signature 有變（真正影響按鈕內容的欄位）才重新 innerHTML。
+let _actionsSig = null;
 function renderActions(s, me) {
   const box = $('actions'); if (!box) return;
-  box.innerHTML = '';
+
   const phase    = s.phase||'waiting';
   const isBanker = me?.is_banker === true;
   const minBet   = s.min_bet || 100;
@@ -1088,6 +1093,21 @@ function renderActions(s, me) {
 
   // 不是我的行動回合 → 取消任何進行中的自動行動
   if (!isMyActionTurn) cancelAutoAct();
+
+  // 計算 signature —— 只要下列任一變動才需要重建按鈕
+  const sig = [
+    phase, isBanker, me?.has_acted ? 1 : 0, me?.is_folded ? 1 : 0,
+    me?.is_spectator ? 1 : 0, me?.is_waiting_next_round ? 1 : 0,
+    s.current_player_turn_seat, s.banker_bet_amount,
+    minBet, maxBet, _selectedBetAmt,
+    _autoActTimer ? 1 : 0,
+    Array.isArray(s.players) ? s.players.length : 0,
+    Array.isArray(s.players) ? s.players.filter(p => !p.is_spectator && !p.is_waiting_next_round).length : 0,
+  ].join('|');
+  if (sig === _actionsSig) return;
+  _actionsSig = sig;
+
+  box.innerHTML = '';
 
   if (!me) {
     box.innerHTML = '<p class="hint">觀看中（等待下一局可加入）</p>';
