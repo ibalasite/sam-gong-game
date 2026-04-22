@@ -10,8 +10,8 @@
 |------|------|
 | **DOC-ID** | SCHEMA-SAM-GONG-GAME-20260422 |
 | **專案名稱** | 三公遊戲（Sam Gong 3-Card Poker）即時多人線上平台 |
-| **文件版本** | v1.1 |
-| **狀態** | DRAFT（STEP-12 Review Round 1 完成，9 findings 已修復） |
+| **文件版本** | v1.2 |
+| **狀態** | DRAFT（STEP-12 Review Round 2 完成，1 finding 已修復；累計 10 findings 已修復）|
 | **作者** | Evans Tseng（由 STEP-09 自動生成） |
 | **日期** | 2026-04-22 |
 | **來源 EDD** | EDD-SAM-GONG-GAME-20260422 v1.4-draft §5.1 / §5.2 / §5.3 / §5.4 |
@@ -25,6 +25,7 @@
 |------|------|------|---------|
 | v1.0 | 2026-04-22 | STEP-09 | 初稿；依 EDD v1.4-draft §5 生成；涵蓋所有 DDL、索引、Enum、分區策略、保留政策、遷移策略 |
 | v1.1 | 2026-04-22 | STEP-12 Review Round 1 | 修復 9 個 findings：F1 game_sessions.banker_bet_amount 補 CHECK >= 0；F2 game_sessions 補 idx_sessions_started_at 索引（稽核查詢）；F3 kyc_records 補 kyc_type 和 status CHECK 約束；F4 player_reports.reason 補 CHECK 約束；F5 cookie_consents.session_id 補部分索引；F6 users.music_volume/sfx_volume 補 BETWEEN 0 AND 100 CHECK；F7/F11 釐清 rake 記錄必須 user_id=NULL 而非 SYSTEM_ACCOUNT_UUID，更新範例與 Appendix C 說明；F10 chip_transactions 分頁策略從 OFFSET 改為 Keyset Pagination；F12 ERD 中 task_date 從 string 修正為 date；§4.2 補全所有手動 Enum CHECK 約束清單 |
+| v1.2 | 2026-04-22 | STEP-12 Review Round 2 | 修復 1 個 finding：F13 chat_messages.sender_id FK 缺少索引，補 idx_chat_messages_sender（部分索引 WHERE NOT NULL，用於稽核/封號查詢） |
 
 ---
 
@@ -728,6 +729,10 @@ CREATE TABLE chat_messages (
 ```sql
 -- 查詢房間最新聊天（依時間倒序）
 CREATE INDEX idx_chat_messages_room ON chat_messages(room_id, created_at DESC);
+
+-- 查詢玩家發送的聊天記錄（稽核 / 封號時使用；部分索引排除已匿名記錄）
+CREATE INDEX idx_chat_messages_sender ON chat_messages(sender_id)
+    WHERE sender_id IS NOT NULL;
 ```
 
 **自動清除**：
@@ -875,6 +880,7 @@ CHECK (sfx_volume BETWEEN 0 AND 100)
 | `idx_cookie_consents_session` | cookie_consents | session_id WHERE NOT NULL | 部分 B-tree | 未登入前 Cookie 同意查詢 |
 | `idx_sessions_started_at` | game_sessions | started_at DESC | B-tree | 稽核時序查詢（7 年保留）|
 | `idx_chat_messages_room` | chat_messages | room_id, created_at DESC | B-tree | 房間聊天訊息分頁查詢 |
+| `idx_chat_messages_sender` | chat_messages | sender_id WHERE NOT NULL | 部分 B-tree | 查詢玩家發送的聊天記錄（稽核 / 封號）|
 | `idx_player_reports_status` | player_reports | status WHERE pending | 部分 B-tree | Admin 待審查舉報列表 |
 | `idx_player_reports_reported` | player_reports | reported_id | B-tree | 被舉報者舉報記錄 |
 | `idx_player_reports_reporter` | player_reports | reporter_id | B-tree | 舉報者舉報記錄 |
@@ -1176,4 +1182,4 @@ CREATE TYPE tx_type_enum AS ENUM (
 
 ---
 
-*文件版本 v1.1 — STEP-12 Review Round 1 修復 9 findings — 2026-04-22*
+*文件版本 v1.2 — STEP-12 Review Round 2 修復 1 finding（累計 10 findings）— finding=0 確認 — 2026-04-22*
