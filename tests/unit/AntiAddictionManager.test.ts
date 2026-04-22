@@ -38,13 +38,14 @@ describe('AntiAddictionManager', () => {
     it('TC-AA-002: 同一玩家多次 trackAdultSession 不重置計時', async () => {
       await manager.trackAdultSession('player_adult_2');
 
-      // 模擬少量時間經過（內部計時不依賴 mock，直接驗證 API 行為）
+      // 第二次呼叫仍使用同一個 session_start_ms（不重置），elapsed 應 < 1s
       const status = await manager.trackAdultSession('player_adult_2');
 
       expect(status.player_id).toBe('player_adult_2');
       expect(status.should_warn).toBe(false);
-      // session_play_seconds >= 0（因第二次呼叫距第一次有少量 ms）
+      // session_play_seconds 應在合理範圍：>=0 且 <1（兩次呼叫間隔極短）
       expect(status.session_play_seconds).toBeGreaterThanOrEqual(0);
+      expect(status.session_play_seconds).toBeLessThan(1);
     });
 
     it('TC-AA-003: onAdultWarningConfirmed 重置計時器', async () => {
@@ -139,12 +140,17 @@ describe('AntiAddictionManager', () => {
   // ──────────────────────────────────────────────
 
   describe('玩家離線計時（onPlayerOffline）', () => {
-    it('TC-AA-011: onPlayerOffline 不拋出錯誤（有計時器）', async () => {
+    it('TC-AA-011: onPlayerOffline 後再次追蹤，session_play_seconds 重置為近零', async () => {
+      // 先建立計時器
       await manager.trackAdultSession('player_offline_1');
 
-      expect(() => {
-        manager.onPlayerOffline('player_offline_1');
-      }).not.toThrow();
+      // 離線：累積 daily_play_seconds、重置 session_play_seconds
+      manager.onPlayerOffline('player_offline_1');
+
+      // 重新追蹤後 session_play_seconds 應從 0 重新計算（< 1s）
+      const status = await manager.trackAdultSession('player_offline_1');
+      expect(status.session_play_seconds).toBeLessThan(1);
+      expect(status.should_warn).toBe(false);
     });
 
     it('TC-AA-012: onPlayerOffline 不存在玩家不拋出錯誤', () => {
