@@ -42,6 +42,17 @@ let _lastBetAnimAt  = 0;   // timestamp of last coin-to-pot animation (ms)
 // _dealAnim.dealtForSeat：{seat_index: 已飛到的張數（0-3）}，用於逐張呈現
 let _dealAnim = { inProgress: false, dealtForSeat: {} };
 let _myHandRevealedCount = 0;   // 自己手牌已翻面的張數（0-3）
+// BUG-20260422-005：座位相對映射（圓桌邏輯）— 每次 render 更新
+let _seatPosMap = null;   // { offsetToPos:string[], mySeat:number, seatAtOffset:array }
+function seatOffsetOf(seatIndex) {
+  if (!_seatPosMap || typeof seatIndex !== 'number') return -1;
+  return ((seatIndex - _seatPosMap.mySeat) % 6 + 6) % 6;
+}
+function elForSeat(seatIndex) {
+  const offset = seatOffsetOf(seatIndex);
+  if (offset < 0) return null;
+  return $(_seatPosMap.offsetToPos[offset]);
+}
 // Auto-act (auto-call / auto-min-bet)
 let _autoActTimer   = null;
 let _autoActAt      = 0;   // ms timestamp when auto-act countdown started
@@ -381,15 +392,35 @@ function renderState(s) {
   }
 
   // ── 6 seats ────────────────────────────────────────────────
-  const positions = ['s-bot','s-bl','s-tl','s-top','s-tr','s-br'];
+  // BUG-20260422-005：座位依「我」為原點做圓桌相對位置映射。
+  // seat_index 逆增方向 = 順時鐘繞桌（從我看出去，右手邊），
+  // 所以相對位移 offset = (other_seat - my_seat + 6) % 6；
+  // 螢幕 offset → position 對照表（我永遠在 s-bot；右手邊 s-br 起順時鐘繞回左手邊 s-bl）
+  const offsetToPos = ['s-bot', 's-br', 's-tr', 's-top', 's-tl', 's-bl'];
+  const mySeat = me ? me.seat_index : 0;
+  const seatAtOffset = new Array(6).fill(null);
+  if (me) seatAtOffset[0] = me;
+  all.forEach(p => {
+    if (p === me) return;
+    const offset = ((p.seat_index - mySeat) % 6 + 6) % 6;
+    // 若某 offset 已有玩家（理論上不會，因 seat_index 唯一），避免覆蓋
+    if (!seatAtOffset[offset]) seatAtOffset[offset] = p;
+  });
+
+  // 供發牌 / 結算動畫共用
+  _seatPosMap = { offsetToPos, mySeat, seatAtOffset };
+
   // Find seat index of the most recently revealed seat (for flipping animation)
   const sdSorted = [..._sdRevealedSet].sort((a,b) => b-a);
   const sdLatest  = sdSorted[0] ?? -1;
 
+  // 向下相容：ordered / positions 在動畫模組仍被用到
+  const positions = offsetToPos;
+
   for (let i=0; i<6; i++) {
     const box = $(positions[i]);
     if (!box) continue;
-    const p = ordered[i];
+    const p = seatAtOffset[i];
     if (!p) {
       box.innerHTML = '<div class="av empty">💺</div><div class="sname muted">空位</div>';
       continue;
@@ -539,14 +570,10 @@ function updateActionMarquee(s, me) {
 
 // ── Bet transition → coins fly to pot ────────────────────
 function checkBetTransitions(newS) {
-  const positions = ['s-bot','s-bl','s-tl','s-top','s-tr','s-br'];
   const potEl = $('c-pot');
   if (!potEl) return;
 
-  // Helper: ordered array for new state
-  const allP   = Array.isArray(newS.players) ? newS.players.slice() : [];
-  const meP    = _myPid ? allP.find(p => p.player_id === _myPid) : allP[0] || null;
-  const ordP   = meP ? [meP, ...allP.filter(p => p !== meP)] : [...allP];
+  const allP = Array.isArray(newS.players) ? newS.players.slice() : [];
 
   // BUG-20260422-002：莊家下注不入獎池（屬 escrow），不再觸發 banker→pot 動畫。
   // 莊家下注改為在莊家座位上播放 coin drop 音效作為視覺提示。
@@ -559,8 +586,7 @@ function checkBetTransitions(newS) {
   if (newS.phase === 'player-bet' || _prevPhase === 'player-bet') {
     allP.forEach(p => {
       if (!p.is_banker && p.has_acted && !_prevActedSeats.has(p.seat_index)) {
-        const idx = ordP.findIndex(q => q.seat_index === p.seat_index);
-        const fromEl = idx >= 0 ? $(positions[idx]) : null;
+        const fromEl = elForSeat(p.seat_index);  // BUG-20260422-005：用相對映射
         if (fromEl) {
           setTimeout(() => { flyCoins(fromEl, potEl, 6); playCoinDrop(); }, 80);
           _lastBetAnimAt = Date.now(); // 記錄最後一次押注動畫時間
@@ -650,17 +676,14 @@ function markWinners() {
 //   3) 贏家 called_bet 退回：獎池 → 贏家
 //   4) 贏家賠付：莊家 → 贏家（N × banker_bet，從莊家籌碼支付）
 //   5) 莊家破產情境：少量破碎動畫，象徵未獲得支付
-function triggerSettleAnimation(s, ordered) {
-  const positions = ['s-bot','s-bl','s-tl','s-top','s-tr','s-br'];
+function triggerSettleAnimation(s, _ordered) {
   const potEl = $('c-pot');
   if (!potEl) return;
 
   playCashRegister();
 
-  const seatElOf = (seatIndex) => {
-    const idx = ordered.findIndex(p => p.seat_index === seatIndex);
-    return idx >= 0 ? $(positions[idx]) : null;
-  };
+  // BUG-20260422-005：一律用 elForSeat（依「我」為原點的相對位置映射）
+  const seatElOf = (seatIndex) => elForSeat(seatIndex);
   const bankerEl = seatElOf(s.banker_seat_index);
 
   const sett = s.settlement || {};
@@ -780,9 +803,10 @@ function flyCard(fromEl, toEl, onLand) {
   card.style.cssText = `position:fixed;left:${fx}px;top:${fy}px;`;
   document.body.appendChild(card);
 
-  const dur = 420;
+  // BUG-20260422-006：發牌節奏 1 秒一張，飛行時間延長為 750ms（留 250ms 緩衝給下一張）
+  const dur = 750;
   requestAnimationFrame(() => requestAnimationFrame(() => {
-    card.style.transition = `transform ${dur}ms cubic-bezier(.25,.46,.45,.94), opacity 160ms ease ${dur - 160}ms`;
+    card.style.transition = `transform ${dur}ms cubic-bezier(.25,.46,.45,.94), opacity 200ms ease ${dur - 200}ms`;
     card.style.transform = `translate(${tx-fx}px,${ty-fy}px) rotate(380deg) scale(.65)`;
     card.style.opacity = '0';
   }));
@@ -799,15 +823,24 @@ function startDealAnimation(onComplete) {
     if (onComplete) onComplete();
     return;
   }
-  const positions = ['s-bot','s-bl','s-tl','s-top','s-tr','s-br'];
   const bankerSeat = _state.banker_seat_index;
-
-  // ordered = me-first；對照發牌座位 index
   const all = _state.players.slice();
-  const meP = _myPid ? all.find(p => p.player_id === _myPid) : all[0] || null;
-  const ordered = meP ? [meP, ...all.filter(p => p !== meP)] : all.slice();
-  const bankerOrderedIdx = ordered.findIndex(p => p.seat_index === bankerSeat);
-  const bankerEl = bankerOrderedIdx >= 0 ? $(positions[bankerOrderedIdx]) : null;
+
+  // 先建 _seatPosMap（若 render 還沒跑過）— 發牌時可能早於第一次 renderState
+  if (!_seatPosMap) {
+    const meP = _myPid ? all.find(p => p.player_id === _myPid) : all[0] || null;
+    const mySeat = meP ? meP.seat_index : 0;
+    const seatAtOffset = new Array(6).fill(null);
+    if (meP) seatAtOffset[0] = meP;
+    all.forEach(p => {
+      if (p === meP) return;
+      const offset = ((p.seat_index - mySeat) % 6 + 6) % 6;
+      if (!seatAtOffset[offset]) seatAtOffset[offset] = p;
+    });
+    _seatPosMap = { offsetToPos: ['s-bot','s-br','s-tr','s-top','s-tl','s-bl'], mySeat, seatAtOffset };
+  }
+
+  const bankerEl = elForSeat(bankerSeat);
   if (!bankerEl) { if (onComplete) onComplete(); return; }
 
   // 發牌順序：依 seat_index 由莊家 +1 開始順時鐘，莊家最後
@@ -825,15 +858,15 @@ function startDealAnimation(onComplete) {
   _myHandRevealedCount = 0;
   renderState(_state);
 
-  const CARD_DELAY = 140;  // 每張牌間隔
+  // BUG-20260422-006：1 秒一張，讓玩家看清楚發牌順序與翻面時機
+  const CARD_DELAY = 1000;
   const total = dealQueue.length * 3;
   let dealt = 0;
 
   for (let round = 0; round < 3; round++) {
     dealQueue.forEach((player, j) => {
       const delay = (round * dealQueue.length + j) * CARD_DELAY;
-      const toOrderedIdx = ordered.findIndex(q => q.seat_index === player.seat_index);
-      const toEl = toOrderedIdx >= 0 ? $(positions[toOrderedIdx]) : null;
+      const toEl = elForSeat(player.seat_index);  // 依相對座位映射
       setTimeout(() => {
         flyCard(bankerEl, toEl, () => {
           _dealAnim.dealtForSeat[player.seat_index] = (_dealAnim.dealtForSeat[player.seat_index] || 0) + 1;
@@ -849,7 +882,7 @@ function startDealAnimation(onComplete) {
               _myHandRevealedCount = 3;
               renderState(_state);
               if (onComplete) onComplete();
-            }, 280);
+            }, 400);
           }
         });
       }, delay);
