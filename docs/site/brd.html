@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BRD — Sam Gong (三公)</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+  <header class="top-nav">
+    <a href="index.html" class="nav-brand"><span class="logo">🃏</span> Sam Gong (三公)</a>
+    <div class="nav-controls">
+      <span class="nav-badge"><span class="dot green"></span> v0.12-draft</span>
+      <button class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">☰</button>
+    </div>
+  </header>
+
+  <div class="page-header">
+    <div class="breadcrumb">
+      <a href="index.html">Home</a> <span class="sep">›</span> Requirements <span class="sep">›</span> BRD
+    </div>
+    <h1 class="page-title"><span class="icon">📋</span> BRD — Business Requirements Document</h1>
+    <p class="page-subtitle">三公遊戲（Sam Gong 3-Card Poker）即時多人線上平台 — v0.12-draft</p>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar__section">
+        <span class="sidebar__label">📋 Requirements</span>
+        <a class="sidebar__link active" href="brd.html"><span class="icon">📋</span> BRD (Business)</a>
+        <a class="sidebar__link" href="prd.html"><span class="icon">📝</span> PRD (Product)</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">📐 Design</span>
+        <a class="sidebar__link" href="edd.html"><span class="icon">🏗️</span> EDD (Engineering)</a>
+        <a class="sidebar__link" href="arch.html"><span class="icon">🧩</span> Architecture</a>
+        <a class="sidebar__link" href="api.html"><span class="icon">🔌</span> API Reference</a>
+        <a class="sidebar__link" href="schema.html"><span class="icon">🗄️</span> DB Schema</a>
+        <a class="sidebar__link" href="diagrams.html"><span class="icon">📊</span> Diagrams</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">✅ Quality</span>
+        <a class="sidebar__link" href="test-plan.html"><span class="icon">✅</span> Test Plan</a>
+        <a class="sidebar__link" href="alignment.html"><span class="icon">🔍</span> Alignment Report</a>
+        <a class="sidebar__link" href="smoke-test.html"><span class="icon">🚬</span> Smoke Test</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">🚀 Deployment</span>
+        <a class="sidebar__link" href="deployment.html"><span class="icon">🚀</span> Local Deploy</a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="doc-body">
+
+        <h1>BRD — 三公遊戲（Sam Gong 3-Card Poker）即時多人線上平台</h1>
+
+        <table>
+          <tr><th>欄位</th><th>內容</th></tr>
+          <tr><td>DOC-ID</td><td>BRD-SAM-GONG-GAME-20260421</td></tr>
+          <tr><td>文件版本</td><td>v0.12-draft</td></tr>
+          <tr><td>狀態</td><td>DRAFT（STEP-01 Review Round 11 完成）</td></tr>
+          <tr><td>作者</td><td>Evans Tseng（由 /devsop-idea 自動生成）</td></tr>
+          <tr><td>日期</td><td>2026-04-22</td></tr>
+        </table>
+
+        <h2>1. Executive Summary</h2>
+        <h3>1.1 假設新聞稿</h3>
+        <blockquote>
+          <strong>標題：</strong> Sayyo Games 推出「三公 Online」，打造華人市場首款 Server-Authoritative 公平三公即時多人遊戲<br><br>
+          Sayyo Games 今日推出「三公 Online」，一款主打「絕對公平」的即時多人三公遊戲。玩家可跨手機與網頁加入房間，與真人對戰，享受復古像素風賭場氛圍，所有牌局計算由伺服器權威判定，杜絕任何作弊可能。
+        </blockquote>
+
+        <h2>2. 核心業務目標</h2>
+        <table>
+          <tr><th>目標 ID</th><th>目標描述</th><th>時間框架</th></tr>
+          <tr><td>O1</td><td>推出 Server-authoritative 公平三公多人遊戲</td><td>GA 目標 2026-08-21</td></tr>
+          <tr><td>O2</td><td>建立穩定同時在線（CCU）基礎；Peak CCU ≥ 500，DAU ≥ 2,000</td><td>≤ 2027-02-21</td></tr>
+          <tr><td>O3</td><td>建立虛擬籌碼變現模式；付費率 ≥ 3%</td><td>≤ 2027-05-21</td></tr>
+          <tr><td>O4</td><td>擴展遊戲品類（大老二、21 點等）</td><td>≤ 2027-08-21</td></tr>
+          <tr><td>O合規</td><td>防沉迷合規；Cookie同意；個資保護</td><td>GA Launch</td></tr>
+        </table>
+
+        <h2>3. 技術架構概覽</h2>
+        <ul>
+          <li><strong>Client:</strong> Cocos Creator 3.8.x（Web + 手機跨平台），TypeScript 開發</li>
+          <li><strong>Server:</strong> Colyseus 0.15.x（Node.js/TypeScript），<code>@colyseus/schema</code> 做狀態同步</li>
+          <li><strong>架構原則:</strong> Server-authoritative — Schema 類別僅含欄位定義，遊戲邏輯獨立於 State</li>
+          <li><strong>持久層:</strong> PostgreSQL 16.x（玩家資料、牌局紀錄）+ Redis 7.x（matchmaking queue、session cache）</li>
+          <li><strong>部署:</strong> Kubernetes (k8s)；Client 走 WebSocket + TLS</li>
+        </ul>
+
+        <h2>4. 三公遊戲規則（D-Series）</h2>
+        <table>
+          <tr><th>編號</th><th>規則</th></tr>
+          <tr><td>D1</td><td>每局發牌：莊家 + 閒家各發 3 張牌（標準 52 張牌組）</td></tr>
+          <tr><td>D2</td><td>點數計算：10、J、Q、K 算 0 點；A 算 1 點；2-9 依面值</td></tr>
+          <tr><td>D3</td><td>手牌點數：3 張牌總點數 mod 10 為最終點數</td></tr>
+          <tr><td>D4</td><td>三公（Sam Gong）：3 張牌均為 10/J/Q/K，點數為 0 但為最大手牌</td></tr>
+          <tr><td>D5</td><td>比牌：高點數勝；同點比花色大小（黑桃 &gt; 紅心 &gt; 方塊 &gt; 梅花）</td></tr>
+          <tr><td>D6</td><td>結算方向：閒家贏莊家 → 莊家付賠；莊家贏閒家 → 閒家付注</td></tr>
+          <tr><td>D7</td><td>Rake：<code>floor(pot × 0.05)</code>，最少 1 籌碼，從底池抽取</td></tr>
+          <tr><td>D8</td><td>平手（同點同花色）：A 為最小牌，依 2-9-10(0)-J-K-Q 花色排列</td></tr>
+          <tr><td>D13</td><td>莊家破產：籌碼不足以支付所有贏家時，先到先得算法分配</td></tr>
+        </table>
+
+        <h2>5. 房間級距設定</h2>
+        <table>
+          <tr><th>廳別</th><th>入場門檻</th><th>下注範圍</th><th>初始籌碼</th></tr>
+          <tr><td>青銅廳</td><td>≥ 1,000</td><td>100 ~ 500</td><td>100,000</td></tr>
+          <tr><td>白銀廳</td><td>≥ 5,000</td><td>500 ~ 2,000</td><td>100,000</td></tr>
+          <tr><td>黃金廳</td><td>≥ 20,000</td><td>2,000 ~ 10,000</td><td>100,000</td></tr>
+          <tr><td>鉑金廳</td><td>≥ 100,000</td><td>10,000 ~ 50,000</td><td>100,000</td></tr>
+        </table>
+
+        <h2>6. Non-Functional Requirements</h2>
+        <table>
+          <tr><th>NFR ID</th><th>類別</th><th>指標</th><th>目標值</th></tr>
+          <tr><td>NFR-01</td><td>延遲</td><td>P95 WebSocket 往返延遲</td><td>≤ 200ms</td></tr>
+          <tr><td>NFR-02</td><td>延遲</td><td>結算廣播延遲（服務端計算）</td><td>≤ 100ms</td></tr>
+          <tr><td>NFR-03</td><td>可用性</td><td>整體系統 SLA</td><td>≥ 99.5%</td></tr>
+          <tr><td>NFR-04</td><td>規模</td><td>峰值同時在線（CCU）</td><td>≥ 500</td></tr>
+          <tr><td>NFR-05</td><td>安全</td><td>Server-authoritative 計算率</td><td>100%</td></tr>
+          <tr><td>NFR-06</td><td>資料一致性</td><td>籌碼守恆誤差</td><td>= 0</td></tr>
+          <tr><td>NFR-09</td><td>防作弊</td><td>投訴作弊率</td><td>≤ 0.1%</td></tr>
+          <tr><td>NFR-17</td><td>認證</td><td>Access Token TTL</td><td>≤ 1 小時</td></tr>
+        </table>
+
+        <h2>7. 已知風險</h2>
+        <ul>
+          <li><strong>R-Legal（台灣法規）：</strong>三公屬「博弈」性質遊戲。本產品必須採「虛擬籌碼、不可兌換、不可購買」模式以規避賭博罪嫌疑。</li>
+          <li><strong>R-Cheat：</strong>卡牌遊戲最大技術風險為作弊（偷看牌、結果預測、外掛注入）。Server-authoritative 是基本功。</li>
+          <li><strong>R-Scale：</strong>Colyseus 單實例約支援 1,000-3,000 同時連線；若目標規模 &gt;10,000，需提早規劃 horizontal scaling。</li>
+          <li><strong>R-UX：</strong>賭場風格 + 像素美術在跨平台（手機小螢幕）易顯擁擠；UI 需響應式設計。</li>
+        </ul>
+
+        <h2>8. MoSCoW 功能優先度</h2>
+        <table>
+          <tr><th>優先度</th><th>功能</th></tr>
+          <tr><td><span class="text-danger">Must Have</span></td><td>Server-authoritative 遊戲邏輯、配對系統、帳號驗證、防沉迷、Cookie 同意</td></tr>
+          <tr><td><span class="text-warning">Should Have</span></td><td>每日任務系統、籌碼購買（IAP）、新手引導</td></tr>
+          <tr><td><span class="text-accent">Could Have</span></td><td>排行榜、聊天室、好友系統</td></tr>
+          <tr><td><span class="text-muted">Won't Have (v1)</span></td><td>觀戰模式、錦標賽、跨平台帳號合併</td></tr>
+        </table>
+
+      </div>
+      <footer>Sam Gong (三公) Documentation — Generated 2026-04-22 | Sayyo Games</footer>
+    </main>
+  </div>
+
+  <a href="#" class="back-to-top" id="backToTop">↑</a>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+  <script src="assets/nav.js"></script>
+</body>
+</html>

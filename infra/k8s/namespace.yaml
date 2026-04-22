@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sam-gong
+  labels:
+    app.kubernetes.io/managed-by: devsop
+    environment: production
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: sam-gong-quota
+  namespace: sam-gong
+spec:
+  hard:
+    requests.cpu: "8"
+    limits.cpu: "16"
+    requests.memory: 16Gi
+    limits.memory: 32Gi
+    pods: "50"
+    services: "20"
+    persistentvolumeclaims: "10"

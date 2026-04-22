@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smoke Test Results — Sam Gong (三公)</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="top-nav">
+    <a href="index.html" class="nav-brand"><span class="logo">🃏</span> Sam Gong (三公)</a>
+    <div class="nav-controls">
+      <span class="nav-badge"><span class="dot green"></span> All Pass</span>
+      <button class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">☰</button>
+    </div>
+  </header>
+
+  <div class="page-header">
+    <div class="breadcrumb">
+      <a href="index.html">Home</a> <span class="sep">›</span> Quality <span class="sep">›</span> Smoke Test
+    </div>
+    <h1 class="page-title"><span class="icon">🚬</span> Smoke Test Results</h1>
+    <p class="page-subtitle">Post-deploy verification — 10 critical flows</p>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar__section">
+        <span class="sidebar__label">📋 Requirements</span>
+        <a class="sidebar__link" href="brd.html"><span class="icon">📋</span> BRD (Business)</a>
+        <a class="sidebar__link" href="prd.html"><span class="icon">📝</span> PRD (Product)</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">📐 Design</span>
+        <a class="sidebar__link" href="edd.html"><span class="icon">🏗️</span> EDD (Engineering)</a>
+        <a class="sidebar__link" href="arch.html"><span class="icon">🧩</span> Architecture</a>
+        <a class="sidebar__link" href="api.html"><span class="icon">🔌</span> API Reference</a>
+        <a class="sidebar__link" href="schema.html"><span class="icon">🗄️</span> DB Schema</a>
+        <a class="sidebar__link" href="diagrams.html"><span class="icon">📊</span> Diagrams</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">✅ Quality</span>
+        <a class="sidebar__link" href="test-plan.html"><span class="icon">✅</span> Test Plan</a>
+        <a class="sidebar__link" href="alignment.html"><span class="icon">🔍</span> Alignment Report</a>
+        <a class="sidebar__link active" href="smoke-test.html"><span class="icon">🚬</span> Smoke Test</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">🚀 Deployment</span>
+        <a class="sidebar__link" href="deployment.html"><span class="icon">🚀</span> Local Deploy</a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="doc-body">
+        <h1>Smoke Test Results</h1>
+        <blockquote>
+          For the complete smoke test report, see <code>docs/SMOKE_TEST_REPORT.md</code>. This page summarizes key test results.
+        </blockquote>
+
+        <h2>Summary</h2>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-num text-success">10/10</span>
+            <span class="stat-label">Tests Passed</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-num">97.71%</span>
+            <span class="stat-label">Code Coverage</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-num text-success">0</span>
+            <span class="stat-label">Critical Failures</span>
+          </div>
+        </div>
+
+        <h2>Smoke Test Cases</h2>
+        <table>
+          <tr><th>#</th><th>Test</th><th>Status</th><th>Notes</th></tr>
+          <tr><td>ST-01</td><td>Health endpoints respond 200</td><td><span class="text-success">✅ PASS</span></td><td>/health/live + /health/ready</td></tr>
+          <tr><td>ST-02</td><td>OTP login flow</td><td><span class="text-success">✅ PASS</span></td><td>Access + Refresh Token issued</td></tr>
+          <tr><td>ST-03</td><td>WebSocket connection established</td><td><span class="text-success">✅ PASS</span></td><td>Colyseus Room joinOrCreate</td></tr>
+          <tr><td>ST-04</td><td>Full game round (2 players)</td><td><span class="text-success">✅ PASS</span></td><td>dealing → settled, chip conservation verified</td></tr>
+          <tr><td>ST-05</td><td>Chip conservation validation</td><td><span class="text-success">✅ PASS</span></td><td>sum(net_chips) + rake === 0</td></tr>
+          <tr><td>ST-06</td><td>Rate limit enforcement</td><td><span class="text-success">✅ PASS</span></td><td>429 returned at limit threshold</td></tr>
+          <tr><td>ST-07</td><td>Anti-addiction timer (adult)</td><td><span class="text-success">✅ PASS</span></td><td>Warning sent at 2h session</td></tr>
+          <tr><td>ST-08</td><td>JWT refresh token rotation</td><td><span class="text-success">✅ PASS</span></td><td>Old token revoked, new token issued</td></tr>
+          <tr><td>ST-09</td><td>Leaderboard ZADD update</td><td><span class="text-success">✅ PASS</span></td><td>Redis ZSET updated after settlement</td></tr>
+          <tr><td>ST-10</td><td>Disconnect/reconnect (30s window)</td><td><span class="text-success">✅ PASS</span></td><td>State restored after reconnection</td></tr>
+        </table>
+
+        <h2>Performance Baselines</h2>
+        <table>
+          <tr><th>Metric</th><th>Target</th><th>Actual</th><th>Status</th></tr>
+          <tr><td>P95 WS Latency</td><td>≤ 200ms</td><td>~45ms</td><td><span class="text-success">✅ PASS</span></td></tr>
+          <tr><td>Settlement Duration (P99)</td><td>≤ 1000ms</td><td>~120ms</td><td><span class="text-success">✅ PASS</span></td></tr>
+          <tr><td>REST API P95</td><td>≤ 500ms</td><td>~85ms</td><td><span class="text-success">✅ PASS</span></td></tr>
+          <tr><td>DB Query P95</td><td>≤ 100ms</td><td>~35ms</td><td><span class="text-success">✅ PASS</span></td></tr>
+        </table>
+      </div>
+      <footer>Sam Gong (三公) Documentation — Generated 2026-04-22 | Sayyo Games</footer>
+    </main>
+  </div>
+
+  <a href="#" class="back-to-top" id="backToTop">↑</a>
+  <script src="assets/nav.js"></script>
+</body>
+</html>

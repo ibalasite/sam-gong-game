@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sam-gong-client
+  namespace: sam-gong
+  labels:
+    app: sam-gong-client
+    app.kubernetes.io/name: sam-gong-client
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/managed-by: devsop
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: sam-gong-client
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: sam-gong-client
+        app.kubernetes.io/name: sam-gong-client
+        app.kubernetes.io/component: frontend
+    spec:
+      terminationGracePeriodSeconds: 10
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: sam-gong-client
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: sam-gong-client
+          image: sam-gong-client:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+              name: http
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 20
+            failureThreshold: 3
+      securityContext:
+        runAsNonRoot: false  # nginx requires root to bind port 80

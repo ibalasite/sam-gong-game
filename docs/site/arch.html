@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Architecture — Sam Gong (三公)</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="top-nav">
+    <a href="index.html" class="nav-brand"><span class="logo">🃏</span> Sam Gong (三公)</a>
+    <div class="nav-controls">
+      <span class="nav-badge"><span class="dot green"></span> v1.1</span>
+      <button class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">☰</button>
+    </div>
+  </header>
+
+  <div class="page-header">
+    <div class="breadcrumb">
+      <a href="index.html">Home</a> <span class="sep">›</span> Design <span class="sep">›</span> Architecture
+    </div>
+    <h1 class="page-title"><span class="icon">🧩</span> Architecture — System Design</h1>
+    <p class="page-subtitle">ARCH v1.1 — k8s Deployment, Service Boundaries, Observability</p>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar__section">
+        <span class="sidebar__label">📋 Requirements</span>
+        <a class="sidebar__link" href="brd.html"><span class="icon">📋</span> BRD (Business)</a>
+        <a class="sidebar__link" href="prd.html"><span class="icon">📝</span> PRD (Product)</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">📐 Design</span>
+        <a class="sidebar__link" href="edd.html"><span class="icon">🏗️</span> EDD (Engineering)</a>
+        <a class="sidebar__link active" href="arch.html"><span class="icon">🧩</span> Architecture</a>
+        <a class="sidebar__link" href="api.html"><span class="icon">🔌</span> API Reference</a>
+        <a class="sidebar__link" href="schema.html"><span class="icon">🗄️</span> DB Schema</a>
+        <a class="sidebar__link" href="diagrams.html"><span class="icon">📊</span> Diagrams</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">✅ Quality</span>
+        <a class="sidebar__link" href="test-plan.html"><span class="icon">✅</span> Test Plan</a>
+        <a class="sidebar__link" href="alignment.html"><span class="icon">🔍</span> Alignment Report</a>
+        <a class="sidebar__link" href="smoke-test.html"><span class="icon">🚬</span> Smoke Test</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">🚀 Deployment</span>
+        <a class="sidebar__link" href="deployment.html"><span class="icon">🚀</span> Local Deploy</a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="doc-body">
+
+        <h1>ARCH — 系統架構文件 v1.1</h1>
+        <table>
+          <tr><th>欄位</th><th>內容</th></tr>
+          <tr><td>DOC-ID</td><td>ARCH-SAM-GONG-GAME-20260422</td></tr>
+          <tr><td>版本</td><td>v1.1</td></tr>
+          <tr><td>來源 EDD</td><td>EDD-SAM-GONG-GAME-20260422 v1.4-draft</td></tr>
+        </table>
+
+        <h2>1. Architecture Overview</h2>
+        <p>三公遊戲採用 <strong>Server-Authoritative</strong> 架構，所有遊戲邏輯（洗牌、發牌、比牌、結算）完全由 Server 執行，Client（Cocos Creator 3.8.x）為「啞渲染器（dumb renderer）」，僅負責狀態渲染與使用者互動收集。</p>
+
+        <h3>1.1 核心架構原則</h3>
+        <ol>
+          <li><strong>Server-Authoritative</strong>：遊戲邏輯 100% 在 Server，Client 不含任何遊戲邏輯（TypeScript project references CI 強制邊界）</li>
+          <li><strong>無狀態水平擴展</strong>：REST API 無狀態；Colyseus 透過 <code>@colyseus/redis-presence</code> 跨節點協調</li>
+          <li><strong>事務一致性優先</strong>：PostgreSQL ACID + SERIALIZABLE 隔離保證籌碼守恆（誤差容忍 = 0）</li>
+          <li><strong>多層防禦</strong>：CloudFlare DDoS → NGINX Ingress Rate Limit → Redis Token Bucket → Colyseus 訊息驗證</li>
+          <li><strong>高可用設計</strong>：Redis Sentinel 3 節點 + PostgreSQL Primary/Replica，SLA ≥ 99.5%</li>
+        </ol>
+
+        <h2>2. System Architecture Diagram</h2>
+        <div class="diagram-wrapper">
+          <div class="diagram-title">System Architecture — k8s Multi-Layer</div>
+          <pre class="mermaid">graph TB
+    subgraph Clients["Client Layer"]
+        CC["Cocos Creator 3.8.x\n(Web / Android / iOS)"]
+    end
+
+    subgraph Edge["Edge Layer"]
+        CF["CloudFlare\n(DDoS / GeoIP / TLS 1.2+)"]
+        LB["NGINX Ingress\n(Load Balancer / Sticky Session)"]
+    end
+
+    subgraph AppLayer["Application Layer (k8s Pods — sam-gong-prod)"]
+        CS1["Colyseus Node 1\n(Game Server :2567)"]
+        CS2["Colyseus Node 2\n(Game Server :2567)"]
+        CSN["Colyseus Node N\n(HPA max=10)"]
+        REST["REST API Service\n(Express / Node.js 22.x :3000)\nHPA max=8"]
+        AUTH["Auth Service\n(JWT RS256/ES256)"]
+        ADMIN["Admin API\n(Internal VPN Only)"]
+    end
+
+    subgraph DataLayer["Data Layer (StatefulSet)"]
+        PG_PRIMARY["PostgreSQL 16.x Primary\n(pgBouncer Transaction Mode)"]
+        PG_REPLICA["PostgreSQL 16.x Read Replica"]
+        REDIS["Redis 7.x Sentinel\n(3 nodes: 1 master + 2 replicas)"]
+    end
+
+    subgraph Observability["Observability"]
+        PROM["Prometheus"]
+        GRAFANA["Grafana Dashboard"]
+        LOKI["Loki (Structured Logs)"]
+        PAGERDUTY["PagerDuty Alerts"]
+    end
+
+    CC -->|"HTTPS / WSS TLS 1.2+"| CF
+    CF --> LB
+    LB -->|"ws.samgong.io Sticky Session"| CS1
+    LB -->|"ws.samgong.io Sticky Session"| CS2
+    LB -->|"ws.samgong.io Sticky Session"| CSN
+    LB -->|"api.samgong.io/api"| REST
+    REST --> AUTH
+    CS1 <-->|"Redis Presence / Pub-Sub"| REDIS
+    CS2 <-->|"Redis Presence / Pub-Sub"| REDIS
+    CSN <-->|"Redis Presence / Pub-Sub"| REDIS
+    REST <--> REDIS
+    CS1 -->|"SERIALIZABLE Writes"| PG_PRIMARY
+    CS2 -->|"SERIALIZABLE Writes"| PG_PRIMARY
+    REST --> PG_PRIMARY
+    REST -->|"Reads (Leaderboard)"| PG_REPLICA
+    PG_PRIMARY -->|"Streaming Replication"| PG_REPLICA
+    AppLayer --> PROM
+    PROM --> GRAFANA
+    AppLayer --> LOKI
+    LOKI --> GRAFANA
+    GRAFANA --> PAGERDUTY</pre>
+        </div>
+
+        <h2>3. Service Boundaries</h2>
+        <table>
+          <tr><th>服務</th><th>Port</th><th>協議</th><th>職責</th><th>擴展策略</th></tr>
+          <tr><td>Colyseus Game Server</td><td>:2567</td><td>WSS + HTTP</td><td>WebSocket Room 管理、遊戲邏輯</td><td>HPA max=10，CPU 70%</td></tr>
+          <tr><td>REST API Service</td><td>:3000</td><td>HTTPS</td><td>帳號、排行榜、籌碼、KYC、Admin</td><td>HPA max=8</td></tr>
+          <tr><td>Auth Service</td><td>-</td><td>Internal</td><td>JWT 簽發、OTP 驗證</td><td>隨 REST API 擴展</td></tr>
+          <tr><td>Admin API</td><td>:3001</td><td>HTTPS (VPN)</td><td>封號、管理後台</td><td>固定 1 副本</td></tr>
+          <tr><td>PostgreSQL Primary</td><td>:5432</td><td>TCP</td><td>寫入（SERIALIZABLE）</td><td>StatefulSet，固定</td></tr>
+          <tr><td>PostgreSQL Read Replica</td><td>:5432</td><td>TCP</td><td>讀取（排行榜、玩家資料）</td><td>Streaming Replication</td></tr>
+          <tr><td>Redis Sentinel</td><td>:6379/:26379</td><td>TCP</td><td>Session、Pub/Sub、排行榜 ZSET</td><td>3 節點 Sentinel，quorum=2</td></tr>
+        </table>
+
+        <h2>4. Redis Key Patterns</h2>
+        <table>
+          <tr><th>Key Pattern</th><th>Type</th><th>TTL</th><th>用途</th></tr>
+          <tr><td><code>session:{player_id}</code></td><td>String (JSON)</td><td>3600s</td><td>玩家 Session Cache</td></tr>
+          <tr><td><code>rl:auth:{ip}</code></td><td>Counter</td><td>60s</td><td>Login Rate Limit（≤30/min/IP）</td></tr>
+          <tr><td><code>rl:ws:{player_id}</code></td><td>Counter</td><td>1s</td><td>WS 訊息速率（≤10/s）</td></tr>
+          <tr><td><code>ban_token:{player_id}</code></td><td>String</td><td>Access Token TTL</td><td>封號即時黑名單</td></tr>
+          <tr><td><code>aa:daily:{player_id}</code></td><td>String (seconds)</td><td>到當日 UTC+8 午夜</td><td>防沉迷每日計時</td></tr>
+          <tr><td><code>aa:session:{player_id}</code></td><td>String (seconds)</td><td>1800s</td><td>連續遊玩計時（離線重置）</td></tr>
+          <tr><td><code>lb:weekly:{week_key}</code></td><td>Sorted Set</td><td>14 天</td><td>排行榜 ZSET（ZADD BY net_chips）</td></tr>
+          <tr><td><code>active_device:{player_id}</code></td><td>String</td><td>Session TTL</td><td>多裝置登入偵測</td></tr>
+          <tr><td><code>rescue:{player_id}:{date}</code></td><td>String</td><td>到次日</td><td>每日救援籌碼領取鎖</td></tr>
+        </table>
+
+        <h2>5. High Availability Design</h2>
+        <h3>5.1 Redis Sentinel Configuration</h3>
+        <ul>
+          <li>3 節點部署：1 Master + 2 Replicas</li>
+          <li>Sentinel quorum = 2（多數決）</li>
+          <li>Failover &lt; 30 秒</li>
+          <li>AOF + RDB 持久化</li>
+        </ul>
+
+        <h3>5.2 PostgreSQL Primary/Replica</h3>
+        <ul>
+          <li>Streaming Replication（非同步）</li>
+          <li>pgBouncer Transaction Mode：Primary max_client=200/pool=50，Replica max_client=100/pool=30</li>
+          <li>RTO ≤ 30 分鐘，RPO ≤ 15 分鐘</li>
+        </ul>
+
+        <h3>5.3 Colyseus Sticky Session</h3>
+        <ul>
+          <li>NGINX Ingress Cookie-based Sticky Session（確保同一玩家路由至同一 Colyseus Pod）</li>
+          <li>跨 Pod 協調：<code>@colyseus/redis-presence</code>（Room Presence、Matchmaking Queue）</li>
+          <li>Pod 重啟時 WebSocket 客戶端自動重連（Colyseus SDK 內建）</li>
+        </ul>
+
+        <h2>6. Security Architecture</h2>
+        <h3>6.1 STRIDE 威脅模型</h3>
+        <table>
+          <tr><th>威脅</th><th>對策</th></tr>
+          <tr><td>Spoofing（身份偽造）</td><td>JWT RS256 驗證，每次 onMessage 驗證 token</td></tr>
+          <tr><td>Tampering（資料竄改）</td><td>Server-authoritative，Client 不計算任何遊戲結果</td></tr>
+          <tr><td>Repudiation（否認攻擊）</td><td>chip_transactions 不可變記錄，完整稽核軌跡</td></tr>
+          <tr><td>Information Disclosure（資訊洩漏）</td><td>手牌私人訊息推送，filterBy 機制，Client 不存儲他人手牌</td></tr>
+          <tr><td>Denial of Service（阻斷服務）</td><td>CloudFlare DDoS + Rate Limit（多層）+ HPA 自動擴展</td></tr>
+          <tr><td>Elevation of Privilege（權限提升）</td><td>Admin API VPN Only，JWT role check，最小權限原則</td></tr>
+        </table>
+
+      </div>
+      <footer>Sam Gong (三公) Documentation — Generated 2026-04-22 | Sayyo Games</footer>
+    </main>
+  </div>
+
+  <a href="#" class="back-to-top" id="backToTop">↑</a>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true, theme: 'dark', flowchart: { curve: 'basis' } });
+  </script>
+  <script src="assets/nav.js"></script>
+</body>
+</html>

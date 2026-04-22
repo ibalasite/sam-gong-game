@@ -1,0 +1,153 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+  namespace: sam-gong
+  labels:
+    app: redis
+    app.kubernetes.io/managed-by: devsop
+data:
+  redis.conf: |
+    # Memory management
+    maxmemory 512mb
+    maxmemory-policy allkeys-lru
+
+    # Persistence — RDB snapshot for durability
+    save 900 1
+    save 300 10
+    save 60 10000
+    rdbcompression yes
+    rdbchecksum yes
+    dbfilename dump.rdb
+    dir /data
+
+    # AOF (optional, enable for stronger durability)
+    # appendonly yes
+    # appendfsync everysec
+
+    # Security — requirepass injected via env
+    # requirepass set via REDIS_PASSWORD env var at startup
+
+    # Networking
+    bind 0.0.0.0
+    port 6379
+    tcp-backlog 511
+    timeout 0
+    tcp-keepalive 300
+
+    # Logging
+    loglevel notice
+    logfile ""
+
+    # Pub/Sub for Colyseus room coordination
+    # No special config needed; defaults are suitable
+
+    # Slow log
+    slowlog-log-slower-than 10000
+    slowlog-max-len 128
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+  namespace: sam-gong
+  labels:
+    app: redis
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/component: cache
+    app.kubernetes.io/managed-by: devsop
+spec:
+  # MVP: single replica
+  # For HA: consider Redis Sentinel or Redis Cluster (replicas: 3+)
+  replicas: 1
+  serviceName: redis-service
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+        app.kubernetes.io/name: redis
+        app.kubernetes.io/component: cache
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |
+              redis-server /etc/redis/redis.conf --requirepass $(REDIS_PASSWORD)
+          ports:
+            - containerPort: 6379
+              name: redis
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 768Mi
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sam-gong-secrets
+                  key: REDIS_PASSWORD
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - redis-cli -a $(REDIS_PASSWORD) ping | grep PONG
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - redis-cli -a $(REDIS_PASSWORD) ping | grep PONG
+            initialDelaySeconds: 20
+            periodSeconds: 20
+            failureThreshold: 3
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+            - name: redis-config-vol
+              mountPath: /etc/redis
+      volumes:
+        - name: redis-config-vol
+          configMap:
+            name: redis-config
+  volumeClaimTemplates:
+    - metadata:
+        name: redis-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: fast-ssd
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: sam-gong
+  labels:
+    app: redis
+    app.kubernetes.io/managed-by: devsop
+spec:
+  type: ClusterIP
+  clusterIP: None  # Headless service for StatefulSet DNS
+  selector:
+    app: redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379

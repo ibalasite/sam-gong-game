@@ -1,0 +1,89 @@
+version: "3.9"
+
+# Local development environment for Sam Gong (三公)
+# Provides: PostgreSQL 15, Redis 7, pgAdmin (optional)
+# Usage: docker compose up -d
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: sam-gong-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-sam_gong}
+      POSTGRES_USER: ${DB_USER:-sam_gong_app}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-dev_password_change_me}
+      TZ: Asia/Taipei
+      PGTZ: Asia/Taipei
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-sam_gong_app} -d ${DB_NAME:-sam_gong}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - sam-gong-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: sam-gong-redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD:-dev_redis_password}
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-dev_redis_password}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - sam-gong-net
+
+  # Optional: pgAdmin web UI for database management
+  # Access at http://localhost:5050
+  # Email: admin@example.com, Password: admin
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: sam-gong-pgadmin
+    restart: unless-stopped
+    profiles:
+      - tools  # Only starts with: docker compose --profile tools up -d
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - sam-gong-net
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  sam-gong-net:
+    driver: bridge

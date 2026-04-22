@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Run secrets audit before every commit
+exec scripts/secrets/audit-secrets.sh

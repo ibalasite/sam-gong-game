@@ -1,0 +1,171 @@
+## ─────────────────────────────────────────
+## Game Server (Colyseus) — local, 1 replica
+## ─────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sam-gong-server
+  namespace: sam-gong-local
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sam-gong-server
+  template:
+    metadata:
+      labels:
+        app: sam-gong-server
+    spec:
+      containers:
+        - name: sam-gong-server
+          image: sam-gong-server:local
+          imagePullPolicy: Never          # Use locally-built image
+          ports:
+            - containerPort: 2567
+          envFrom:
+            - configMapRef:
+                name: sam-gong-config
+            - secretRef:
+                name: sam-gong-secrets
+          env:
+            - name: PORT
+              value: "2567"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 2567
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 2567
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sam-gong-server-service
+  namespace: sam-gong-local
+spec:
+  selector:
+    app: sam-gong-server
+  ports:
+    - name: ws
+      port: 2567
+      targetPort: 2567
+  type: ClusterIP
+---
+## ─────────────────────────────────────────
+## REST API Server — local, 1 replica
+## ─────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sam-gong-api
+  namespace: sam-gong-local
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sam-gong-api
+  template:
+    metadata:
+      labels:
+        app: sam-gong-api
+    spec:
+      containers:
+        - name: sam-gong-api
+          image: sam-gong-api:local
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: sam-gong-config
+            - secretRef:
+                name: sam-gong-secrets
+          env:
+            - name: PORT
+              value: "3000"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 300m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sam-gong-api-service
+  namespace: sam-gong-local
+spec:
+  selector:
+    app: sam-gong-api
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+  type: ClusterIP
+---
+## ─────────────────────────────────────────
+## Frontend (nginx) — local, 1 replica
+## ─────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sam-gong-client
+  namespace: sam-gong-local
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sam-gong-client
+  template:
+    metadata:
+      labels:
+        app: sam-gong-client
+    spec:
+      containers:
+        - name: sam-gong-client
+          image: sam-gong-client:local
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sam-gong-client-service
+  namespace: sam-gong-local
+spec:
+  selector:
+    app: sam-gong-client
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+  type: ClusterIP

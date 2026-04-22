@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Plan — Sam Gong (三公)</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+  <header class="top-nav">
+    <a href="index.html" class="nav-brand"><span class="logo">🃏</span> Sam Gong (三公)</a>
+    <div class="nav-controls">
+      <span class="nav-badge"><span class="dot green"></span> Coverage 97.71%</span>
+      <button class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">☰</button>
+    </div>
+  </header>
+
+  <div class="page-header">
+    <div class="breadcrumb">
+      <a href="index.html">Home</a> <span class="sep">›</span> Quality <span class="sep">›</span> Test Plan
+    </div>
+    <h1 class="page-title"><span class="icon">✅</span> Test Plan</h1>
+    <p class="page-subtitle">5-Layer Testing Strategy — Unit / Integration / E2E / Performance / UAT</p>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar__section">
+        <span class="sidebar__label">📋 Requirements</span>
+        <a class="sidebar__link" href="brd.html"><span class="icon">📋</span> BRD (Business)</a>
+        <a class="sidebar__link" href="prd.html"><span class="icon">📝</span> PRD (Product)</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">📐 Design</span>
+        <a class="sidebar__link" href="edd.html"><span class="icon">🏗️</span> EDD (Engineering)</a>
+        <a class="sidebar__link" href="arch.html"><span class="icon">🧩</span> Architecture</a>
+        <a class="sidebar__link" href="api.html"><span class="icon">🔌</span> API Reference</a>
+        <a class="sidebar__link" href="schema.html"><span class="icon">🗄️</span> DB Schema</a>
+        <a class="sidebar__link" href="diagrams.html"><span class="icon">📊</span> Diagrams</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">✅ Quality</span>
+        <a class="sidebar__link active" href="test-plan.html"><span class="icon">✅</span> Test Plan</a>
+        <a class="sidebar__link" href="alignment.html"><span class="icon">🔍</span> Alignment Report</a>
+        <a class="sidebar__link" href="smoke-test.html"><span class="icon">🚬</span> Smoke Test</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">🚀 Deployment</span>
+        <a class="sidebar__link" href="deployment.html"><span class="icon">🚀</span> Local Deploy</a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="doc-body">
+
+        <h1>TEST_PLAN — 測試計畫</h1>
+        <table>
+          <tr><th>欄位</th><th>內容</th></tr>
+          <tr><td>DOC-ID</td><td>TEST-PLAN-SAM-GONG-GAME-20260422</td></tr>
+          <tr><td>版本</td><td>v1.0-draft</td></tr>
+          <tr><td>來源</td><td>EDD v1.4-draft + PRD v0.14-draft</td></tr>
+        </table>
+
+        <h2>1. Coverage Requirements</h2>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-num">97.71%</span>
+            <span class="stat-label">Actual Coverage</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-num">≥ 80%</span>
+            <span class="stat-label">CI Gate (Lines)</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-num">≥ 200</span>
+            <span class="stat-label">HandEvaluator Vectors</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-num">181</span>
+            <span class="stat-label">BDD Scenarios</span>
+          </div>
+        </div>
+
+        <table>
+          <tr><th>指標</th><th>目標值</th><th>CI 門控</th></tr>
+          <tr><td>Lines Coverage</td><td>≥ 80%</td><td>PR 合併阻擋</td></tr>
+          <tr><td>Branches Coverage</td><td>≥ 80%</td><td>PR 合併阻擋</td></tr>
+          <tr><td>Functions Coverage</td><td>≥ 80%</td><td>PR 合併阻擋</td></tr>
+          <tr><td>Statements Coverage</td><td>≥ 80%</td><td>PR 合併阻擋</td></tr>
+          <tr><td>HandEvaluator 測試向量</td><td>≥ 200 個</td><td>CI 驗證</td></tr>
+        </table>
+
+        <pre><code class="language-bash">jest --coverage \
+  --coverageThreshold='{"global":{"lines":80,"branches":80,"functions":80,"statements":80}}'</code></pre>
+
+        <h2>2. Test Strategy — 5 Layers</h2>
+
+        <h3>Layer 1: Unit Tests</h3>
+        <table>
+          <tr><th>框架</th><th>目標模組</th><th>隔離</th><th>執行頻率</th></tr>
+          <tr><td>Jest + ts-jest</td><td>HandEvaluator, SettlementEngine, DeckManager, AntiAddiction, BankerRotation</td><td>完全 Mock 外部依賴</td><td>每次 commit</td></tr>
+        </table>
+
+        <h4>Key Unit Test Cases</h4>
+        <table>
+          <tr><th>Test ID</th><th>模組</th><th>測試內容</th></tr>
+          <tr><td>UT-shuffle-001</td><td>DeckManager</td><td>Fisher-Yates 分佈均勻性（χ² test, n=10,000）</td></tr>
+          <tr><td>UT-deal-001</td><td>DeckManager</td><td>發牌 3 張正確性，無重複</td></tr>
+          <tr><td>UT-compare-001</td><td>HandEvaluator</td><td>比牌向量測試集 ≥ 200 組（涵蓋三公、各點數、花色 tiebreak）</td></tr>
+          <tr><td>UT-settle-001</td><td>SettlementEngine</td><td>籌碼守恆驗證（sum net_chips + rake === 0）</td></tr>
+          <tr><td>UT-settle-002</td><td>SettlementEngine</td><td>莊家破產 D13 先到先得算法</td></tr>
+          <tr><td>UT-settle-003</td><td>SettlementEngine</td><td>all_fold 情境：rake=0, banker escrow 退回</td></tr>
+          <tr><td>UT-aa-001</td><td>AntiAddiction</td><td>成人 2h 連續提醒（不強制下線）</td></tr>
+          <tr><td>UT-aa-002</td><td>AntiAddiction</td><td>未成年 2h 每日硬停</td></tr>
+          <tr><td>UT-banker-001</td><td>BankerRotation</td><td>輪莊邏輯（seat_index mod N）</td></tr>
+        </table>
+
+        <h3>Layer 2: Integration Tests</h3>
+        <table>
+          <tr><th>框架</th><th>範圍</th><th>環境</th></tr>
+          <tr><td>Jest + @colyseus/testing + testcontainers</td><td>Room 生命週期、REST API、DB 事務</td><td>真實 Redis/PostgreSQL 容器</td></tr>
+        </table>
+
+        <h4>Key Integration Tests</h4>
+        <table>
+          <tr><th>Test ID</th><th>場景</th></tr>
+          <tr><td>IT-settlement-001</td><td>籌碼守恆並發測試（10 個 goroutines 同時結算）</td></tr>
+          <tr><td>IT-roomstate-001</td><td>斷線重連狀態同步（30s 內重連恢復）</td></tr>
+          <tr><td>IT-anticheat-001</td><td>rate limit 觸發與封禁流程</td></tr>
+          <tr><td>IT-delete-001</td><td>玩家資料刪除（GDPR 個資）7 工作日清除</td></tr>
+          <tr><td>IT-fraud-001</td><td>詐欺行為 SOP 觸發與審查佇列</td></tr>
+          <tr><td>IT-rank-001</td><td>排行榜 Redis ZADD + PostgreSQL 聚合一致性</td></tr>
+          <tr><td>IT-chat-001</td><td>聊天室 Rate Limit 與關鍵字過濾</td></tr>
+        </table>
+
+        <h3>Layer 3: E2E Tests</h3>
+        <table>
+          <tr><th>框架</th><th>範圍</th><th>環境</th></tr>
+          <tr><td>Jest + Playwright + Colyseus Client SDK</td><td>完整遊戲流程、多玩家場景</td><td>Staging 環境</td></tr>
+        </table>
+
+        <h3>Layer 4: Performance Tests</h3>
+        <table>
+          <tr><th>工具</th><th>目標</th><th>測試類型</th></tr>
+          <tr><td>k6</td><td>500 CCU，P95 WS 延遲 ≤ 100ms</td><td>負載/壓力/尖峰/耐久</td></tr>
+        </table>
+
+        <h3>Layer 5: BDD / UAT</h3>
+        <table>
+          <tr><th>方式</th><th>範圍</th><th>工具</th></tr>
+          <tr><td>Cucumber.js + 手動 UAT</td><td>PRD 驗收標準（Acceptance Criteria）</td><td>Staging/Beta</td></tr>
+        </table>
+
+        <h2>3. BDD Feature Files</h2>
+        <h3>Server-side BDD (6 files, 98 scenarios)</h3>
+        <table>
+          <tr><th>Feature File</th><th>覆蓋 REQ</th><th>描述</th></tr>
+          <tr><td>anti_addiction.feature</td><td>REQ-015</td><td>防沉迷計時、成人提醒、未成年硬停</td></tr>
+          <tr><td>authentication.feature</td><td>REQ-014</td><td>OTP 驗證、OAuth、JWT 刷新、封號</td></tr>
+          <tr><td>banker_rotation.feature</td><td>REQ-003</td><td>輪莊機制、莊家破產、first-banker</td></tr>
+          <tr><td>game_flow.feature</td><td>REQ-001~004</td><td>完整一局流程、配對、房間生命週期</td></tr>
+          <tr><td>hand_evaluation.feature</td><td>REQ-003</td><td>比牌邏輯、三公判定、花色 tiebreak</td></tr>
+          <tr><td>settlement.feature</td><td>REQ-004</td><td>結算引擎、Rake、守恆驗證、all_fold</td></tr>
+        </table>
+
+        <h3>Client-side BDD (6 files, 83 scenarios)</h3>
+        <table>
+          <tr><th>Feature File</th><th>描述</th></tr>
+          <tr><td>lobby.feature</td><td>大廳 UI、廳別選擇、快速配對</td></tr>
+          <tr><td>game_room.feature</td><td>遊戲室 UI、手牌動畫、計時器</td></tr>
+          <tr><td>settlement_ui.feature</td><td>結算動畫、籌碼增減視覺效果</td></tr>
+          <tr><td>tutorial.feature</td><td>新手引導 3 局固定劇本</td></tr>
+          <tr><td>settings.feature</td><td>設定頁、音效、排行榜顯示開關</td></tr>
+          <tr><td>anti_addiction_ui.feature</td><td>防沉迷提示 UI、強制下線流程</td></tr>
+        </table>
+
+        <h2>4. Test Environments</h2>
+        <table>
+          <tr><th>環境</th><th>用途</th><th>觸發條件</th></tr>
+          <tr><td>local</td><td>開發者本機單元測試</td><td>本地 npm test</td></tr>
+          <tr><td>dev</td><td>持續整合（Unit + Integration）</td><td>push to feature/*</td></tr>
+          <tr><td>staging</td><td>E2E + 效能測試</td><td>push to develop</td></tr>
+          <tr><td>prod</td><td>UAT + Smoke Test（上線後）</td><td>部署完成後</td></tr>
+        </table>
+
+        <h2>5. CI/CD Quality Gate</h2>
+        <ul>
+          <li>Coverage &lt; 80% → PR 合併阻擋</li>
+          <li>Unit Test 失敗 → build failed</li>
+          <li>Integration Test 失敗 → Staging 部署阻擋</li>
+          <li>Smoke Test 失敗 → Auto-rollback</li>
+          <li>TypeScript 型別錯誤 → build failed</li>
+          <li>ESLint 錯誤 → build failed</li>
+        </ul>
+
+      </div>
+      <footer>Sam Gong (三公) Documentation — Generated 2026-04-22 | Sayyo Games</footer>
+    </main>
+  </div>
+
+  <a href="#" class="back-to-top" id="backToTop">↑</a>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+  <script src="assets/nav.js"></script>
+</body>
+</html>

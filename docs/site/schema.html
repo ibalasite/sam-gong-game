@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DB Schema — Sam Gong (三公)</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+  <header class="top-nav">
+    <a href="index.html" class="nav-brand"><span class="logo">🃏</span> Sam Gong (三公)</a>
+    <div class="nav-controls">
+      <span class="nav-badge"><span class="dot green"></span> v1.2</span>
+      <button class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">☰</button>
+    </div>
+  </header>
+
+  <div class="page-header">
+    <div class="breadcrumb">
+      <a href="index.html">Home</a> <span class="sep">›</span> Design <span class="sep">›</span> DB Schema
+    </div>
+    <h1 class="page-title"><span class="icon">🗄️</span> Database Schema</h1>
+    <p class="page-subtitle">PostgreSQL 16.x DDL — v1.2 | 11 Tables | SERIALIZABLE Isolation</p>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar__section">
+        <span class="sidebar__label">📋 Requirements</span>
+        <a class="sidebar__link" href="brd.html"><span class="icon">📋</span> BRD (Business)</a>
+        <a class="sidebar__link" href="prd.html"><span class="icon">📝</span> PRD (Product)</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">📐 Design</span>
+        <a class="sidebar__link" href="edd.html"><span class="icon">🏗️</span> EDD (Engineering)</a>
+        <a class="sidebar__link" href="arch.html"><span class="icon">🧩</span> Architecture</a>
+        <a class="sidebar__link" href="api.html"><span class="icon">🔌</span> API Reference</a>
+        <a class="sidebar__link active" href="schema.html"><span class="icon">🗄️</span> DB Schema</a>
+        <a class="sidebar__link" href="diagrams.html"><span class="icon">📊</span> Diagrams</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">✅ Quality</span>
+        <a class="sidebar__link" href="test-plan.html"><span class="icon">✅</span> Test Plan</a>
+        <a class="sidebar__link" href="alignment.html"><span class="icon">🔍</span> Alignment Report</a>
+        <a class="sidebar__link" href="smoke-test.html"><span class="icon">🚬</span> Smoke Test</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">🚀 Deployment</span>
+        <a class="sidebar__link" href="deployment.html"><span class="icon">🚀</span> Local Deploy</a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="doc-body">
+
+        <h1>SCHEMA — 資料庫 Schema 文件 v1.2</h1>
+
+        <h2>1. Design Principles</h2>
+        <ol>
+          <li><strong>ACID 事務優先</strong>：籌碼結算使用 SERIALIZABLE 隔離等級，確保籌碼守恆（誤差容忍 = 0）</li>
+          <li><strong>財務記錄保留 7 年</strong>：chip_transactions 按月分區（pg_partman），帳號刪除後 user_id 匿名化</li>
+          <li><strong>不可變記錄</strong>：chip_transactions 不支援 UPDATE/DELETE（僅 INSERT）</li>
+          <li><strong>讀寫分離</strong>：排行榜、玩家資料讀取走 Read Replica；寫入走 Primary</li>
+          <li><strong>索引策略</strong>：優先支援高頻查詢（結算、排行榜、Rate Limit）</li>
+        </ol>
+
+        <h2>2. Entity Relationship Diagram</h2>
+        <div class="diagram-wrapper">
+          <div class="diagram-title">Database ER Diagram</div>
+          <pre class="mermaid">erDiagram
+    users {
+        uuid id PK
+        varchar display_name
+        varchar phone_hash
+        varchar oauth_provider
+        boolean age_verified
+        smallint birth_year
+        boolean is_minor
+        boolean is_banned
+        bigint chip_balance
+        int daily_play_seconds
+        int session_play_seconds
+        boolean show_in_leaderboard
+        timestamptz created_at
+    }
+    refresh_tokens {
+        uuid id PK
+        uuid user_id FK
+        varchar token_hash
+        timestamptz expires_at
+        boolean revoked
+    }
+    game_rooms {
+        uuid id PK
+        varchar room_code
+        varchar tier
+        varchar room_type
+        varchar colyseus_room_id
+        varchar status
+    }
+    game_sessions {
+        uuid id PK
+        uuid room_id FK
+        int round_number
+        uuid banker_id FK
+        bigint banker_bet_amount
+        bigint rake_amount
+        bigint pot_amount
+        boolean all_fold
+        jsonb settlement_payload
+    }
+    chip_transactions {
+        uuid id PK
+        uuid user_id FK
+        uuid game_session_id FK
+        varchar tx_type
+        bigint amount
+        bigint balance_before
+        bigint balance_after
+    }
+    leaderboard_weekly {
+        uuid id PK
+        uuid user_id FK
+        varchar week_key
+        bigint net_chips
+    }
+    daily_tasks {
+        uuid id PK
+        uuid user_id FK
+        varchar task_id
+        date task_date
+        boolean completed
+        bigint reward_chips
+    }
+    cookie_consents {
+        uuid id PK
+        uuid user_id FK
+        varchar consent_version
+        boolean analytics_consent
+        timestamptz consented_at
+    }
+    chat_messages {
+        uuid id PK
+        uuid room_id FK
+        uuid sender_id FK
+        text content
+        boolean is_filtered
+    }
+    player_reports {
+        uuid id PK
+        uuid reporter_id FK
+        uuid reported_id FK
+        uuid room_id FK
+        varchar reason
+        varchar status
+    }
+
+    users ||--o{ refresh_tokens : "has"
+    users ||--o{ chip_transactions : "has"
+    users ||--o{ leaderboard_weekly : "has"
+    users ||--o{ daily_tasks : "has"
+    users ||--o{ cookie_consents : "has"
+    game_rooms ||--o{ game_sessions : "contains"
+    game_sessions ||--o{ chip_transactions : "generates"
+    users ||--o{ chat_messages : "sends"
+    game_rooms ||--o{ chat_messages : "has"
+    users ||--o{ player_reports : "reports"</pre>
+        </div>
+
+        <h2>3. Table Definitions</h2>
+
+        <h3>3.1 users</h3>
+        <pre><code class="language-sql">CREATE TABLE users (
+    id                      UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    display_name            VARCHAR(24) NOT NULL,
+    phone_hash              VARCHAR(64),          -- SHA-256(phone), never plaintext
+    oauth_provider          VARCHAR(20),           -- 'google'|'facebook'|null
+    oauth_id                VARCHAR(128),
+    age_verified            BOOLEAN NOT NULL DEFAULT FALSE,
+    birth_year              SMALLINT,
+    is_minor                BOOLEAN NOT NULL DEFAULT FALSE,
+    is_banned               BOOLEAN NOT NULL DEFAULT FALSE,
+    ban_reason              TEXT,
+    chip_balance            BIGINT NOT NULL DEFAULT 100000,
+    created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    daily_chip_claimed_at   DATE,
+    daily_rescue_claimed_at DATE,
+    tutorial_completed      BOOLEAN NOT NULL DEFAULT FALSE,
+    avatar_url              TEXT,
+    music_volume            SMALLINT NOT NULL DEFAULT 70
+                              CHECK (music_volume BETWEEN 0 AND 100),
+    sfx_volume              SMALLINT NOT NULL DEFAULT 80
+                              CHECK (sfx_volume BETWEEN 0 AND 100),
+    vibration               BOOLEAN NOT NULL DEFAULT TRUE,
+    show_in_leaderboard     BOOLEAN NOT NULL DEFAULT TRUE,
+    daily_play_seconds      INT NOT NULL DEFAULT 0,
+    session_play_seconds    INT NOT NULL DEFAULT 0,
+    last_login_at           TIMESTAMPTZ,
+    UNIQUE (oauth_provider, oauth_id),
+    CONSTRAINT chip_balance_non_negative CHECK (chip_balance >= 0)
+);
+
+CREATE INDEX idx_users_chip_balance ON users(chip_balance DESC);
+CREATE INDEX idx_users_is_banned ON users(is_banned) WHERE is_banned = TRUE;</code></pre>
+
+        <h3>3.2 game_sessions</h3>
+        <pre><code class="language-sql">CREATE TABLE game_sessions (
+    id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    room_id             UUID NOT NULL REFERENCES game_rooms(id),
+    round_number        INT NOT NULL,
+    banker_id           UUID REFERENCES users(id) ON DELETE SET NULL,
+    banker_seat_index   INT NOT NULL,
+    banker_bet_amount   BIGINT NOT NULL CHECK (banker_bet_amount >= 0),
+    rake_amount         BIGINT NOT NULL DEFAULT 0 CHECK (rake_amount >= 0),
+    pot_amount          BIGINT NOT NULL DEFAULT 0,
+    banker_insolvent    BOOLEAN NOT NULL DEFAULT FALSE,
+    all_fold            BOOLEAN NOT NULL DEFAULT FALSE,
+    settlement_payload  JSONB NOT NULL,          -- full settlement snapshot
+    started_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    ended_at            TIMESTAMPTZ
+);
+
+CREATE INDEX idx_sessions_room_id ON game_sessions(room_id);
+CREATE INDEX idx_sessions_started_at ON game_sessions(started_at DESC);</code></pre>
+
+        <h3>3.3 chip_transactions</h3>
+        <pre><code class="language-sql">-- Partitioned by month for 7-year retention
+CREATE TABLE chip_transactions (
+    id                  UUID NOT NULL DEFAULT uuid_generate_v4(),
+    user_id             UUID REFERENCES users(id) ON DELETE SET NULL,
+    game_session_id     UUID REFERENCES game_sessions(id) ON DELETE SET NULL,
+    tx_type             VARCHAR(30) NOT NULL
+                          CHECK (tx_type IN (
+                            'win', 'loss', 'rake', 'daily_chip',
+                            'rescue_chip', 'iap_purchase', 'ad_reward',
+                            'daily_task_reward', 'admin_adjust',
+                            'tutorial_initial'
+                          )),
+    amount              BIGINT NOT NULL,         -- positive=credit, negative=debit
+    balance_before      BIGINT NOT NULL,
+    balance_after       BIGINT NOT NULL,
+    metadata            JSONB,
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+) PARTITION BY RANGE (created_at);
+
+-- Example: monthly partition
+CREATE TABLE chip_transactions_2026_04
+    PARTITION OF chip_transactions
+    FOR VALUES FROM ('2026-04-01') TO ('2026-05-01');
+
+CREATE INDEX idx_tx_user_id ON chip_transactions(user_id, created_at DESC);
+CREATE INDEX idx_tx_session_id ON chip_transactions(game_session_id)
+    WHERE game_session_id IS NOT NULL;</code></pre>
+
+        <h3>3.4 Table Summary</h3>
+        <table>
+          <tr><th>表格</th><th>說明</th><th>保留期限</th><th>分區</th></tr>
+          <tr><td>users</td><td>玩家帳號資料</td><td>永久（個資 7 工作日刪除）</td><td>-</td></tr>
+          <tr><td>refresh_tokens</td><td>Refresh Token 管理</td><td>7 天（過期後清理）</td><td>-</td></tr>
+          <tr><td>kyc_records</td><td>KYC 身份驗證記錄</td><td>7 年（法規要求）</td><td>-</td></tr>
+          <tr><td>game_rooms</td><td>遊戲房間資訊</td><td>永久（closed_at 後歸檔）</td><td>-</td></tr>
+          <tr><td>game_sessions</td><td>牌局結算記錄</td><td>7 年（稽核用）</td><td>-</td></tr>
+          <tr><td>chip_transactions</td><td>籌碼交易流水帳</td><td>7 年（財務法規）</td><td>月分區（pg_partman）</td></tr>
+          <tr><td>leaderboard_weekly</td><td>週排行榜聚合</td><td>永久（歷史數據）</td><td>-</td></tr>
+          <tr><td>daily_tasks</td><td>每日任務完成記錄</td><td>30 天（定時清理）</td><td>-</td></tr>
+          <tr><td>cookie_consents</td><td>Cookie 同意記錄</td><td>3 年（REQ-016）</td><td>-</td></tr>
+          <tr><td>chat_messages</td><td>房間聊天訊息</td><td>30 天自動清除</td><td>-</td></tr>
+          <tr><td>player_reports</td><td>玩家舉報記錄</td><td>永久（稽核用）</td><td>-</td></tr>
+        </table>
+
+        <h2>4. Settlement Transaction Pattern</h2>
+        <pre><code class="language-sql">-- SERIALIZABLE transaction for settlement
+BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+
+-- 1. Deduct from losers
+UPDATE users SET chip_balance = chip_balance + :net_chips
+WHERE id = :player_id;
+
+-- 2. Record each transaction
+INSERT INTO chip_transactions (user_id, game_session_id, tx_type, amount,
+                                balance_before, balance_after)
+VALUES (:player_id, :session_id, 'win'|'loss', :amount,
+        :balance_before, :balance_after);
+
+-- 3. Rake record (user_id = NULL = rake account)
+INSERT INTO chip_transactions (user_id, game_session_id, tx_type, amount,
+                                balance_before, balance_after)
+VALUES (NULL, :session_id, 'rake', :rake_amount, 0, 0);
+
+-- 4. Verify conservation (application-level check before commit)
+-- sum(net_chips) + rake === 0
+
+COMMIT;</code></pre>
+
+      </div>
+      <footer>Sam Gong (三公) Documentation — Generated 2026-04-22 | Sayyo Games</footer>
+    </main>
+  </div>
+
+  <a href="#" class="back-to-top" id="backToTop">↑</a>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-sql.min.js"></script>
+  <script src="assets/nav.js"></script>
+</body>
+</html>

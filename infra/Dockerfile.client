@@ -1,0 +1,17 @@
+## Sam Gong — Frontend Client (static HTML/CSS/JS + nginx)
+## Pure browser client — Colyseus SDK loaded via CDN, no build step needed
+
+FROM nginx:1.25-alpine
+
+RUN rm -f /etc/nginx/conf.d/default.conf
+COPY infra/nginx.conf /etc/nginx/conf.d/default.conf
+
+COPY client/index.html  /usr/share/nginx/html/index.html
+COPY client/css/        /usr/share/nginx/html/css/
+COPY client/js/         /usr/share/nginx/html/js/
+COPY client/assets/     /usr/share/nginx/html/assets/
+
+EXPOSE 80
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget -qO- http://localhost:80/ | grep -q "三公" || exit 1
+CMD ["nginx", "-g", "daemon off;"]

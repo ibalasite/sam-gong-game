@@ -1,0 +1,136 @@
+name: PR Checks
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+      - labeled
+      - unlabeled
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  title-check:
+    name: Conventional Commits Title Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR title format
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          # Conventional Commits pattern:
+          # type(scope): description
+          # types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
+          PATTERN='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9/_-]+\))?: .{1,100}$'
+          if echo "$PR_TITLE" | grep -qE "$PATTERN"; then
+            echo "PR title follows Conventional Commits format."
+          else
+            echo "PR title does NOT follow Conventional Commits format."
+            echo ""
+            echo "Expected format: <type>(<scope>): <description>"
+            echo "Valid types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert"
+            echo ""
+            echo "Examples:"
+            echo "  feat(game): add sam-gong hand scoring logic"
+            echo "  fix(server): resolve room cleanup race condition"
+            echo "  chore(deps): upgrade colyseus to 0.15.x"
+            echo ""
+            echo "Your PR title: '$PR_TITLE'"
+            exit 1
+          fi
+
+  size-check:
+    name: PR Size Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Count changed lines
+        id: diff
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          LINES=$(git diff --stat "$BASE_SHA...$HEAD_SHA" | tail -1 | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+' || echo 0)
+          DELETIONS=$(git diff --stat "$BASE_SHA...$HEAD_SHA" | tail -1 | grep -oE '[0-9]+ deletion' | grep -oE '[0-9]+' || echo 0)
+          TOTAL=$((LINES + DELETIONS))
+          echo "total=${TOTAL}" >> "$GITHUB_OUTPUT"
+          echo "additions=${LINES}" >> "$GITHUB_OUTPUT"
+          echo "deletions=${DELETIONS}" >> "$GITHUB_OUTPUT"
+          echo "Changed lines — additions: $LINES, deletions: $DELETIONS, total: $TOTAL"
+
+      - name: Warn if PR is too large
+        if: ${{ fromJson(steps.diff.outputs.total) > 500 }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const total = ${{ steps.diff.outputs.total }};
+            const additions = ${{ steps.diff.outputs.additions }};
+            const deletions = ${{ steps.diff.outputs.deletions }};
+
+            const body = [
+              '## :warning: Large PR Warning',
+              '',
+              `This PR changes **${total} lines** (${additions} additions, ${deletions} deletions), which exceeds the recommended limit of **500 lines**.`,
+              '',
+              'Large PRs are harder to review and more likely to introduce bugs. Please consider:',
+              '',
+              '- Breaking this PR into smaller, focused changes',
+              '- Separating refactoring from feature work',
+              '- Splitting large feature additions into incremental PRs',
+              '',
+              '*This is a warning only — the PR is not blocked.*'
+            ].join('\n');
+
+            // Check for existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+
+            const existing = comments.find(c =>
+              c.user.login === 'github-actions[bot]' &&
+              c.body.includes('Large PR Warning')
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body
+              });
+            }
+
+  labels-check:
+    name: Labels Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure PR has at least one label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = context.payload.pull_request.labels;
+            if (labels.length === 0) {
+              core.setFailed(
+                'This PR has no labels. Please add at least one label before merging.\n\n' +
+                'Suggested labels: feature, bugfix, hotfix, docs, chore, refactor, performance, security, dependencies'
+              );
+            } else {
+              const labelNames = labels.map(l => l.name).join(', ');
+              console.log(`PR has ${labels.length} label(s): ${labelNames}`);
+            }

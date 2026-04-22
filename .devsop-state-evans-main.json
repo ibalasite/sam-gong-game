@@ -6,5 +6,19 @@
   "created_at": "2026-04-21",
   "current_step": "0",
   "review_strategy_custom": "",
-  "last_updated": "2026-04-21T15:47:26Z"
+  "last_updated": "2026-04-21T15:48:28Z",
+  "version": "2.0",
+  "project_dir": "C:\\Projects\\sam-gong-game",
+  "brd_path": "docs/BRD.md",
+  "lang_stack": "",
+  "client_type": "cocos",
+  "auto_mode": "full",
+  "review_mode": "MODE-B",
+  "log_file": ".devsop-run-20260421-234828.log",
+  "github_repo": "",
+  "base_branch": "master",
+  "port": 2567,
+  "project_name": "三公遊戲（Sam Gong 3-Card Poker）即時多人線上平台",
+  "completed_steps": [],
+  "conflict_resolutions": []
 }

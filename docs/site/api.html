@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Reference — Sam Gong (三公)</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+  <header class="top-nav">
+    <a href="index.html" class="nav-brand"><span class="logo">🃏</span> Sam Gong (三公)</a>
+    <div class="nav-controls">
+      <span class="nav-badge"><span class="dot green"></span> v1.1</span>
+      <button class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">☰</button>
+    </div>
+  </header>
+
+  <div class="page-header">
+    <div class="breadcrumb">
+      <a href="index.html">Home</a> <span class="sep">›</span> Design <span class="sep">›</span> API Reference
+    </div>
+    <h1 class="page-title"><span class="icon">🔌</span> API Reference</h1>
+    <p class="page-subtitle">REST API + WebSocket Protocol — v1.1 | Base: https://api.samgong.io/api/v1</p>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar__section">
+        <span class="sidebar__label">📋 Requirements</span>
+        <a class="sidebar__link" href="brd.html"><span class="icon">📋</span> BRD (Business)</a>
+        <a class="sidebar__link" href="prd.html"><span class="icon">📝</span> PRD (Product)</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">📐 Design</span>
+        <a class="sidebar__link" href="edd.html"><span class="icon">🏗️</span> EDD (Engineering)</a>
+        <a class="sidebar__link" href="arch.html"><span class="icon">🧩</span> Architecture</a>
+        <a class="sidebar__link active" href="api.html"><span class="icon">🔌</span> API Reference</a>
+        <a class="sidebar__link" href="schema.html"><span class="icon">🗄️</span> DB Schema</a>
+        <a class="sidebar__link" href="diagrams.html"><span class="icon">📊</span> Diagrams</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">✅ Quality</span>
+        <a class="sidebar__link" href="test-plan.html"><span class="icon">✅</span> Test Plan</a>
+        <a class="sidebar__link" href="alignment.html"><span class="icon">🔍</span> Alignment Report</a>
+        <a class="sidebar__link" href="smoke-test.html"><span class="icon">🚬</span> Smoke Test</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">🚀 Deployment</span>
+        <a class="sidebar__link" href="deployment.html"><span class="icon">🚀</span> Local Deploy</a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="doc-body">
+
+        <h1>API Reference — REST + WebSocket Protocol</h1>
+
+        <h2>1. API Overview</h2>
+        <table>
+          <tr><th>項目</th><th>值</th></tr>
+          <tr><td>Base URL (REST)</td><td><code>https://api.samgong.io/api/v1</code></td></tr>
+          <tr><td>Base URL (WebSocket)</td><td><code>wss://ws.samgong.io</code></td></tr>
+          <tr><td>協議</td><td>HTTPS（TLS 1.2+）/ WSS（WebSocket Secure）</td></tr>
+          <tr><td>內容類型</td><td><code>application/json</code>（REST）/ Colyseus Binary Protocol（WS）</td></tr>
+          <tr><td>OpenAPI Spec</td><td><code>https://api.samgong.io/api/docs</code>（Swagger UI）</td></tr>
+          <tr><td>版本策略</td><td>URL Path 版本控制（<code>/api/v1/</code>）</td></tr>
+        </table>
+
+        <h3>1.1 認證方式</h3>
+        <p>所有需要認證的端點使用 <strong>Bearer JWT（RS256）</strong>：</p>
+        <pre><code class="language-bash">Authorization: Bearer {access_token}</code></pre>
+        <ul>
+          <li>Access Token TTL：≤ 1 小時</li>
+          <li>封號後 60s 內 Token 失效（Redis 黑名單機制）</li>
+          <li>不使用 Cookie 認證（CSRF 防護）</li>
+        </ul>
+
+        <h3>1.2 Rate Limits</h3>
+        <table>
+          <tr><th>層次</th><th>對象</th><th>限制</th><th>說明</th></tr>
+          <tr><td>L1a</td><td>全域</td><td>500 req/min/IP</td><td>NGINX Ingress 全域限流</td></tr>
+          <tr><td>L1b</td><td>POST /auth/otp/send</td><td>5 req/min/IP</td><td>OTP 防暴力（Redis）</td></tr>
+          <tr><td>L2a</td><td>POST /auth/login</td><td>30 req/min/IP</td><td>登入防暴力（Redis）</td></tr>
+          <tr><td>L2b</td><td>POST /player/rescue-chip</td><td>3 req/min/player</td><td>救援籌碼防重複請求</td></tr>
+          <tr><td>L3</td><td>WebSocket 訊息</td><td>10 msg/s/player</td><td>Colyseus onMessage 速率限制</td></tr>
+          <tr><td>L4</td><td>Admin API</td><td>100 req/min/admin</td><td>管理後台操作</td></tr>
+        </table>
+
+        <h3>1.3 CORS 設定</h3>
+        <table>
+          <tr><th>設定</th><th>值</th></tr>
+          <tr><td><code>Access-Control-Allow-Origin</code></td><td>白名單（<code>https://samgong.io</code>, <code>https://www.samgong.io</code>）</td></tr>
+          <tr><td><code>Access-Control-Allow-Methods</code></td><td>GET, POST, PUT, DELETE, OPTIONS</td></tr>
+          <tr><td><code>Access-Control-Max-Age</code></td><td>86400（Preflight Cache 24h）</td></tr>
+        </table>
+
+        <h2>2. Authentication Endpoints</h2>
+
+        <h3>POST /auth/otp/send</h3>
+        <p>發送 OTP 驗證碼（手機號碼驗證）。</p>
+        <pre><code class="language-json">// Request
+{ "phone": "+886912345678" }
+
+// Response 200
+{ "message": "OTP sent", "expires_in": 300 }
+
+// Response 429
+{ "error": "rate_limit_exceeded", "retry_after_seconds": 60 }</code></pre>
+
+        <h3>POST /auth/otp/verify</h3>
+        <p>驗證 OTP 並取得 Token（新用戶自動建立帳號）。</p>
+        <pre><code class="language-json">// Request
+{ "phone": "+886912345678", "otp": "123456", "birth_year": 1990 }
+
+// Response 200
+{
+  "access_token": "eyJhbGci...",
+  "refresh_token": "rt_...",
+  "expires_in": 3600,
+  "is_new_user": false
+}</code></pre>
+
+        <h3>POST /auth/oauth/google</h3>
+        <p>Google OAuth 登入。</p>
+        <pre><code class="language-json">// Request
+{ "id_token": "google_id_token_here" }
+
+// Response 200 — same as OTP verify response</code></pre>
+
+        <h3>POST /auth/refresh</h3>
+        <p>刷新 Access Token（使用 Refresh Token）。</p>
+        <pre><code class="language-json">// Request
+{ "refresh_token": "rt_..." }
+
+// Response 200
+{
+  "access_token": "eyJhbGci...",
+  "expires_in": 3600
+}</code></pre>
+
+        <h3>POST /auth/logout</h3>
+        <p>登出並撤銷 Refresh Token。需 Bearer Token。</p>
+        <pre><code class="language-json">// Request
+{ "refresh_token": "rt_..." }
+
+// Response 200
+{ "message": "logged out" }</code></pre>
+
+        <h2>3. Player Endpoints</h2>
+
+        <h3>GET /player/me</h3>
+        <p>取得當前玩家資料。需 Bearer Token。</p>
+        <pre><code class="language-json">// Response 200
+{
+  "id": "uuid",
+  "display_name": "玩家名稱",
+  "chip_balance": 95000,
+  "is_minor": false,
+  "age_verified": true,
+  "tutorial_completed": true,
+  "daily_play_seconds": 3600,
+  "show_in_leaderboard": true
+}</code></pre>
+
+        <h3>PUT /player/settings</h3>
+        <p>更新玩家設定。需 Bearer Token。</p>
+        <pre><code class="language-json">// Request
+{
+  "display_name": "新名字",
+  "music_volume": 60,
+  "sfx_volume": 80,
+  "vibration": true,
+  "show_in_leaderboard": false
+}
+
+// Response 200
+{ "updated": true }</code></pre>
+
+        <h3>POST /player/daily-chip</h3>
+        <p>領取每日贈籌（每日限 1 次）。需 Bearer Token。</p>
+        <pre><code class="language-json">// Response 200
+{ "chips_received": 10000, "new_balance": 105000 }
+
+// Response 400
+{ "error": "already_claimed_today" }</code></pre>
+
+        <h3>POST /player/rescue-chip</h3>
+        <p>請求救援籌碼（籌碼 &lt; 入場門檻時）。需 Bearer Token。</p>
+        <pre><code class="language-json">// Response 200
+{ "chips_received": 100000, "new_balance": 100000 }
+
+// Response 400
+{ "error": "rescue_unavailable", "reason": "chip_balance_sufficient" }
+
+// Response 403
+{ "error": "rescue_chip_claimed", "reason": "already_claimed_today" }</code></pre>
+
+        <h3>POST /player/ad-reward</h3>
+        <p>廣告獎勵籌碼。需 Bearer Token。</p>
+        <pre><code class="language-json">// Request
+{ "ad_unit_id": "interstitial_001", "reward_amount": 5000 }
+
+// Response 200
+{ "chips_received": 5000, "new_balance": 100000 }
+
+// Response 400 — ad already watched / invalid ad_unit_id
+// Response 401 — unauthorized
+// Response 429 — too many ad rewards today</code></pre>
+
+        <h2>4. Game Room Endpoints</h2>
+
+        <h3>GET /game/config</h3>
+        <p>取得廳別設定與 WebSocket Server 域名。需 Bearer Token。</p>
+        <pre><code class="language-json">// Response 200
+{
+  "ws_url": "wss://ws.samgong.io",
+  "tier_configs": [
+    { "tier": "bronze", "min_chips": 1000, "min_bet": 100, "max_bet": 500 },
+    { "tier": "silver", "min_chips": 5000, "min_bet": 500, "max_bet": 2000 },
+    { "tier": "gold", "min_chips": 20000, "min_bet": 2000, "max_bet": 10000 },
+    { "tier": "platinum", "min_chips": 100000, "min_bet": 10000, "max_bet": 50000 }
+  ]
+}</code></pre>
+
+        <h3>GET /game/rooms</h3>
+        <p>列出可用房間（快速配對用）。需 Bearer Token。</p>
+        <pre><code class="language-json">// Query: ?tier=bronze&type=matchmaking
+// Response 200
+{
+  "rooms": [
+    {
+      "room_id": "colyseus_room_id",
+      "tier": "bronze",
+      "player_count": 3,
+      "max_players": 6
+    }
+  ]
+}</code></pre>
+
+        <h2>5. Leaderboard Endpoints</h2>
+
+        <h3>GET /leaderboard/weekly</h3>
+        <p>取得週排行榜（前 100 名）。</p>
+        <pre><code class="language-json">// Query: ?week=2026-W17&limit=50&offset=0
+// Response 200
+{
+  "week": "2026-W17",
+  "entries": [
+    { "rank": 1, "player_id": "uuid", "display_name": "玩家", "net_chips": 500000 }
+  ],
+  "my_rank": 42,
+  "total_players": 1234
+}</code></pre>
+
+        <h2>6. KYC Endpoints</h2>
+
+        <h3>POST /player/kyc/submit</h3>
+        <p>提交 KYC 文件（身份驗證用）。需 Bearer Token。</p>
+        <pre><code class="language-json">// Request: multipart/form-data
+// Field: kyc_type = "national_id" | "passport" | "driver_license"
+// Field: document (file upload)
+
+// Response 201
+{ "kyc_id": "uuid", "status": "pending", "submitted_at": "2026-04-22T10:00:00Z" }</code></pre>
+
+        <h2>7. WebSocket Protocol</h2>
+        <p>Client 透過 Colyseus SDK 連線至 <code>wss://ws.samgong.io</code>。</p>
+
+        <h3>7.1 連線方式</h3>
+        <pre><code class="language-typescript">import Colyseus from "colyseus.js";
+
+const client = new Colyseus.Client("wss://ws.samgong.io");
+const room = await client.joinOrCreate("sam_gong", {
+  tier: "bronze",
+  token: access_token,  // JWT Bearer Token
+});</code></pre>
+
+        <h3>7.2 Client → Server 訊息（onMessage）</h3>
+        <table>
+          <tr><th>訊息類型</th><th>Phase</th><th>Payload</th><th>說明</th></tr>
+          <tr><td><code>banker_bet</code></td><td>banker-bet</td><td><code>{ amount: number }</code></td><td>莊家下注（min_bet ≤ amount ≤ max_bet）</td></tr>
+          <tr><td><code>player_call</code></td><td>player-bet</td><td><code>{}</code></td><td>閒家跟注（扣除 banker_bet_amount）</td></tr>
+          <tr><td><code>player_fold</code></td><td>player-bet</td><td><code>{}</code></td><td>閒家棄牌（不扣籌碼）</td></tr>
+          <tr><td><code>request_rescue_chips</code></td><td>waiting/settled</td><td><code>{}</code></td><td>請求救援籌碼</td></tr>
+          <tr><td><code>leave_room</code></td><td>任何</td><td><code>{}</code></td><td>主動離開房間</td></tr>
+          <tr><td><code>chat_message</code></td><td>任何</td><td><code>{ content: string }</code></td><td>發送聊天訊息（≤100 字元）</td></tr>
+        </table>
+
+        <h3>7.3 Server → Client 廣播事件</h3>
+        <table>
+          <tr><th>事件</th><th>Phase</th><th>Payload</th><th>說明</th></tr>
+          <tr><td><code>myHand</code></td><td>dealing</td><td><code>{ cards: Card[] }</code></td><td>私人訊息：玩家自己的 3 張手牌</td></tr>
+          <tr><td><code>showdown_reveal</code></td><td>showdown</td><td><code>{ hands: Record&lt;player_id, Card[]&gt; }</code></td><td>廣播所有未 Fold 手牌</td></tr>
+          <tr><td><code>settlement_result</code></td><td>settled</td><td><code>{ settlements: Settlement[] }</code></td><td>結算結果廣播</td></tr>
+          <tr><td><code>rescue_chips</code></td><td>waiting/settled</td><td><code>{ chips_received: number, new_balance: number }</code></td><td>救援籌碼成功</td></tr>
+          <tr><td><code>rescue_not_available</code></td><td>waiting/settled</td><td><code>{ reason: string }</code></td><td>救援籌碼失敗</td></tr>
+          <tr><td><code>anti_addiction_warning</code></td><td>任何</td><td><code>{ daily_seconds: number, limit_seconds: number }</code></td><td>防沉迷 80% 警告</td></tr>
+          <tr><td><code>anti_addiction_limit</code></td><td>任何</td><td><code>{ reason: 'daily_limit' | 'minor_curfew' }</code></td><td>防沉迷強制下線</td></tr>
+          <tr><td><code>my_session_info</code></td><td>joining</td><td><code>{ daily_seconds_remaining: number }</code></td><td>加入房間後推送今日剩餘時間</td></tr>
+          <tr><td><code>force_disconnect</code></td><td>任何</td><td><code>{ reason: string, code: number }</code></td><td>強制斷線（封號/多裝置）</td></tr>
+        </table>
+
+        <h3>7.4 WebSocket Close Codes</h3>
+        <table>
+          <tr><th>Code</th><th>含義</th><th>Client 行為</th></tr>
+          <tr><td>4000</td><td>Room 解散（玩家不足）</td><td>返回大廳</td></tr>
+          <tr><td>4001</td><td>Token 無效 / 過期</td><td>刷新 Token 後重連</td></tr>
+          <tr><td>4002</td><td>籌碼不足入場門檻</td><td>提示並引導至救援籌碼</td></tr>
+          <tr><td>4003</td><td>帳號已封禁</td><td>顯示封號訊息</td></tr>
+          <tr><td>4004</td><td>防沉迷強制下線</td><td>顯示防沉迷提示</td></tr>
+          <tr><td>4005</td><td>多裝置登入踢出</td><td>提示「已在其他裝置登入」</td></tr>
+        </table>
+
+        <h2>8. Error Codes</h2>
+        <table>
+          <tr><th>HTTP Code</th><th>Error Code</th><th>說明</th></tr>
+          <tr><td>400</td><td><code>invalid_request</code></td><td>請求格式錯誤</td></tr>
+          <tr><td>400</td><td><code>already_claimed_today</code></td><td>每日籌碼已領取</td></tr>
+          <tr><td>400</td><td><code>rescue_unavailable</code></td><td>救援籌碼條件不符</td></tr>
+          <tr><td>401</td><td><code>token_invalid</code></td><td>Token 無效或過期</td></tr>
+          <tr><td>401</td><td><code>account_not_found</code></td><td>帳號不存在</td></tr>
+          <tr><td>401</td><td><code>account_banned</code></td><td>帳號已封禁</td></tr>
+          <tr><td>403</td><td><code>rescue_chip_claimed</code></td><td>今日救援籌碼已使用</td></tr>
+          <tr><td>429</td><td><code>rate_limit_exceeded</code></td><td>超過速率限制</td></tr>
+          <tr><td>500</td><td><code>internal_error</code></td><td>伺服器內部錯誤</td></tr>
+        </table>
+
+      </div>
+      <footer>Sam Gong (三公) Documentation — Generated 2026-04-22 | Sayyo Games</footer>
+    </main>
+  </div>
+
+  <a href="#" class="back-to-top" id="backToTop">↑</a>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+  <script src="assets/nav.js"></script>
+</body>
+</html>

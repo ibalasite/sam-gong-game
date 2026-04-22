@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PRD — Sam Gong (三公)</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+  <header class="top-nav">
+    <a href="index.html" class="nav-brand"><span class="logo">🃏</span> Sam Gong (三公)</a>
+    <div class="nav-controls">
+      <span class="nav-badge"><span class="dot green"></span> v0.14-draft</span>
+      <button class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">☰</button>
+    </div>
+  </header>
+
+  <div class="page-header">
+    <div class="breadcrumb">
+      <a href="index.html">Home</a> <span class="sep">›</span> Requirements <span class="sep">›</span> PRD
+    </div>
+    <h1 class="page-title"><span class="icon">📝</span> PRD — Product Requirements Document</h1>
+    <p class="page-subtitle">三公遊戲 — v0.14-draft | 21 REQs | 14 NFRs</p>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar__section">
+        <span class="sidebar__label">📋 Requirements</span>
+        <a class="sidebar__link" href="brd.html"><span class="icon">📋</span> BRD (Business)</a>
+        <a class="sidebar__link active" href="prd.html"><span class="icon">📝</span> PRD (Product)</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">📐 Design</span>
+        <a class="sidebar__link" href="edd.html"><span class="icon">🏗️</span> EDD (Engineering)</a>
+        <a class="sidebar__link" href="arch.html"><span class="icon">🧩</span> Architecture</a>
+        <a class="sidebar__link" href="api.html"><span class="icon">🔌</span> API Reference</a>
+        <a class="sidebar__link" href="schema.html"><span class="icon">🗄️</span> DB Schema</a>
+        <a class="sidebar__link" href="diagrams.html"><span class="icon">📊</span> Diagrams</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">✅ Quality</span>
+        <a class="sidebar__link" href="test-plan.html"><span class="icon">✅</span> Test Plan</a>
+        <a class="sidebar__link" href="alignment.html"><span class="icon">🔍</span> Alignment Report</a>
+        <a class="sidebar__link" href="smoke-test.html"><span class="icon">🚬</span> Smoke Test</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">🚀 Deployment</span>
+        <a class="sidebar__link" href="deployment.html"><span class="icon">🚀</span> Local Deploy</a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="doc-body">
+
+        <h1>PRD — 三公遊戲（Sam Gong 3-Card Poker）即時多人線上平台</h1>
+
+        <table>
+          <tr><th>欄位</th><th>內容</th></tr>
+          <tr><td>DOC-ID</td><td>PRD-SAM-GONG-GAME-20260421</td></tr>
+          <tr><td>文件版本</td><td>v0.14-draft</td></tr>
+          <tr><td>來源 BRD</td><td>BRD-SAM-GONG-GAME-20260421 v0.12-draft</td></tr>
+          <tr><td>日期</td><td>2026-04-22</td></tr>
+        </table>
+
+        <h2>1. Product Vision</h2>
+        <blockquote>
+          打造華人市場首款 <strong>Server-Authoritative 即時多人三公遊戲</strong>，以「絕對公平」為核心差異化，讓 35–55 歲華人玩家能跨平台（Web + Android + iOS）安心享受公平、流暢的三公對戰體驗。
+        </blockquote>
+
+        <h2>2. Success Metrics</h2>
+        <p><strong>北極星指標（North Star）：</strong>週活躍對戰場次（Weekly Active Rounds）— Launch+6M 目標：<strong>≥ 50,000 場/週</strong></p>
+        <table>
+          <tr><th>指標類別</th><th>指標</th><th>目標值</th><th>量測時間點</th></tr>
+          <tr><td>公平性信任</td><td>NPS「認為遊戲公平」</td><td>≥ 70</td><td>Launch+3M（2026-11-21）</td></tr>
+          <tr><td>留存</td><td>7 日留存率</td><td>≥ 35%</td><td>Launch+6M（2027-02-21）</td></tr>
+          <tr><td>規模</td><td>Peak CCU</td><td>≥ 500</td><td>Launch+6M（2027-02-21）</td></tr>
+          <tr><td>規模</td><td>DAU</td><td>≥ 2,000</td><td>Launch+6M（2027-02-21）</td></tr>
+          <tr><td>變現</td><td>付費率（IAP 模式）</td><td>≥ 3%</td><td>Launch+9M（2027-05-21）</td></tr>
+          <tr><td>新手</td><td>新手引導完成率</td><td>≥ 60%</td><td>Launch+1M（2026-09-21）</td></tr>
+          <tr><td>防作弊</td><td>投訴作弊率</td><td>≤ 0.1%</td><td>持續量測</td></tr>
+        </table>
+
+        <h2>3. Functional Requirements</h2>
+
+        <h3>REQ-001 — 洗牌 (Must Have)</h3>
+        <ul>
+          <li>AC-1: Fisher-Yates 洗牌算法，使用 <code>crypto.randomInt</code>（禁止 <code>Math.random</code>）</li>
+          <li>AC-2: 洗牌操作完全在 Server 執行，Client 不參與</li>
+          <li>AC-3: 每局發牌前強制重新洗牌</li>
+          <li>BDD: S-001</li>
+        </ul>
+
+        <h3>REQ-002 — 發牌 (Must Have)</h3>
+        <ul>
+          <li>AC-1: 每位玩家發 3 張牌，手牌透過私人訊息推送（防手牌洩漏）</li>
+          <li>AC-2: 最少 2 人、最多 6 人同時參與一局</li>
+          <li>BDD: S-002</li>
+        </ul>
+
+        <h3>REQ-003 — 比牌 (Must Have)</h3>
+        <ul>
+          <li>AC-1: 點數計算：(sum of cards) mod 10</li>
+          <li>AC-2: 三公判定（3 張均為 10/J/Q/K）優先於點數比較</li>
+          <li>AC-3: 同點比花色：黑桃 &gt; 紅心 &gt; 方塊 &gt; 梅花</li>
+          <li>AC-4: 比牌向量測試集 ≥ 200 組</li>
+          <li>BDD: S-003</li>
+        </ul>
+
+        <h3>REQ-004 — 結算 (Must Have)</h3>
+        <ul>
+          <li>AC-1: 籌碼守恆：<code>sum(net_chips) + rake === 0</code></li>
+          <li>AC-2: Rake = <code>floor(pot × 0.05)</code>，最少 1 籌碼</li>
+          <li>AC-3: 莊家破產（D13）：先到先得算法，贏家按 seat_index 排序</li>
+          <li>AC-4: all_fold 情境：莊家底注退回，rake = 0</li>
+          <li>BDD: S-004</li>
+        </ul>
+
+        <h3>REQ-010 — 配對系統 (Must Have)</h3>
+        <ul>
+          <li>AC-1: 廳別配對（按籌碼級距分組）</li>
+          <li>AC-2: 配對超時 90 秒後顯示等待提示</li>
+          <li>AC-3: 支援快速配對（matchmaking）和私人房間</li>
+          <li>BDD: S-010</li>
+        </ul>
+
+        <h3>REQ-011 — 房間狀態管理 (Must Have)</h3>
+        <ul>
+          <li>AC-1: 斷線重連 —— 30 秒內重連可恢復狀態</li>
+          <li>AC-2: 斷線期間計時器不暫停（Server 繼續計時）</li>
+          <li>AC-3: 玩家籌碼不足入場門檻時自動移出房間</li>
+          <li>BDD: S-011</li>
+        </ul>
+
+        <h3>REQ-014 — 帳號驗證 (Must Have)</h3>
+        <ul>
+          <li>AC-1: 手機號碼 OTP 驗證</li>
+          <li>AC-2: OAuth 2.0（Google / LINE）</li>
+          <li>AC-3: 年齡驗證（18 歲以上）</li>
+          <li>BDD: S-014</li>
+        </ul>
+
+        <h3>REQ-015 — 防沉迷 (Must Have)</h3>
+        <ul>
+          <li>AC-1: 成人玩家每日遊玩上限 8 小時（可配置）</li>
+          <li>AC-2: 未成年玩家每日上限 2 小時，22:00–08:00 禁止登入</li>
+          <li>AC-3: 累計達 80% 上限時推播警告</li>
+          <li>BDD: S-015</li>
+        </ul>
+
+        <h3>REQ-017 — 反作弊 (Must Have)</h3>
+        <ul>
+          <li>AC-1: 每秒訊息超過 10 條自動 rate limit</li>
+          <li>AC-2: 連續 5 局內重複行為模式觸發審查佇列</li>
+          <li>AC-3: 可疑行為日誌 30 天保存</li>
+          <li>BDD: S-017</li>
+        </ul>
+
+        <h2>4. Non-Functional Requirements</h2>
+        <table>
+          <tr><th>NFR ID</th><th>類別</th><th>指標</th><th>目標值</th><th>優先度</th></tr>
+          <tr><td>NFR-01</td><td>延遲</td><td>P95 WebSocket 往返延遲</td><td>≤ 200ms</td><td>P0</td></tr>
+          <tr><td>NFR-02</td><td>延遲</td><td>結算廣播延遲</td><td>≤ 100ms</td><td>P0</td></tr>
+          <tr><td>NFR-03</td><td>可用性</td><td>整體系統 SLA</td><td>≥ 99.5%</td><td>P0</td></tr>
+          <tr><td>NFR-04</td><td>規模</td><td>Peak CCU</td><td>≥ 500</td><td>P0</td></tr>
+          <tr><td>NFR-05</td><td>安全</td><td>Server-authoritative 計算率</td><td>100%</td><td>P0</td></tr>
+          <tr><td>NFR-06</td><td>一致性</td><td>籌碼守恆誤差</td><td>= 0</td><td>P0</td></tr>
+          <tr><td>NFR-07</td><td>擴展性</td><td>HPA max 副本數</td><td>10 pods</td><td>P1</td></tr>
+          <tr><td>NFR-08</td><td>恢復</td><td>RTO（Recovery Time Objective）</td><td>≤ 30 分鐘</td><td>P1</td></tr>
+          <tr><td>NFR-09</td><td>防作弊</td><td>投訴作弊率</td><td>≤ 0.1%</td><td>P0</td></tr>
+          <tr><td>NFR-10</td><td>監控</td><td>籌碼異常警報響應時間</td><td>≤ 5 分鐘</td><td>P0</td></tr>
+          <tr><td>NFR-14</td><td>測試</td><td>Server 端單元測試覆蓋率</td><td>≥ 90%</td><td>P0</td></tr>
+          <tr><td>NFR-17</td><td>認證</td><td>Access Token TTL</td><td>≤ 1 小時</td><td>P0</td></tr>
+        </table>
+
+        <h2>5. 遊戲流程規格</h2>
+        <h3>5.1 完整一局流程（6 步驟）</h3>
+        <ol>
+          <li><strong>Step 1: 等待</strong> — 房間建立，等待玩家加入（最少 2 人）</li>
+          <li><strong>Step 2: 發牌</strong> — Server Fisher-Yates 洗牌，各玩家私人訊息收到 3 張手牌</li>
+          <li><strong>Step 3: 莊家下注</strong> — 莊家 30 秒內選擇下注金額（min_bet ~ max_bet），超時自動最低下注；<code>banker.chip_balance -= bet</code>（escrow 預扣）</li>
+          <li><strong>Step 4: 閒家行動</strong> — 每位閒家 30 秒決策：Call（扣除 banker_bet_amount）或 Fold（bet=0，不扣籌碼）</li>
+          <li><strong>Step 5: 比牌</strong> — Server HandEvaluator 比牌，廣播 showdown_reveal（所有未 Fold 手牌）</li>
+          <li><strong>Step 6: 結算</strong> — 計算 Rake、分配籌碼、驗證籌碼守恆，5 秒後下一局</li>
+        </ol>
+
+        <h3>5.2 結算邏輯</h3>
+        <ul>
+          <li>閒家贏：<code>net_chips = +banker_bet_amount</code>（莊家付賠）</li>
+          <li>閒家輸：<code>net_chips = -banker_bet_amount</code>（閒家輸注）</li>
+          <li>Fold：<code>net_chips = 0</code>（不輸不贏）</li>
+          <li>守恆驗證：<code>sum(all net_chips) + rake === 0</code></li>
+        </ul>
+
+      </div>
+      <footer>Sam Gong (三公) Documentation — Generated 2026-04-22 | Sayyo Games</footer>
+    </main>
+  </div>
+
+  <a href="#" class="back-to-top" id="backToTop">↑</a>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+  <script src="assets/nav.js"></script>
+</body>
+</html>

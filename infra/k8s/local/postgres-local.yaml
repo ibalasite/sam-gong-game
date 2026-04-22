@@ -1,0 +1,72 @@
+## PostgreSQL — local k8s (StatefulSet, single replica, hostPath storage)
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: sam-gong-local
+spec:
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: sam-gong-local
+spec:
+  serviceName: postgres-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: sam_gong
+            - name: POSTGRES_USER
+              value: sam_gong_app
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sam-gong-secrets
+                  key: DB_PASSWORD
+            - name: TZ
+              value: Asia/Taipei
+            - name: PGTZ
+              value: Asia/Taipei
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "sam_gong_app", "-d", "sam_gong"]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi

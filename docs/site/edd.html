@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EDD — Sam Gong (三公)</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+  <header class="top-nav">
+    <a href="index.html" class="nav-brand"><span class="logo">🃏</span> Sam Gong (三公)</a>
+    <div class="nav-controls">
+      <span class="nav-badge"><span class="dot green"></span> v1.4-draft</span>
+      <button class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">☰</button>
+    </div>
+  </header>
+
+  <div class="page-header">
+    <div class="breadcrumb">
+      <a href="index.html">Home</a> <span class="sep">›</span> Design <span class="sep">›</span> EDD
+    </div>
+    <h1 class="page-title"><span class="icon">🏗️</span> EDD — Engineering Design Document</h1>
+    <p class="page-subtitle">v1.4-draft | 9 Review Rounds | 95+ Findings Fixed | Production-ready</p>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar__section">
+        <span class="sidebar__label">📋 Requirements</span>
+        <a class="sidebar__link" href="brd.html"><span class="icon">📋</span> BRD (Business)</a>
+        <a class="sidebar__link" href="prd.html"><span class="icon">📝</span> PRD (Product)</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">📐 Design</span>
+        <a class="sidebar__link active" href="edd.html"><span class="icon">🏗️</span> EDD (Engineering)</a>
+        <a class="sidebar__link" href="arch.html"><span class="icon">🧩</span> Architecture</a>
+        <a class="sidebar__link" href="api.html"><span class="icon">🔌</span> API Reference</a>
+        <a class="sidebar__link" href="schema.html"><span class="icon">🗄️</span> DB Schema</a>
+        <a class="sidebar__link" href="diagrams.html"><span class="icon">📊</span> Diagrams</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">✅ Quality</span>
+        <a class="sidebar__link" href="test-plan.html"><span class="icon">✅</span> Test Plan</a>
+        <a class="sidebar__link" href="alignment.html"><span class="icon">🔍</span> Alignment Report</a>
+        <a class="sidebar__link" href="smoke-test.html"><span class="icon">🚬</span> Smoke Test</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">🚀 Deployment</span>
+        <a class="sidebar__link" href="deployment.html"><span class="icon">🚀</span> Local Deploy</a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="doc-body">
+        <h1>EDD — Sam Gong 三公 多人紙牌遊戲</h1>
+        <table>
+          <tr><th>欄位</th><th>內容</th></tr>
+          <tr><td>DOC-ID</td><td>EDD-SAM-GONG-GAME-20260422</td></tr>
+          <tr><td>文件版本</td><td>v1.4-draft</td></tr>
+          <tr><td>狀態</td><td>DRAFT — 9 輪精查完成，共修復 95+ findings</td></tr>
+          <tr><td>GA 目標</td><td>2026-08-21</td></tr>
+          <tr><td>來源 PRD</td><td>PRD-SAM-GONG-GAME-20260421 v0.14-draft</td></tr>
+        </table>
+
+        <h2>1. Executive Summary</h2>
+        <p>三公遊戲（Sam Gong 3-Card Poker）是一款 Server-Authoritative 即時多人紙牌遊戲。所有遊戲邏輯（洗牌、發牌、比牌、結算）完全由 Server 執行，Client（Cocos Creator 3.8.x）僅負責狀態渲染與使用者互動收集，實現「啞渲染器（dumb renderer）」架構。</p>
+
+        <h3>關鍵架構決策</h3>
+        <ol>
+          <li><strong>Server-Authoritative 架構</strong>：Colyseus 0.15.x（Node.js 22.x + TypeScript 5.4.x）作為 Game Server，透過 WebSocket 即時同步 Room State；Client 不包含任何遊戲邏輯。</li>
+          <li><strong>資料持久層</strong>：PostgreSQL 16.x（玩家資料、交易記錄、KYC）；Redis 7.x（快取、Session、Rate Limit、Leaderboard Sorted Set）</li>
+          <li><strong>身份驗證</strong>：JWT RS256/ES256；Access Token ≤ 1 小時，Refresh Token ≤ 7 天；帳號封鎖後 ≤ 60 秒失效</li>
+          <li><strong>部署</strong>：Kubernetes（k8s）叢集，Colyseus 水平擴展配合 <code>@colyseus/redis-presence</code>；GitHub Actions CI/CD</li>
+          <li><strong>台灣法規合規</strong>：虛擬籌碼不可兌換、OTP 年齡驗證、防沉迷計時器、KYC</li>
+        </ol>
+
+        <h2>2. Tech Stack</h2>
+        <table>
+          <tr><th>層次</th><th>技術</th><th>版本</th><th>用途</th></tr>
+          <tr><td>Game Server</td><td>Colyseus</td><td>0.15.x (locked)</td><td>WebSocket Room State 管理</td></tr>
+          <tr><td>Runtime</td><td>Node.js</td><td>22.x LTS</td><td>Server 運行環境</td></tr>
+          <tr><td>Language</td><td>TypeScript</td><td>5.4.x</td><td>全端型別安全</td></tr>
+          <tr><td>Client</td><td>Cocos Creator</td><td>3.8.x</td><td>Web / Android / iOS 跨平台</td></tr>
+          <tr><td>Primary DB</td><td>PostgreSQL</td><td>16.x</td><td>玩家資料、牌局記錄、財務帳本</td></tr>
+          <tr><td>Cache / MQ</td><td>Redis</td><td>7.x Sentinel</td><td>Session、Matchmaking、Pub/Sub、排行榜</td></tr>
+          <tr><td>HTTP Framework</td><td>Express.js</td><td>4.x</td><td>REST API Service</td></tr>
+          <tr><td>DB Pool</td><td>pgBouncer</td><td>latest</td><td>Transaction Mode 連線池</td></tr>
+          <tr><td>Container</td><td>Docker</td><td>latest</td><td>開發環境 + 生產映像</td></tr>
+          <tr><td>Orchestration</td><td>Kubernetes</td><td>1.28+</td><td>生產部署、HPA 水平擴展</td></tr>
+          <tr><td>Testing</td><td>Jest + @colyseus/testing</td><td>latest</td><td>Unit + Integration 測試</td></tr>
+          <tr><td>E2E</td><td>Playwright</td><td>latest</td><td>Client 端到端測試</td></tr>
+          <tr><td>Monitoring</td><td>Prometheus + Grafana</td><td>latest</td><td>指標收集、視覺化</td></tr>
+          <tr><td>Logging</td><td>Pino + Loki</td><td>latest</td><td>結構化 JSON 日誌</td></tr>
+          <tr><td>Alerting</td><td>PagerDuty</td><td>-</td><td>On-call 告警</td></tr>
+        </table>
+
+        <h2>3. Colyseus Room Design</h2>
+        <h3>3.1 SamGongRoom — Room State Schema</h3>
+        <pre><code class="language-typescript">// SamGongRoomState — Colyseus Schema
+import { Schema, MapSchema, ArraySchema, type } from "@colyseus/schema";
+
+export class CardSchema extends Schema {
+  @type("string") suit: string;   // 'spades'|'hearts'|'diamonds'|'clubs'
+  @type("number") rank: number;   // 1(A),2-10,11(J),12(Q),13(K)
+}
+
+export class PlayerState extends Schema {
+  @type("string") player_id: string;
+  @type("string") display_name: string;
+  @type("number") chip_balance: number;  // Open Information
+  @type("number") seat_index: number;    // 0-based
+  @type("boolean") is_banker: boolean;
+  @type("boolean") is_connected: boolean;
+  @type("string") action: string;        // 'waiting'|'call'|'fold'
+  @type("number") bet_amount: number;
+  // session_id: Server-only, NOT decorated with @type
+  session_id: string;
+}
+
+export class SamGongRoomState extends Schema {
+  @type("string") phase: string;         // 'waiting'|'dealing'|'banker-bet'|'player-bet'|'showdown'|'settled'
+  @type({ map: PlayerState }) players = new MapSchema<PlayerState>();
+  @type("string") current_banker_id: string;
+  @type("number") banker_bet_amount: number;
+  @type("number") pot_amount: number;
+  @type("string") current_player_turn_id: string;
+  @type("number") action_deadline: number;  // Unix timestamp ms
+  @type("number") round_number: number;
+  @type("string") room_code: string;
+  @type("string") tier: string;
+}</code></pre>
+
+        <h3>3.2 Core Modules</h3>
+        <table>
+          <tr><th>模組</th><th>檔案</th><th>職責</th></tr>
+          <tr><td>DeckManager</td><td><code>src/game/DeckManager.ts</code></td><td>建牌組、Fisher-Yates 洗牌（crypto.randomInt）</td></tr>
+          <tr><td>HandEvaluator</td><td><code>src/game/HandEvaluator.ts</code></td><td>點數計算 (mod 10)、三公判定、花色比較</td></tr>
+          <tr><td>SettlementEngine</td><td><code>src/game/SettlementEngine.ts</code></td><td>多步驟原子性結算、Rake 計算、籌碼守恆驗證</td></tr>
+          <tr><td>BankerRotation</td><td><code>src/game/BankerRotation.ts</code></td><td>輪莊邏輯（seat_index mod N）、破產跳過</td></tr>
+          <tr><td>AntiAddictionManager</td><td><code>src/game/AntiAddiction.ts</code></td><td>防沉迷計時器（成人 8h / 未成年 2h）</td></tr>
+          <tr><td>TutorialScriptEngine</td><td><code>src/game/Tutorial.ts</code></td><td>固定劇本 R1/R2/R3 新手引導</td></tr>
+        </table>
+
+        <h3>3.3 HandEvaluator 關鍵邏輯</h3>
+        <pre><code class="language-typescript">// HandEvaluator.ts
+const SUIT_RANK = { spades: 4, hearts: 3, diamonds: 2, clubs: 1 };
+const FACE_VALUE = { 1: 1, 11: 0, 12: 0, 13: 0 }; // A=1, J=Q=K=0
+
+export function calculateHandValue(cards: CardSchema[]): number {
+  const sum = cards.reduce((acc, card) => {
+    const val = card.rank >= 10 ? 0 : (card.rank === 1 ? 1 : card.rank);
+    return acc + val;
+  }, 0);
+  return sum % 10;
+}
+
+export function isSamGong(cards: CardSchema[]): boolean {
+  return cards.every(c => c.rank === 1 || c.rank >= 10);
+}
+
+// Returns positive if hand1 > hand2, negative if hand1 < hand2, 0 if tie
+export function compareHands(hand1: CardSchema[], hand2: CardSchema[]): number {
+  const sg1 = isSamGong(hand1), sg2 = isSamGong(hand2);
+  if (sg1 !== sg2) return sg1 ? 1 : -1;
+  const v1 = calculateHandValue(hand1), v2 = calculateHandValue(hand2);
+  if (v1 !== v2) return v1 - v2;
+  // Tiebreak by highest suit
+  const maxSuit = (h: CardSchema[]) => Math.max(...h.map(c => SUIT_RANK[c.suit]));
+  return maxSuit(hand1) - maxSuit(hand2);
+}</code></pre>
+
+        <h3>3.4 SettlementEngine — Rake Formula</h3>
+        <pre><code class="language-typescript">// Rake = floor(pot * 0.05), minimum 1
+// pot = sum of all callers' bet amounts (not folded)
+// Conservation: sum(net_chips) + rake === 0
+const rake = Math.max(1, Math.floor(pot * 0.05));
+// Validation
+const conservation = settlements.reduce((a, s) => a + s.net_chips, 0) + rake;
+if (conservation !== 0) throw new ChipConservationError(conservation);</code></pre>
+
+        <h2>4. Security Architecture</h2>
+        <h3>4.1 Multi-Layer Defense</h3>
+        <table>
+          <tr><th>層次</th><th>機制</th><th>目的</th></tr>
+          <tr><td>L1: Edge</td><td>CloudFlare DDoS + GeoIP</td><td>網路層攻擊防護</td></tr>
+          <tr><td>L2: Ingress</td><td>NGINX Rate Limit（連線數、請求頻率）</td><td>過載保護</td></tr>
+          <tr><td>L3: API</td><td>Redis Token Bucket（rl:auth:{ip} ≤ 30/min）</td><td>暴力破解防護</td></tr>
+          <tr><td>L4: WS</td><td>Colyseus onMessage 驗證（phase、is_banker、餘額）</td><td>非法訊息過濾</td></tr>
+          <tr><td>L5: DB</td><td>SERIALIZABLE + parameterized queries</td><td>籌碼守恆 + SQL Injection 防護</td></tr>
+        </table>
+
+        <h3>4.2 JWT 黑名單機制（封號即時踢出）</h3>
+        <pre><code class="language-typescript">// Redis Key: ban_token:{player_id} = 1, TTL = Access Token TTL
+// Colyseus onMessage handler 每次訊息前驗證
+const isBanned = await redis.get(`ban_token:${player_id}`);
+if (isBanned) client.leave(4003, 'account_banned');</code></pre>
+
+        <h2>5. Kubernetes Deployment</h2>
+        <h3>5.1 HPA Configuration</h3>
+        <pre><code class="language-yaml">apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: colyseus-hpa
+  namespace: sam-gong-prod
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: colyseus-game-server
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60</code></pre>
+
+        <h2>6. CI/CD Pipeline</h2>
+        <ul>
+          <li><strong>GitHub Actions</strong>：PR 觸發 → Jest 單元測試 + 覆蓋率門控（≥ 80%）→ Docker Build → Staging 部署</li>
+          <li><strong>Branch 策略</strong>：feature/* → develop → main（所有 PR 必須通過 CI gate）</li>
+          <li><strong>Auto-rollback</strong>：Staging Smoke Test 失敗時自動回滾</li>
+          <li><strong>TypeScript Project References</strong>：CI 強制邊界隔離（Client 不得引用 Server 模組）</li>
+        </ul>
+
+        <h2>7. Observability</h2>
+        <h3>Key Metrics</h3>
+        <table>
+          <tr><th>指標名稱</th><th>類型</th><th>告警條件</th><th>告警等級</th></tr>
+          <tr><td>ws_latency_p95_ms</td><td>Gauge</td><td>&gt; 100ms</td><td>Warning</td></tr>
+          <tr><td>chip_conservation_violation</td><td>Counter</td><td>&gt; 0</td><td>Critical → PagerDuty</td></tr>
+          <tr><td>ccu_active_connections</td><td>Gauge</td><td>&gt; 450（非 HPA 觸發）</td><td>Warning</td></tr>
+          <tr><td>settlement_duration_ms</td><td>Histogram</td><td>P99 &gt; 1000ms</td><td>Warning</td></tr>
+          <tr><td>auth_rate_limit_exceeded</td><td>Counter</td><td>&gt; 100/min</td><td>Warning</td></tr>
+          <tr><td>rake_exceeds_theoretical_max</td><td>Counter</td><td>&gt; 0</td><td>Critical</td></tr>
+        </table>
+
+      </div>
+      <footer>Sam Gong (三公) Documentation — Generated 2026-04-22 | Sayyo Games</footer>
+    </main>
+  </div>
+
+  <a href="#" class="back-to-top" id="backToTop">↑</a>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-yaml.min.js"></script>
+  <script src="assets/nav.js"></script>
+</body>
+</html>

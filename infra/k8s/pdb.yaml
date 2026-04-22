@@ -1,0 +1,41 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: sam-gong-server-pdb
+  namespace: sam-gong
+  labels:
+    app: sam-gong-server
+    app.kubernetes.io/managed-by: devsop
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: sam-gong-server
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: sam-gong-api-pdb
+  namespace: sam-gong
+  labels:
+    app: sam-gong-api
+    app.kubernetes.io/managed-by: devsop
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: sam-gong-api
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: sam-gong-client-pdb
+  namespace: sam-gong
+  labels:
+    app: sam-gong-client
+    app.kubernetes.io/managed-by: devsop
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: sam-gong-client

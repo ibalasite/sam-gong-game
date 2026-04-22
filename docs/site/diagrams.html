@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diagrams — Sam Gong (三公)</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="top-nav">
+    <a href="index.html" class="nav-brand"><span class="logo">🃏</span> Sam Gong (三公)</a>
+    <div class="nav-controls">
+      <span class="nav-badge"><span class="dot green"></span> 12 Diagrams</span>
+      <button class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">☰</button>
+    </div>
+  </header>
+
+  <div class="page-header">
+    <div class="breadcrumb">
+      <a href="index.html">Home</a> <span class="sep">›</span> Design <span class="sep">›</span> Diagrams
+    </div>
+    <h1 class="page-title"><span class="icon">📊</span> System Diagrams</h1>
+    <p class="page-subtitle">12 Architecture & Flow Diagrams — State Machine, Sequence, ER, CI/CD</p>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar__section">
+        <span class="sidebar__label">📋 Requirements</span>
+        <a class="sidebar__link" href="brd.html"><span class="icon">📋</span> BRD (Business)</a>
+        <a class="sidebar__link" href="prd.html"><span class="icon">📝</span> PRD (Product)</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">📐 Design</span>
+        <a class="sidebar__link" href="edd.html"><span class="icon">🏗️</span> EDD (Engineering)</a>
+        <a class="sidebar__link" href="arch.html"><span class="icon">🧩</span> Architecture</a>
+        <a class="sidebar__link" href="api.html"><span class="icon">🔌</span> API Reference</a>
+        <a class="sidebar__link" href="schema.html"><span class="icon">🗄️</span> DB Schema</a>
+        <a class="sidebar__link active" href="diagrams.html"><span class="icon">📊</span> Diagrams</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">✅ Quality</span>
+        <a class="sidebar__link" href="test-plan.html"><span class="icon">✅</span> Test Plan</a>
+        <a class="sidebar__link" href="alignment.html"><span class="icon">🔍</span> Alignment Report</a>
+        <a class="sidebar__link" href="smoke-test.html"><span class="icon">🚬</span> Smoke Test</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">🚀 Deployment</span>
+        <a class="sidebar__link" href="deployment.html"><span class="icon">🚀</span> Local Deploy</a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="doc-body">
+        <h1>System Diagrams — 12 Diagrams</h1>
+        <p>All 12 system diagrams from DIAGRAMS.md v1.0. Rendered with Mermaid.js.</p>
+
+        <!-- Diagram 1: System Architecture -->
+        <h2>1. System Architecture</h2>
+        <div class="diagram-wrapper">
+          <div class="diagram-title">System Architecture — k8s Multi-Layer (CloudFlare → NGINX → Colyseus → PostgreSQL/Redis)</div>
+          <pre class="mermaid">graph TB
+    subgraph Clients["Client Layer"]
+        CC["Cocos Creator 3.8.x\n(Web / Android / iOS)"]
+    end
+
+    subgraph Edge["Edge Layer"]
+        CF["CloudFlare\n(DDoS / GeoIP / TLS 1.2+)"]
+        LB["NGINX Ingress\n(Load Balancer / Sticky Session)"]
+    end
+
+    subgraph AppLayer["Application Layer (k8s Pods)"]
+        CS1["Colyseus Node 1\n(Game Server :2567)"]
+        CS2["Colyseus Node 2\n(Game Server :2567)"]
+        CSN["Colyseus Node N\n(HPA max=10)"]
+        REST["REST API Service\n(Express / Node.js 22.x :3000)"]
+        AUTH["Auth Service\n(JWT RS256/ES256)"]
+        ADMIN["Admin API\n(Internal VPN Only)"]
+    end
+
+    subgraph DataLayer["Data Layer (StatefulSet)"]
+        PG_PRIMARY["PostgreSQL 16.x Primary\n(pgBouncer Transaction Mode)"]
+        PG_REPLICA["PostgreSQL 16.x Read Replica"]
+        REDIS["Redis 7.x Sentinel\n(3 nodes)"]
+    end
+
+    subgraph Observability["Observability"]
+        PROM["Prometheus"]
+        GRAFANA["Grafana Dashboard"]
+        LOKI["Loki (Logs)"]
+        PAGERDUTY["PagerDuty Alerts"]
+    end
+
+    CC -->|"HTTPS / WSS TLS 1.2+"| CF
+    CF --> LB
+    LB -->|"Sticky Session"| CS1
+    LB -->|"Sticky Session"| CS2
+    LB -->|"Sticky Session"| CSN
+    LB -->|"REST"| REST
+    REST --> AUTH
+    CS1 <-->|"Redis Presence"| REDIS
+    CS2 <-->|"Redis Presence"| REDIS
+    REST <--> REDIS
+    CS1 -->|"SERIALIZABLE"| PG_PRIMARY
+    CS2 -->|"SERIALIZABLE"| PG_PRIMARY
+    REST --> PG_PRIMARY
+    REST --> PG_REPLICA
+    PG_PRIMARY -->|"Replication"| PG_REPLICA
+    AppLayer --> PROM
+    PROM --> GRAFANA
+    AppLayer --> LOKI
+    GRAFANA --> PAGERDUTY</pre>
+        </div>
+
+        <!-- Diagram 2: Game State Machine -->
+        <h2>2. Game State Machine</h2>
+        <div class="diagram-wrapper">
+          <div class="diagram-title">Game State Machine — 6 phases with transition conditions</div>
+          <pre class="mermaid">stateDiagram-v2
+    [*] --> waiting : onCreate (phase=waiting)
+
+    waiting --> dealing : players.size >= 2
+    waiting --> [*] : 60s 無人加入 自動解散
+
+    dealing --> banker_bet : 發牌完成 (每人3張)
+    dealing --> waiting : 發牌中玩家數 < 2
+
+    banker_bet --> player_bet : 莊家下注確認 或 30s 超時
+    banker_bet --> dealing : 莊家籌碼 < min_bet 跳過
+
+    player_bet --> showdown : 所有閒家行動完成
+    player_bet --> showdown : 所有閒家均 Fold
+
+    showdown --> settled : Server 比牌完成 廣播 showdown_reveal
+    showdown --> settled : all_fold 直接結算
+
+    settled --> dealing : 籌碼更新完成 5s後 players.size >= 2
+    settled --> waiting : players.size < 2
+    settled --> [*] : 所有玩家離開</pre>
+        </div>
+
+        <!-- Diagram 3: Login Flow -->
+        <h2>3. Player Login Flow</h2>
+        <div class="diagram-wrapper">
+          <div class="diagram-title">Player Login — 4-layer security (CloudFlare → Rate Limit → Auth → DB)</div>
+          <pre class="mermaid">sequenceDiagram
+    autonumber
+    participant C as Client (Cocos Creator)
+    participant CF as CloudFlare
+    participant LB as NGINX Ingress
+    participant API as REST API (Express)
+    participant AUTH as Auth Service (JWT)
+    participant DB as PostgreSQL
+    participant REDIS as Redis 7.x
+
+    C->>CF: POST /api/v1/auth/login
+    CF->>LB: TLS Termination
+    LB->>API: Rate Limit Check (rl:auth:ip <= 30/min)
+    API->>REDIS: GET rl:auth:ip
+    REDIS-->>API: count
+    API->>AUTH: 轉交認證請求
+    AUTH->>DB: SELECT users WHERE phone_hash=$1
+    DB-->>AUTH: 帳號資料
+
+    alt 帳號封禁
+        AUTH-->>C: 401 account_banned
+    else 驗證成功
+        AUTH->>AUTH: 簽發 Access Token RS256 TTL=1h
+        AUTH->>DB: INSERT refresh_tokens TTL=7d
+        AUTH->>REDIS: DEL session:player_id
+        AUTH-->>C: 200 { access_token, refresh_token, expires_in:3600 }
+    end
+
+    C->>API: GET /api/v1/config
+    API->>REDIS: GET session:player_id
+    API-->>C: 200 { ws_url, tier_configs }</pre>
+        </div>
+
+        <!-- Diagram 4: Settlement Flow -->
+        <h2>4. Settlement Logic Flowchart</h2>
+        <div class="diagram-wrapper">
+          <div class="diagram-title">Settlement Flowchart — Rake, Conservation, Banker Insolvency</div>
+          <pre class="mermaid">flowchart TD
+    START([開始結算]) --> VALIDATE{Phase === showdown?}
+    VALIDATE -->|否| ERR[拋出錯誤]
+    VALIDATE -->|是| CHECK_FOLD{all_fold?}
+
+    CHECK_FOLD -->|是| ALL_FOLD[pot=0, rake=0\n莊家 escrow 退回\n所有 net_chips=0]
+    ALL_FOLD --> PERSIST
+
+    CHECK_FOLD -->|否| COMPARE[HandEvaluator.compare\n每位閒家 vs 莊家]
+    COMPARE --> CLASSIFY[分類: winners/losers/ties/folders]
+    CLASSIFY --> CALC_POT[pot = sum of losers' called_bets]
+    CALC_POT --> BANKER_CHECK{莊家籌碼足夠?}
+
+    BANKER_CHECK -->|是| NORMAL[逐一支付贏家\n三公 N=3, 9點 N=2, 1-8點 N=1]
+    BANKER_CHECK -->|否| INSOLVENT[D13 先到先得算法\n依 seat_index 順序支付]
+
+    NORMAL --> RAKE
+    INSOLVENT --> RAKE
+    RAKE{pot > 0?} -->|是| CALC_RAKE[rake=max(floor(pot*0.05), 1)]
+    RAKE -->|否| ZERO_RAKE[rake=0]
+
+    CALC_RAKE --> CONSERVATION
+    ZERO_RAKE --> CONSERVATION
+    CONSERVATION{sum net_chips + rake === 0?} -->|違反| ALERT[回滾事務\nPagerDuty CRITICAL]
+    CONSERVATION -->|通過| PERSIST[PostgreSQL SERIALIZABLE\nUPDATE chip_balance\nINSERT chip_transactions\nINSERT game_sessions]
+
+    PERSIST --> BROADCAST[廣播 settlement_result]
+    BROADCAST --> DONE([結算完成])
+
+    style ALERT fill:#f85149,color:#fff
+    style INSOLVENT fill:#d29922,color:#fff</pre>
+        </div>
+
+        <!-- Diagram 5: Anti-Addiction -->
+        <h2>5. Anti-Addiction Flowchart</h2>
+        <div class="diagram-wrapper">
+          <div class="diagram-title">Anti-Addiction — Adult (soft limit) vs Minor (hard stop)</div>
+          <pre class="mermaid">flowchart TD
+    JOIN([玩家加入房間]) --> CHECK_MINOR{is_minor?}
+
+    CHECK_MINOR -->|否 成人| ADULT[讀取 Redis aa:session:player_id]
+    CHECK_MINOR -->|是 未成年| MINOR[讀取 aa:daily:player_id]
+
+    ADULT --> ADULT_CHECK{session_play_seconds >= 7200?}
+    ADULT_CHECK -->|否| PLAY[正常遊戲\n累積計時]
+    ADULT_CHECK -->|是| WARN[發送 anti_addiction_warning\n等待確認]
+    WARN --> CONFIRM{確認?}
+    CONFIRM -->|是| RESET[重置 session_play_seconds\n繼續遊戲]
+    CONFIRM -->|60s 超時| WARN
+
+    MINOR --> MINOR_CHECK{daily_play_seconds >= 7200?}
+    MINOR_CHECK -->|否| PLAY
+    MINOR_CHECK -->|是| MINOR_SIGNAL[發送 anti_addiction_signal]
+    MINOR_SIGNAL --> ROUND{牌局進行中?}
+    ROUND -->|是| WAIT[等待本局結算後]
+    ROUND -->|否| KICK
+    WAIT --> AFTER[本局 settled]
+    AFTER --> KICK[client.leave(4004)\nWS Close Code 4004]
+
+    PLAY --> PERSIST[每局結算後\n持久化計時至 PostgreSQL]
+
+    style KICK fill:#f85149,color:#fff
+    style WARN fill:#d29922,color:#fff</pre>
+        </div>
+
+        <!-- Diagram 6: JWT Auth -->
+        <h2>6. JWT Authentication & Refresh Flow</h2>
+        <div class="diagram-wrapper">
+          <div class="diagram-title">JWT Auth — RS256, Token Rotation, 60s Ban Blacklist</div>
+          <pre class="mermaid">sequenceDiagram
+    participant C as Client
+    participant API as REST API / Auth
+    participant DB as PostgreSQL
+    participant REDIS as Redis 7.x
+
+    Note over C,REDIS: Access Token 過期 - Refresh Flow
+    C->>API: POST /auth/refresh { refresh_token }
+    API->>DB: SELECT refresh_tokens WHERE token_hash=SHA256(rt) AND revoked=false
+
+    alt Refresh Token 無效/已撤銷
+        DB-->>API: 0 rows
+        API->>DB: 撤銷所有該帳號的 refresh_tokens (Token Reuse Detection)
+        API-->>C: 401 token_invalid
+    else Refresh Token 有效
+        DB-->>API: token record
+        API->>DB: UPDATE SET revoked=true (舊 token 撤銷)
+        API->>API: 簽發新 Access Token RS256 TTL=1h
+        API->>DB: INSERT 新 refresh_token TTL=7d
+        API-->>C: 200 { access_token, refresh_token }
+    end
+
+    Note over API,REDIS: 封號後 60s 黑名單機制
+    API->>DB: UPDATE users SET is_banned=true
+    API->>REDIS: SETEX block:player_id 60 1
+    API->>REDIS: DEL session:player_id
+    API->>REDIS: PUBLISH sam-gong:admin:force_disconnect player_id</pre>
+        </div>
+
+        <!-- Diagram 7: Ban & Kick -->
+        <h2>7. Ban & Force Kick</h2>
+        <div class="diagram-wrapper">
+          <div class="diagram-title">Ban & Kick — Redis Pub/Sub cross-pod broadcast</div>
+          <pre class="mermaid">sequenceDiagram
+    participant ADMIN as Admin UI (VPN)
+    participant ADMIN_API as Admin API
+    participant DB as PostgreSQL
+    participant REDIS as Redis Pub/Sub
+    participant POD1 as Colyseus Pod 1
+    participant POD2 as Colyseus Pod 2
+    participant C as Client (被封玩家)
+
+    ADMIN->>ADMIN_API: POST /admin/player/:id/ban
+    ADMIN_API->>DB: UPDATE users SET is_banned=true
+    ADMIN_API->>DB: INSERT audit_log
+    ADMIN_API->>REDIS: SETEX block:player_id 60 1
+    ADMIN_API->>REDIS: DEL session:player_id
+    ADMIN_API->>REDIS: PUBLISH force_disconnect player_id
+    ADMIN_API-->>ADMIN: 200 OK
+
+    REDIS-->>POD1: MESSAGE force_disconnect player_id
+    REDIS-->>POD2: MESSAGE force_disconnect player_id
+
+    POD1->>POD1: 搜尋 client.auth.player_id === player_id
+    alt 玩家在 Pod 1
+        POD1->>C: client.leave(4001) WS Close
+        C->>C: 清除 token 跳轉登入頁
+    else 不在 Pod 1
+        POD1->>POD1: No-op
+    end</pre>
+        </div>
+
+        <!-- Diagram 8: Horizontal Scaling -->
+        <h2>8. Horizontal Scaling & Room Routing</h2>
+        <div class="diagram-wrapper">
+          <div class="diagram-title">Colyseus Horizontal Scaling — Redis Presence, Sticky Session, HPA</div>
+          <pre class="mermaid">flowchart LR
+    subgraph Clients["Clients"]
+        C1["Client 1"]
+        C2["Client 2"]
+        C3["Client N"]
+    end
+
+    subgraph Edge["Edge"]
+        CF["CloudFlare DDoS"]
+        NGINX["NGINX Ingress\nSticky Session Cookie"]
+    end
+
+    subgraph K8S["k8s HPA min=2 max=10"]
+        POD1["Colyseus Pod 1\n~500 CCU"]
+        POD2["Colyseus Pod 2\n~500 CCU"]
+        POD3["Colyseus Pod N\n(auto-scale)"]
+    end
+
+    subgraph Redis["Redis Sentinel"]
+        PRESENCE["@colyseus/redis-presence\nRoom Routing"]
+        MMQUEUE["Matchmaking Queue\nmm:queue:tier"]
+        PUBSUB["Pub-Sub\nAdmin Channels"]
+    end
+
+    C1 --> CF --> NGINX
+    C2 --> CF
+    C3 --> CF
+
+    NGINX -->|Sticky→Pod1| POD1
+    NGINX -->|Sticky→Pod2| POD2
+    NGINX -->|New conn| POD3
+
+    POD1 <--> PRESENCE
+    POD2 <--> PRESENCE
+    POD3 <--> PRESENCE
+    POD1 <--> MMQUEUE
+    POD2 <--> MMQUEUE
+    POD1 --> PUBSUB
+    POD2 --> PUBSUB</pre>
+        </div>
+
+        <!-- Diagram 9: ER Diagram -->
+        <h2>9. Database ER Diagram</h2>
+        <div class="diagram-wrapper">
+          <div class="diagram-title">Entity Relationship Diagram — PostgreSQL 16.x</div>
+          <pre class="mermaid">erDiagram
+    users {
+        uuid id PK
+        varchar display_name
+        bigint chip_balance
+        boolean is_minor
+        boolean is_banned
+        int daily_play_seconds
+        boolean show_in_leaderboard
+    }
+    game_rooms {
+        uuid id PK
+        varchar tier
+        varchar status
+        varchar room_type
+    }
+    game_sessions {
+        uuid id PK
+        uuid room_id FK
+        uuid banker_id FK
+        bigint rake_amount
+        bigint pot_amount
+        boolean all_fold
+        jsonb settlement_payload
+    }
+    chip_transactions {
+        uuid id PK
+        uuid user_id FK
+        uuid game_session_id FK
+        varchar tx_type
+        bigint amount
+        bigint balance_after
+    }
+    leaderboard_weekly {
+        uuid id PK
+        uuid user_id FK
+        varchar week_key
+        bigint net_chips
+    }
+    daily_tasks {
+        uuid id PK
+        uuid user_id FK
+        varchar task_id
+        date task_date
+        boolean completed
+    }
+
+    users ||--o{ chip_transactions : "has"
+    users ||--o{ leaderboard_weekly : "ranks in"
+    users ||--o{ daily_tasks : "completes"
+    game_rooms ||--o{ game_sessions : "contains"
+    game_sessions ||--o{ chip_transactions : "generates"</pre>
+        </div>
+
+        <!-- Diagram 10: Rescue Chips -->
+        <h2>10. Rescue Chips Flowchart</h2>
+        <div class="diagram-wrapper">
+          <div class="diagram-title">Rescue Chips — Eligibility check, daily limit, atomic DB operation</div>
+          <pre class="mermaid">flowchart TD
+    REQ([玩家請求救援籌碼]) --> CHECK_BAL{chip_balance < 500?}
+    CHECK_BAL -->|否 籌碼足夠| DENY1[rescue_unavailable\n籌碼餘額充足]
+    CHECK_BAL -->|是| CHECK_DAILY{今日已領取?\ndaily_rescue_claimed_at === today}
+    CHECK_DAILY -->|是| DENY2[rescue_chip_claimed\n今日已使用]
+    CHECK_DAILY -->|否| CHECK_LOCK{Redis rescue:player_id:date\n分散式鎖}
+    CHECK_LOCK -->|鎖存在| DENY3[並發重複請求\n忽略]
+    CHECK_LOCK -->|無鎖| ACQUIRE[SET rescue:player_id:date NX EX 86400\n取得分散式鎖]
+    ACQUIRE --> DB_TXN[PostgreSQL 事務\nUPDATE users SET chip_balance=100000\nSET daily_rescue_claimed_at=today\nINSERT chip_transactions rescue_chip]
+    DB_TXN --> SUCCESS[發送 rescue_chips 訊息\n{ chips_received:100000, new_balance:100000 }]
+    SUCCESS --> DONE([完成])
+
+    style DENY1 fill:#30363d,color:#8b949e
+    style DENY2 fill:#30363d,color:#8b949e
+    style SUCCESS fill:#3fb950,color:#fff</pre>
+        </div>
+
+        <!-- Diagram 11: CI/CD Pipeline -->
+        <h2>11. CI/CD Pipeline</h2>
+        <div class="diagram-wrapper">
+          <div class="diagram-title">GitHub Actions CI/CD Pipeline — Test Gate → Docker → Deploy → Smoke Test</div>
+          <pre class="mermaid">flowchart LR
+    subgraph Dev["Developer"]
+        PUSH["git push\nfeature/*"]
+    end
+
+    subgraph CI["GitHub Actions CI"]
+        LINT["Lint\n(ESLint + Prettier)"]
+        TYPE["TypeScript\ntype-check"]
+        TEST["Jest Unit Tests\nCoverage >= 80%"]
+        INT["Integration Tests\n@colyseus/testing"]
+        BUILD["Docker Build\nmulti-stage"]
+        PUSH_IMG["Push to\nGHCR / ECR"]
+    end
+
+    subgraph Staging["Staging Deploy"]
+        DEPLOY_S["kubectl apply\nstaging namespace"]
+        E2E["E2E Tests\nPlaywright"]
+        SMOKE["Smoke Test\n10 key flows"]
+        PERF["k6 Load Test\n500 CCU baseline"]
+    end
+
+    subgraph Prod["Production Deploy"]
+        DEPLOY_P["kubectl apply\nsam-gong-prod"]
+        HEALTH["Health Check\n/health/ready"]
+        SMOKE_P["Post-deploy\nSmoke Test"]
+        ROLLBACK["Auto-rollback\non failure"]
+    end
+
+    PUSH --> LINT --> TYPE --> TEST
+    TEST -->|Coverage gate| INT --> BUILD --> PUSH_IMG
+    PUSH_IMG --> DEPLOY_S --> E2E --> SMOKE --> PERF
+    PERF -->|Pass| DEPLOY_P --> HEALTH --> SMOKE_P
+    SMOKE_P -->|Fail| ROLLBACK
+    SMOKE_P -->|Pass| DONE([Deploy Complete])
+
+    style TEST fill:#238636,color:#fff
+    style ROLLBACK fill:#da3633,color:#fff</pre>
+        </div>
+
+        <!-- Diagram 12: Game Round Full Sequence (simplified) -->
+        <h2>12. Game Round Full Sequence</h2>
+        <div class="diagram-wrapper">
+          <div class="diagram-title">Full Game Round — dealing → banker-bet → player-bet → showdown → settled</div>
+          <pre class="mermaid">sequenceDiagram
+    participant C1 as Client Banker
+    participant C2 as Client Player
+    participant COL as Colyseus (SamGongRoom)
+    participant EVAL as HandEvaluator
+    participant SETTLE as SettlementEngine
+    participant DB as PostgreSQL (SERIALIZABLE)
+
+    Note over C1,DB: Phase: dealing
+    COL->>COL: buildDeck + shuffle (Fisher-Yates, crypto.randomInt)
+    COL->>C1: send('myHand', [card1, card2, card3]) 私人訊息
+    COL->>C2: send('myHand', [card1, card2, card3]) 私人訊息
+    COL->>COL: phase → banker-bet, action_deadline = NOW+30s
+
+    Note over C1,DB: Phase: banker-bet (30s)
+    C1->>COL: onMessage('banker_bet', { amount: 1000 })
+    COL->>COL: 驗證 phase, balance >= 1000
+    COL->>COL: banker chip_balance -= 1000 (escrow)
+    COL->>COL: phase → player-bet
+
+    Note over C1,DB: Phase: player-bet (30s each)
+    C2->>COL: onMessage('player_call', {})
+    COL->>COL: C2 chip_balance -= 1000 (escrow)
+    COL->>COL: all acted → phase → showdown
+
+    Note over C1,DB: Phase: showdown
+    COL->>EVAL: compare(bankerHand, playerHand)
+    EVAL-->>COL: player wins (9pt > 5pt)
+    COL->>SETTLE: settle(input)
+    SETTLE-->>COL: { winner: C2 net=+1000, loser: C1 net=-1000, rake: 50 }
+    COL-->>C1: broadcast('showdown_reveal', { all hands })
+    COL-->>C2: broadcast('showdown_reveal', { all hands })
+
+    Note over C1,DB: Phase: settled
+    COL->>DB: BEGIN SERIALIZABLE
+    Note over DB: UPDATE chip_balance C1, C2
+    Note over DB: INSERT chip_transactions x3 (win/loss/rake)
+    Note over DB: INSERT game_sessions snapshot
+    Note over DB: COMMIT
+    DB-->>COL: committed
+    COL-->>C1: broadcast('settlement_result')
+    COL-->>C2: broadcast('settlement_result')
+    Note over COL: 5s → resetForNextRound → phase=dealing</pre>
+        </div>
+
+      </div>
+      <footer>Sam Gong (三公) Documentation — Generated 2026-04-22 | Sayyo Games</footer>
+    </main>
+  </div>
+
+  <a href="#" class="back-to-top" id="backToTop">↑</a>
+
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      flowchart: { curve: 'basis', nodeSpacing: 60, rankSpacing: 80 },
+      er: { layoutDirection: 'TB', minEntityWidth: 100, fontSize: 12 },
+      sequence: { actorMargin: 60, messageMargin: 30 }
+    });
+  </script>
+  <script src="assets/nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: sam-gong-api-service
+  namespace: sam-gong
+  labels:
+    app: sam-gong-api
+    app.kubernetes.io/name: sam-gong-api
+    app.kubernetes.io/component: rest-api
+    app.kubernetes.io/managed-by: devsop
+spec:
+  type: ClusterIP
+  selector:
+    app: sam-gong-api
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+      protocol: TCP

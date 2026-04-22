@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alignment Report — Sam Gong (三公)</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="top-nav">
+    <a href="index.html" class="nav-brand"><span class="logo">🃏</span> Sam Gong (三公)</a>
+    <div class="nav-controls">
+      <span class="nav-badge"><span class="dot green"></span> Aligned</span>
+      <button class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">☰</button>
+    </div>
+  </header>
+
+  <div class="page-header">
+    <div class="breadcrumb">
+      <a href="index.html">Home</a> <span class="sep">›</span> Quality <span class="sep">›</span> Alignment Report
+    </div>
+    <h1 class="page-title"><span class="icon">🔍</span> Cross-Layer Alignment Report</h1>
+    <p class="page-subtitle">BRD → PRD → EDD → ARCH → API → SCHEMA alignment verification</p>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar__section">
+        <span class="sidebar__label">📋 Requirements</span>
+        <a class="sidebar__link" href="brd.html"><span class="icon">📋</span> BRD (Business)</a>
+        <a class="sidebar__link" href="prd.html"><span class="icon">📝</span> PRD (Product)</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">📐 Design</span>
+        <a class="sidebar__link" href="edd.html"><span class="icon">🏗️</span> EDD (Engineering)</a>
+        <a class="sidebar__link" href="arch.html"><span class="icon">🧩</span> Architecture</a>
+        <a class="sidebar__link" href="api.html"><span class="icon">🔌</span> API Reference</a>
+        <a class="sidebar__link" href="schema.html"><span class="icon">🗄️</span> DB Schema</a>
+        <a class="sidebar__link" href="diagrams.html"><span class="icon">📊</span> Diagrams</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">✅ Quality</span>
+        <a class="sidebar__link" href="test-plan.html"><span class="icon">✅</span> Test Plan</a>
+        <a class="sidebar__link active" href="alignment.html"><span class="icon">🔍</span> Alignment Report</a>
+        <a class="sidebar__link" href="smoke-test.html"><span class="icon">🚬</span> Smoke Test</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">🚀 Deployment</span>
+        <a class="sidebar__link" href="deployment.html"><span class="icon">🚀</span> Local Deploy</a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="doc-body">
+        <h1>Cross-Layer Alignment Report</h1>
+        <blockquote>
+          This page summarizes the cross-layer alignment verification between BRD, PRD, EDD, ARCH, API, SCHEMA, and TEST_PLAN. For the full report, see <code>docs/ALIGNMENT_REPORT.md</code>.
+        </blockquote>
+
+        <h2>Alignment Summary</h2>
+        <table>
+          <tr><th>Layer Pair</th><th>Status</th><th>Findings Fixed</th></tr>
+          <tr><td>BRD → PRD</td><td><span class="text-success">✅ Aligned</span></td><td>14 rounds, all resolved</td></tr>
+          <tr><td>PRD → EDD</td><td><span class="text-success">✅ Aligned</span></td><td>9 rounds, 95+ findings fixed</td></tr>
+          <tr><td>EDD → ARCH</td><td><span class="text-success">✅ Aligned</span></td><td>3 rounds, all resolved</td></tr>
+          <tr><td>EDD → API</td><td><span class="text-success">✅ Aligned</span></td><td>2 rounds, 12 findings fixed</td></tr>
+          <tr><td>EDD → SCHEMA</td><td><span class="text-success">✅ Aligned</span></td><td>2 rounds, 10 findings fixed</td></tr>
+          <tr><td>All → TEST_PLAN</td><td><span class="text-success">✅ Aligned</span></td><td>Full coverage mapping complete</td></tr>
+        </table>
+
+        <h2>Key Alignment Points</h2>
+        <h3>Chip Conservation (籌碼守恆)</h3>
+        <ul>
+          <li>BRD: Rake = floor(pot × 0.05), min 1 chip</li>
+          <li>PRD: sum(net_chips) + rake === 0 (REQ-004 AC-1)</li>
+          <li>EDD: SettlementEngine.settle() conservation check</li>
+          <li>SCHEMA: chip_transactions balance_after tracking</li>
+          <li>ARCH: SERIALIZABLE isolation for settlement writes</li>
+          <li>TEST: UT-settle-001, IT-settlement-001</li>
+        </ul>
+
+        <h3>Anti-Addiction (防沉迷)</h3>
+        <ul>
+          <li>BRD: Taiwan regulation — adult 8h daily limit, minor 2h hard stop</li>
+          <li>PRD: REQ-015 AC-1/2/3 detailed spec</li>
+          <li>EDD: AntiAddictionManager module</li>
+          <li>SCHEMA: users.daily_play_seconds, users.session_play_seconds</li>
+          <li>ARCH: Redis Write-Through cache strategy</li>
+          <li>TEST: UT-aa-001/002, S-015 BDD</li>
+        </ul>
+
+        <h3>Server-Authoritative (服務器權威)</h3>
+        <ul>
+          <li>BRD: Server-authoritative architecture principle</li>
+          <li>PRD: REQ-001~004 (shuffle/deal/compare/settle all server-side)</li>
+          <li>EDD: Colyseus Room, DeckManager, HandEvaluator, SettlementEngine all server-only</li>
+          <li>ARCH: TypeScript project references CI enforcement — Client cannot import Server modules</li>
+          <li>TEST: NFR-05 (100% server calculation rate)</li>
+        </ul>
+
+        <h2>Document Version Matrix</h2>
+        <table>
+          <tr><th>Document</th><th>Version</th><th>Review Status</th></tr>
+          <tr><td>BRD</td><td>v0.12-draft</td><td>11 rounds complete</td></tr>
+          <tr><td>PRD</td><td>v0.14-draft</td><td>14 rounds complete</td></tr>
+          <tr><td>EDD</td><td>v1.4-draft</td><td>9 rounds, 95+ fixes</td></tr>
+          <tr><td>ARCH</td><td>v1.1</td><td>3 rounds complete</td></tr>
+          <tr><td>API</td><td>v1.1</td><td>2 rounds complete</td></tr>
+          <tr><td>SCHEMA</td><td>v1.2</td><td>2 rounds complete</td></tr>
+          <tr><td>DIAGRAMS</td><td>v1.0</td><td>12 diagrams generated</td></tr>
+          <tr><td>TEST_PLAN</td><td>v1.0-draft</td><td>5-layer strategy</td></tr>
+        </table>
+      </div>
+      <footer>Sam Gong (三公) Documentation — Generated 2026-04-22 | Sayyo Games</footer>
+    </main>
+  </div>
+
+  <a href="#" class="back-to-top" id="backToTop">↑</a>
+  <script src="assets/nav.js"></script>
+</body>
+</html>

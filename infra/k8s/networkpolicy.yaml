@@ -1,0 +1,180 @@
+---
+# Default deny-all ingress in the sam-gong namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: sam-gong
+  labels:
+    app.kubernetes.io/managed-by: devsop
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+# Allow ingress controller → client (port 80)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-client
+  namespace: sam-gong
+  labels:
+    app.kubernetes.io/managed-by: devsop
+spec:
+  podSelector:
+    matchLabels:
+      app: sam-gong-client
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - port: 80
+          protocol: TCP
+---
+# Allow ingress controller → api (port 3000)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-api
+  namespace: sam-gong
+  labels:
+    app.kubernetes.io/managed-by: devsop
+spec:
+  podSelector:
+    matchLabels:
+      app: sam-gong-api
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - port: 3000
+          protocol: TCP
+---
+# Allow ingress controller → game server (port 2567, WebSocket)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-server
+  namespace: sam-gong
+  labels:
+    app.kubernetes.io/managed-by: devsop
+spec:
+  podSelector:
+    matchLabels:
+      app: sam-gong-server
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - port: 2567
+          protocol: TCP
+---
+# Allow api ↔ server internal communication
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-api-server-internal
+  namespace: sam-gong
+  labels:
+    app.kubernetes.io/managed-by: devsop
+spec:
+  podSelector:
+    matchLabels:
+      app: sam-gong-server
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: sam-gong-api
+      ports:
+        - port: 2567
+          protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-server-api-internal
+  namespace: sam-gong
+  labels:
+    app.kubernetes.io/managed-by: devsop
+spec:
+  podSelector:
+    matchLabels:
+      app: sam-gong-api
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: sam-gong-server
+      ports:
+        - port: 3000
+          protocol: TCP
+---
+# Allow api → postgres (port 5432)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-api-to-postgres
+  namespace: sam-gong
+  labels:
+    app.kubernetes.io/managed-by: devsop
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: sam-gong-api
+        - podSelector:
+            matchLabels:
+              app: sam-gong-server
+      ports:
+        - port: 5432
+          protocol: TCP
+---
+# Allow api + server → redis (port 6379)
+# Deny: client → redis (client has no selector matching here)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-backends-to-redis
+  namespace: sam-gong
+  labels:
+    app.kubernetes.io/managed-by: devsop
+spec:
+  podSelector:
+    matchLabels:
+      app: redis
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: sam-gong-api
+        - podSelector:
+            matchLabels:
+              app: sam-gong-server
+      ports:
+        - port: 6379
+          protocol: TCP

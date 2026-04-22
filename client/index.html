@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>三公 Sam Gong</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://unpkg.com/colyseus.js@0.15.21/dist/colyseus.js"></script>
+</head>
+<body>
+
+<!-- ══ LOGIN ══════════════════════════════════════════ -->
+<div id="login" style="display:flex">
+  <div class="lbox">
+    <div class="gtitle">三公</div>
+    <div class="gsub">Sam Gong — Multiplayer Card Game</div>
+    <input id="nick" type="text" placeholder="暱稱（留空自動產生）" maxlength="20" autofocus>
+    <button id="joinbtn" class="btn pri">🎴 建立／加入遊戲</button>
+    <div style="display:flex;gap:6px;align-items:center">
+      <input id="room-join-id" type="text" placeholder="貼上房間代號加入..." maxlength="30"
+             style="font-family:monospace;letter-spacing:1px;flex:1">
+      <button id="clearbtn" class="btn sec" style="white-space:nowrap;flex-shrink:0" title="清空房間代號">✕</button>
+    </div>
+    <div id="errmsg" style="font-size:.82rem;color:#ffcc80;text-align:center;min-height:18px"></div>
+    <div id="apistatus" style="font-size:.75rem;color:#555;text-align:center"></div>
+    <div style="font-size:.72rem;color:#444;text-align:center;border-top:1px solid rgba(255,255,255,.08);padding-top:10px">
+      本機開發版 — ws://localhost:2567
+    </div>
+  </div>
+</div>
+
+<!-- ══ GAME ═══════════════════════════════════════════ -->
+<div id="game" style="display:none">
+
+  <!-- felt table -->
+  <div class="felt">
+    <!-- 6 seat positions -->
+    <div class="seat s-bot"  id="s-bot"></div>
+    <div class="seat s-bl"   id="s-bl"></div>
+    <div class="seat s-tl"   id="s-tl"></div>
+    <div class="seat s-top"  id="s-top"></div>
+    <div class="seat s-tr"   id="s-tr"></div>
+    <div class="seat s-br"   id="s-br"></div>
+
+    <!-- center oval -->
+    <div class="oval">
+      <div class="oplbl" id="c-phase">等待玩家</div>
+      <div class="opot"  id="c-pot">—</div>
+      <div class="oresult" id="c-result"></div>
+      <div class="ohall" id="c-hall">青銅廳</div>
+    </div>
+  </div>
+
+  <!-- ── floating chat panel ─────────────────── -->
+  <div class="fpanel left">
+    <div class="ptitle">💬 聊天室</div>
+    <div id="chat-log" class="clog"></div>
+    <div class="crow">
+      <input id="chatinp" type="text" placeholder="輸入訊息..." maxlength="60">
+      <button id="chatsend" class="btn sec sm">送</button>
+    </div>
+  </div>
+
+  <!-- ── floating action panel ──────────────── -->
+  <div class="fpanel right">
+    <div class="ptitle">🎮 操作</div>
+    <label class="auto-toggle" title="輪到您時自動跟注或最低押注">
+      <input type="checkbox" id="auto-act-chk" checked>
+      <span class="auto-toggle-txt">🤖 自動跟注 / 最低押注</span>
+    </label>
+    <div id="actions" class="abox">
+      <p class="hint">等待中...</p>
+    </div>
+    <div class="share-box" id="share-box" style="display:none">
+      <div class="share-lbl">📡 房間代號</div>
+      <div class="share-code" id="roomid">—</div>
+      <button class="btn sec sm" id="copybtn" style="width:100%;margin-top:6px">📋 複製邀請連結</button>
+    </div>
+  </div>
+
+  <!-- ── top bar ────────────────────────────── -->
+  <div class="topbar">
+    <span><span class="cdot on" id="cdot"></span><span id="clbl">已連線</span></span>
+    <span class="devbadge">DEV LOCAL</span>
+    <button class="leavebtn" onclick="leaveGame()">離開</button>
+  </div>
+
+</div>
+
+<!-- global toasts -->
+<div id="toasts" class="toasts"></div>
+
+<script src="js/game.js?v=20260423"></script>
+</body>
+</html>

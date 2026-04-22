@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deployment — Sam Gong (三公)</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+  <header class="top-nav">
+    <a href="index.html" class="nav-brand"><span class="logo">🃏</span> Sam Gong (三公)</a>
+    <div class="nav-controls">
+      <span class="nav-badge"><span class="dot green"></span> Local Deploy</span>
+      <button class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">☰</button>
+    </div>
+  </header>
+
+  <div class="page-header">
+    <div class="breadcrumb">
+      <a href="index.html">Home</a> <span class="sep">›</span> Deployment
+    </div>
+    <h1 class="page-title"><span class="icon">🚀</span> Local Deployment Guide</h1>
+    <p class="page-subtitle">From prerequisites to a fully running Minikube deployment</p>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar__section">
+        <span class="sidebar__label">📋 Requirements</span>
+        <a class="sidebar__link" href="brd.html"><span class="icon">📋</span> BRD (Business)</a>
+        <a class="sidebar__link" href="prd.html"><span class="icon">📝</span> PRD (Product)</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">📐 Design</span>
+        <a class="sidebar__link" href="edd.html"><span class="icon">🏗️</span> EDD (Engineering)</a>
+        <a class="sidebar__link" href="arch.html"><span class="icon">🧩</span> Architecture</a>
+        <a class="sidebar__link" href="api.html"><span class="icon">🔌</span> API Reference</a>
+        <a class="sidebar__link" href="schema.html"><span class="icon">🗄️</span> DB Schema</a>
+        <a class="sidebar__link" href="diagrams.html"><span class="icon">📊</span> Diagrams</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">✅ Quality</span>
+        <a class="sidebar__link" href="test-plan.html"><span class="icon">✅</span> Test Plan</a>
+        <a class="sidebar__link" href="alignment.html"><span class="icon">🔍</span> Alignment Report</a>
+        <a class="sidebar__link" href="smoke-test.html"><span class="icon">🚬</span> Smoke Test</a>
+      </div>
+      <div class="sidebar__section">
+        <span class="sidebar__label">🚀 Deployment</span>
+        <a class="sidebar__link active" href="deployment.html"><span class="icon">🚀</span> Local Deploy</a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="doc-body">
+
+        <h1>Sam Gong (三公) — Local Deployment Manual</h1>
+        <p>This guide walks you through setting up and running the Sam Gong multiplayer card game locally, from bare prerequisites to a fully functional Minikube deployment.</p>
+
+        <h2>1. Prerequisites</h2>
+        <table>
+          <tr><th>Tool</th><th>Version</th><th>Install</th></tr>
+          <tr><td>Node.js</td><td>20 LTS</td><td><a href="https://nodejs.org" target="_blank">nodejs.org</a> or <code>nvm install 20</code></td></tr>
+          <tr><td>Docker Desktop</td><td>Latest</td><td><a href="https://www.docker.com/products/docker-desktop" target="_blank">docker.com</a></td></tr>
+          <tr><td>kubectl</td><td>1.28+</td><td><a href="https://kubernetes.io/docs/tasks/tools/" target="_blank">kubernetes.io</a></td></tr>
+          <tr><td>minikube</td><td>1.32+</td><td><a href="https://minikube.sigs.k8s.io/docs/start/" target="_blank">minikube.sigs.k8s.io</a></td></tr>
+          <tr><td>git</td><td>Any</td><td><a href="https://git-scm.com" target="_blank">git-scm.com</a></td></tr>
+        </table>
+
+        <pre><code class="language-bash"># Verify installations
+node --version     # v20.x.x
+docker --version   # Docker version 24.x.x
+kubectl version    # v1.28+
+minikube version   # v1.32+</code></pre>
+
+        <h2>2. Clone and Setup</h2>
+        <pre><code class="language-bash">git clone https://github.com/your-org/sam-gong-game.git
+cd sam-gong-game</code></pre>
+
+        <p>Generate RSA keys for JWT authentication:</p>
+        <pre><code class="language-bash">mkdir -p keys
+openssl genrsa -out keys/private.pem 4096
+openssl rsa -in keys/private.pem -pubout -out keys/public.pem
+chmod 600 keys/private.pem</code></pre>
+
+        <blockquote>
+          <strong>Security:</strong> Never commit the <code>keys/</code> directory to git. It is already listed in <code>.gitignore</code>.
+        </blockquote>
+
+        <h2>3. Install Dependencies</h2>
+        <pre><code class="language-bash"># Backend dependencies
+npm install
+
+# Frontend dependencies (Cocos Creator client)
+cd client && npm install && cd ..</code></pre>
+
+        <h2>4. Environment Configuration</h2>
+        <pre><code class="language-bash">cp .env.example .env
+# Edit .env with your local values</code></pre>
+
+        <p>Key fields to update:</p>
+        <table>
+          <tr><th>Variable</th><th>Description</th><th>Default (dev)</th></tr>
+          <tr><td><code>DB_PASSWORD</code></td><td>PostgreSQL password</td><td><code>dev_password_change_me</code></td></tr>
+          <tr><td><code>REDIS_PASSWORD</code></td><td>Redis password</td><td><code>dev_redis_password</code></td></tr>
+          <tr><td><code>JWT_PRIVATE_KEY_PATH</code></td><td>Path to RS256 private key</td><td><code>./keys/private.pem</code></td></tr>
+          <tr><td><code>JWT_PUBLIC_KEY_PATH</code></td><td>Path to RS256 public key</td><td><code>./keys/public.pem</code></td></tr>
+          <tr><td><code>OTP_API_KEY</code></td><td>OTP provider API key</td><td>(required for registration)</td></tr>
+          <tr><td><code>ANTI_ADDICTION_ENABLED</code></td><td>Taiwan regulation enforcement</td><td><code>true</code></td></tr>
+          <tr><td><code>NODE_ENV</code></td><td>Environment</td><td><code>development</code></td></tr>
+          <tr><td><code>PORT</code></td><td>Game server port</td><td><code>2567</code></td></tr>
+          <tr><td><code>REST_PORT</code></td><td>REST API port</td><td><code>3000</code></td></tr>
+        </table>
+
+        <h2>5. Local Dev: Docker Compose (PostgreSQL + Redis)</h2>
+        <pre><code class="language-bash"># Start infrastructure services
+docker-compose up -d
+
+# Verify services are running
+docker-compose ps
+
+# Expected output:
+# sam-gong-postgres  Up  0.0.0.0:5432->5432/tcp
+# sam-gong-redis     Up  0.0.0.0:6379->6379/tcp</code></pre>
+
+        <h2>6. Run Database Migrations</h2>
+        <pre><code class="language-bash"># Run all pending migrations
+npm run migrate
+
+# Verify schema
+psql -h localhost -U postgres -d sam_gong -c "\dt"</code></pre>
+
+        <h2>7. Start Development Servers</h2>
+        <pre><code class="language-bash"># Terminal 1: Start game server (Colyseus + REST API)
+npm run dev:server
+
+# Terminal 2: Start client (Cocos Creator web preview)
+cd client && npm run dev
+
+# Terminal 3 (optional): Watch TypeScript compilation
+npm run build:watch</code></pre>
+
+        <p>Services will be available at:</p>
+        <ul>
+          <li><strong>Game Server (WebSocket):</strong> <code>ws://localhost:2567</code></li>
+          <li><strong>REST API:</strong> <code>http://localhost:3000</code></li>
+          <li><strong>Swagger UI:</strong> <code>http://localhost:3000/api/docs</code></li>
+          <li><strong>Colyseus Monitor:</strong> <code>http://localhost:2567/colyseus</code> (dev only)</li>
+          <li><strong>Client (Web):</strong> <code>http://localhost:7456</code></li>
+        </ul>
+
+        <h2>8. Run Tests</h2>
+        <pre><code class="language-bash"># Run all unit tests
+npm test
+
+# Run with coverage
+npm run test:coverage
+
+# Run specific test file
+npx jest src/game/HandEvaluator.test.ts
+
+# Integration tests (requires running Docker services)
+npm run test:integration
+
+# Watch mode
+npm run test:watch</code></pre>
+
+        <h2>9. Minikube Kubernetes Deployment</h2>
+        <pre><code class="language-bash"># Start Minikube with sufficient resources
+minikube start --cpus=4 --memory=8192 --disk-size=30g
+
+# Enable required addons
+minikube addons enable ingress
+minikube addons enable metrics-server
+
+# Build Docker images using Minikube's Docker daemon
+eval $(minikube docker-env)
+docker build -t sam-gong-server:local -f Dockerfile.server .
+docker build -t sam-gong-client:local -f Dockerfile.client .
+
+# Create namespace and secrets
+kubectl create namespace sam-gong-local
+kubectl create secret generic sam-gong-secrets \
+  --from-env-file=.env.k8s \
+  -n sam-gong-local
+
+# Deploy to Minikube
+kubectl apply -f infra/k8s/ -n sam-gong-local
+
+# Wait for pods to be ready
+kubectl rollout status deployment/colyseus-game-server -n sam-gong-local
+kubectl rollout status deployment/rest-api -n sam-gong-local
+
+# Get service URL
+minikube service sam-gong-ingress --url -n sam-gong-local</code></pre>
+
+        <h2>10. Verify Health and Game Flow</h2>
+        <pre><code class="language-bash"># Health checks
+curl http://localhost:3000/health/live
+curl http://localhost:3000/health/ready
+
+# Expected output:
+# { "status": "ok" }
+# { "status": "ready", "db": "ok", "redis": "ok" }
+
+# Test WebSocket connection
+wscat -c "ws://localhost:2567"
+
+# Run smoke tests
+npm run test:smoke</code></pre>
+
+        <h2>11. Troubleshooting</h2>
+        <h3>Database Connection Failed</h3>
+        <pre><code class="language-bash"># Check PostgreSQL container
+docker-compose logs postgres
+
+# Connect directly
+psql -h localhost -U postgres -d sam_gong
+
+# Reset database
+docker-compose down -v && docker-compose up -d
+npm run migrate</code></pre>
+
+        <h3>Redis Connection Issues</h3>
+        <pre><code class="language-bash"># Check Redis
+docker-compose logs redis
+redis-cli -h localhost -a dev_redis_password ping
+# Expected: PONG</code></pre>
+
+        <h3>JWT Key Issues</h3>
+        <pre><code class="language-bash"># Regenerate keys
+rm keys/private.pem keys/public.pem
+openssl genrsa -out keys/private.pem 4096
+openssl rsa -in keys/private.pem -pubout -out keys/public.pem</code></pre>
+
+        <h3>Port Already in Use</h3>
+        <pre><code class="language-bash"># Kill process on port
+lsof -ti:2567 | xargs kill -9
+lsof -ti:3000 | xargs kill -9</code></pre>
+
+      </div>
+      <footer>Sam Gong (三公) Documentation — Generated 2026-04-22 | Sayyo Games</footer>
+    </main>
+  </div>
+
+  <a href="#" class="back-to-top" id="backToTop">↑</a>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+  <script src="assets/nav.js"></script>
+</body>
+</html>
