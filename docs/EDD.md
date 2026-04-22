@@ -472,7 +472,7 @@ export const TIER_CONFIGS: Record<string, TierConfigValues> = {
 };
 ```
 
-## §3.4 Matchmaking & Room Assignment
+### 3.4 Matchmaking & Room Assignment
 
 *本節由 Colyseus 原生 matchmaking 處理，詳見 §3.1 Room Lifecycle。*
 
@@ -824,9 +824,11 @@ private resetForNextRound(): void {
   this.state.current_player_turn_seat = -1;
   this.state.settlement = new SettlementState(); // 清空結算結果
 
-  // 輪莊（由 BankerRotation 計算）
-  this.bankerRotation.advance();
-  this.state.banker_seat_index = this.bankerRotation.currentBankerSeat;
+  // 輪莊（由 BankerRotation.rotate() 計算，統一使用 rotate() API）
+  this.state.banker_seat_index = this.bankerRotation.rotate(
+    this.state.banker_seat_index,
+    Array.from(this.state.players.values())
+  );
 }
 ```
 
@@ -1006,7 +1008,7 @@ age_verification_required | underage_session_expired | otp_invalid | otp_expired
 server_maintenance | internal_error | request_timeout
 ```
 
-## §4.4（保留）
+### 4.4（保留）
 
 *本節保留，章節號預留供未來擴充使用。*
 
@@ -1336,6 +1338,8 @@ erDiagram
     users ||--o{ chat_messages : "sends"
     game_rooms ||--o{ chat_messages : "has"
     users ||--o{ player_reports : "reports"
+    game_rooms ||--o{ player_reports : "has"
+    chat_messages ||--o{ player_reports : "references"
 ```
 
 ### 5.2 Core Table Schemas (SQL)
@@ -2080,6 +2084,8 @@ TypeScript seed scripts 位於 `tests/fixtures/`，預置測試帳號（`player_
 ---
 
 ## 9. Monitoring & Observability
+
+### 9.1 Logging & Metrics Strategy
 
 **日誌策略（Structured JSON Logging）：**
 
