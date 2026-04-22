@@ -488,26 +488,29 @@ export const TIER_CONFIGS: Record<string, TierConfigValues> = {
 
 ```mermaid
 stateDiagram-v2
+    state "banker-bet" as bankerBet
+    state "player-bet" as playerBet
+
     [*] --> waiting : onCreate（房間建立）
 
     waiting --> dealing : ≥ 2 玩家就緒，開始新局
     waiting --> [*] : 60s 無人加入，自動解散
 
-    dealing --> banker-bet : 發牌完成（每人 3 張）\n推送 myHand 至各玩家
+    dealing --> bankerBet : 發牌完成（每人 3 張）<br/>推送 myHand 至各玩家
     dealing --> waiting : 玩家數 < 2（中途離開）
 
-    banker-bet --> player-bet : 莊家下注確認（或 30s 超時自動最低下注）\n廣播 banker_bet_amount\n啟動閒家計時器
-    banker-bet --> dealing : 莊家籌碼 < min_bet（跳過當前莊家：banker_index += 1 mod N，輪至下一位後重新發牌；若所有人都不夠資格則回到 waiting）
+    bankerBet --> playerBet : 莊家下注確認（或 15s 超時自動最低下注）<br/>廣播 banker_bet_amount<br/>啟動閒家計時器
+    bankerBet --> dealing : 莊家籌碼 < min_bet（跳過當前莊家，輪至下一位後重新發牌；若無合格莊家回到 waiting）
 
-    player-bet --> showdown : 所有閒家行動完成（Call / Fold / 30s 超時 Fold）
-    player-bet --> showdown : 所有閒家均 Fold（all_fold 情境）
+    playerBet --> showdown : 所有閒家行動完成（Call / Fold / 15s 超時 Fold）
+    playerBet --> showdown : 所有閒家均 Fold（all_fold 情境）
 
-    showdown --> settled : Server 比牌完成\n廣播 showdown_reveal（所有未 Fold 手牌）
+    showdown --> settled : Server 比牌完成<br/>廣播 showdown_reveal（所有未 Fold 手牌）
     showdown --> settled : all_fold：直接進入結算（莊家底注退回）
 
-    settled --> dealing : 結算廣播完成\n籌碼更新持久化\n輪莊至下一位\n5s 後自動開始下一局（players.size ≥ 2）\n呼叫 resetForNextRound()
-    settled --> waiting : 結算廣播完成\n玩家不足（players.size < 2）\n等待更多玩家加入
-    settled --> [*] : 玩家數 < 2 且 60s 無人加入（解散）\n或所有玩家主動離開
+    settled --> dealing : 結算廣播完成<br/>籌碼更新持久化<br/>輪莊至下一位<br/>5s 後自動開始下一局（players.size ≥ 2）<br/>呼叫 resetForNextRound()
+    settled --> waiting : 結算廣播完成<br/>玩家不足（players.size < 2）<br/>等待更多玩家加入
+    settled --> [*] : 玩家數 < 2 且 60s 無人加入（解散）<br/>或所有玩家主動離開
 
     note right of waiting
         room_type: matchmaking / private
@@ -515,14 +518,14 @@ stateDiagram-v2
         60s 超時解散
     end note
 
-    note right of banker-bet
-        莊家 30s 計時器
+    note right of bankerBet
+        莊家 15s 計時器（BUG-012）
         see_cards 可選（D12）
         escrow: banker chip_balance -= bet
     end note
 
-    note right of player-bet
-        閒家逐一 30s 計時
+    note right of playerBet
+        閒家逐一 15s 計時（BUG-012）
         Call: chip_balance -= banker_bet_amount
         Fold: bet=0, no chips deducted
     end note
@@ -532,6 +535,7 @@ stateDiagram-v2
         籌碼守恆驗證
         rake 計算 + 持久化
         anti-addiction 計時累積
+        BUG-019: chip_transactions 寫入 DB
     end note
 ```
 
