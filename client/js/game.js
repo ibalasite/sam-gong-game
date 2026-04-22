@@ -457,11 +457,10 @@ function checkBetTransitions(newS) {
   const meP    = _myPid ? allP.find(p => p.player_id === _myPid) : allP[0] || null;
   const ordP   = meP ? [meP, ...allP.filter(p => p !== meP)] : [...allP];
 
-  // 莊家剛下注：phase 剛變成 player-bet，pot 從 0 增加
-  if (newS.phase === 'player-bet' && _prevPhase === 'banker-bet' && (newS.current_pot||0) > _prevPot) {
-    const bankerIdx = ordP.findIndex(p => p.seat_index === newS.banker_seat_index);
-    const fromEl = bankerIdx >= 0 ? $(positions[bankerIdx]) : null;
-    if (fromEl) setTimeout(() => { flyCoins(fromEl, potEl, 6); playCoinDrop(); }, 0);
+  // BUG-20260422-002：莊家下注不入獎池（屬 escrow），不再觸發 banker→pot 動畫。
+  // 莊家下注改為在莊家座位上播放 coin drop 音效作為視覺提示。
+  if (newS.phase === 'player-bet' && _prevPhase === 'banker-bet') {
+    playCoinDrop();
   }
 
   // 閒家剛跟注：has_acted 從 false → true
@@ -548,34 +547,79 @@ function markWinners() {
 }
 
 // ── Settle animation: coins fly + sound ──────────────────
+// BUG-20260422-002：精準依三公規則演示資金流向
+//   1) 輸家：獎池內的 called_bet → 莊家（抽水後歸莊家）
+//   2) 平手：獎池內的 called_bet → 玩家（退回）
+//   3) 贏家 called_bet 退回：獎池 → 贏家
+//   4) 贏家賠付：莊家 → 贏家（N × banker_bet，從莊家籌碼支付）
+//   5) 莊家破產情境：少量破碎動畫，象徵未獲得支付
 function triggerSettleAnimation(s, ordered) {
   const positions = ['s-bot','s-bl','s-tl','s-top','s-tr','s-br'];
   const potEl = $('c-pot');
   if (!potEl) return;
 
-  // 先播收銀機聲
   playCashRegister();
 
-  // 決定金幣飛向誰：player winners → 飛到各贏家；沒有 → 莊家贏，飛到莊家
-  const playerWinners = s.settlement?.winners || [];
-  let targets = [];
+  const seatElOf = (seatIndex) => {
+    const idx = ordered.findIndex(p => p.seat_index === seatIndex);
+    return idx >= 0 ? $(positions[idx]) : null;
+  };
+  const bankerEl = seatElOf(s.banker_seat_index);
 
-  if (playerWinners.length > 0) {
-    playerWinners.forEach((w, i) => {
-      const idx = ordered.findIndex(p => p.seat_index === w.seat_index);
-      if (idx >= 0) targets.push({ idx, delay: i * 180 });
+  const sett = s.settlement || {};
+  const winners         = sett.winners || [];
+  const losers          = sett.losers  || [];
+  const ties            = sett.ties    || [];
+  const insolventWinners = sett.insolvent_winners || [];
+
+  let t = 0;
+
+  // 1) 輸家的 called_bet：獎池 → 莊家（每位輸家 6 枚金幣，依順序）
+  if (bankerEl) {
+    losers.forEach((l, i) => {
+      setTimeout(() => flyCoins(potEl, bankerEl, 6), t + i * 90);
     });
-  } else {
-    // 莊家贏
-    const bankerIdx = ordered.findIndex(p => p.seat_index === s.banker_seat_index);
-    if (bankerIdx >= 0) targets.push({ idx: bankerIdx, delay: 0 });
+  }
+  if (losers.length > 0) t += losers.length * 90 + 180;
+
+  // 2) 平手的 called_bet：獎池 → 玩家（退回）
+  ties.forEach((tie, i) => {
+    const seatEl = seatElOf(tie.seat_index);
+    if (seatEl) setTimeout(() => flyCoins(potEl, seatEl, 5), t + i * 90);
+  });
+  if (ties.length > 0) t += ties.length * 90 + 180;
+
+  // 3) 贏家的 called_bet：獎池 → 贏家（退回本金）
+  winners.forEach((w, i) => {
+    const seatEl = seatElOf(w.seat_index);
+    if (seatEl) setTimeout(() => flyCoins(potEl, seatEl, 5), t + i * 90);
+  });
+  // insolvent winners 的 called_bet 也從獎池退回（根據 PRD：本金退回後再檢查能否支付賠付）
+  insolventWinners.forEach((iw, i) => {
+    const seatEl = seatElOf(iw.seat_index);
+    if (seatEl) setTimeout(() => flyCoins(potEl, seatEl, 3), t + (winners.length + i) * 90);
+  });
+  if (winners.length + insolventWinners.length > 0) t += (winners.length + insolventWinners.length) * 90 + 200;
+
+  // 4) 贏家賠付：莊家 → 贏家（N × banker_bet 從莊家口袋飛出）
+  if (bankerEl) {
+    winners.forEach((w, i) => {
+      const seatEl = seatElOf(w.seat_index);
+      const n = w.payout_multiplier || 1;
+      if (seatEl) setTimeout(() => flyCoins(bankerEl, seatEl, 6 + n * 2), t + i * 120);
+    });
   }
 
-  targets.forEach(({ idx, delay }) => {
-    const seatEl = $(positions[idx]);
-    if (!seatEl) return;
-    setTimeout(() => flyCoins(potEl, seatEl, 12), delay);
-  });
+  // 5) 莊家破產的贏家：只有 1~2 枚破碎金幣從莊家出發，象徵未能取得支付
+  if (bankerEl && insolventWinners.length > 0) {
+    insolventWinners.forEach((iw, i) => {
+      const seatEl = seatElOf(iw.seat_index);
+      if (seatEl) setTimeout(() => flyCoins(bankerEl, seatEl, 2), t + (winners.length + i) * 120 + 300);
+    });
+  }
+
+  // 若全無 losers / winners / ties / insolventWinners（例如全員 Fold），
+  // 莊家從 §8.0 規則拿回底注，但 current_pot=0 所以無動畫需要。
 }
 
 function flyCoins(fromEl, toEl, count) {

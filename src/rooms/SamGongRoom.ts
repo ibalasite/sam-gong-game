@@ -553,7 +553,7 @@ export class SamGongRoom extends Room<SamGongState> {
     this.state.banker_bet_amount = autoBetAmount;
     bankerPlayer.bet_amount = autoBetAmount;
     bankerPlayer.chip_balance -= autoBetAmount;
-    this.state.current_pot = autoBetAmount;   // ← 莊家下注入池
+    // BUG-20260422-002：莊家下注屬 escrow，不進 current_pot。獎池只由閒家 call 累加。
 
     this.startPlayerBetPhase();
   }
@@ -934,7 +934,7 @@ export class SamGongRoom extends Room<SamGongState> {
     player.chip_balance -= amount;
     player.bet_amount = amount;
     this.state.banker_bet_amount = amount;
-    this.state.current_pot = amount;   // ← 莊家下注入池
+    // BUG-20260422-002：莊家下注屬 escrow，不進 current_pot。獎池只由閒家 call 累加。
 
     this.startPlayerBetPhase();
   }
