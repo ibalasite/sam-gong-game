@@ -114,6 +114,43 @@ export class SamGongRoom extends Room<SamGongState> {
   private waitingTimer?: ReturnType<typeof setTimeout>;
 
   // ──────────────────────────────────────────────
+  // onAuth — JWT 驗證（dev mode 自動 bypass）
+  // ──────────────────────────────────────────────
+
+  async onAuth(_client: Client, options: JoinOptions): Promise<AuthToken> {
+    const isDev = process.env['NODE_ENV'] !== 'production';
+
+    // ── Dev mode bypass ──────────────────────────────────────────────────
+    if (isDev) {
+      const nickname = (options as unknown as { nickname?: string }).nickname ?? 'DevPlayer';
+      const playerId = 'dev_' + Math.random().toString(36).slice(2, 10);
+      console.log(`[onAuth] DEV MODE — auto auth for "${nickname}" (${playerId})`);
+      return {
+        player_id: playerId,
+        display_name: nickname,
+        chip_balance: 100_000,   // 10萬測試籌碼
+        avatar_url: '',
+        is_minor: false,
+      };
+    }
+
+    // ── Production: verify JWT ───────────────────────────────────────────
+    const token = options?.token;
+    if (!token) {
+      throw new Error('Unauthorized: missing auth token');
+    }
+
+    try {
+      // TODO: replace with real JWT verification using jsonwebtoken + public key
+      // const payload = jwt.verify(token, JWT_PUBLIC_KEY, { algorithms: ['RS256'] });
+      // return payload as AuthToken;
+      throw new Error('JWT verification not implemented — use dev mode (NODE_ENV=development)');
+    } catch (e) {
+      throw new Error('Unauthorized: invalid token');
+    }
+  }
+
+  // ──────────────────────────────────────────────
   // onCreate
   // ──────────────────────────────────────────────
 
@@ -211,8 +248,10 @@ export class SamGongRoom extends Room<SamGongState> {
       throw new Error('Unauthorized: missing auth token');
     }
 
-    // 驗證籌碼門檻
-    if (auth.chip_balance < this.state.tier_config.entry_chips) {
+    const isDev = process.env['NODE_ENV'] !== 'production';
+
+    // 驗證籌碼門檻（dev mode 跳過）
+    if (!isDev && auth.chip_balance < this.state.tier_config.entry_chips) {
       throw new Error(`insufficient_chips: need ${this.state.tier_config.entry_chips}, have ${auth.chip_balance}`);
     }
 

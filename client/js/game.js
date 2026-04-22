@@ -108,7 +108,8 @@ async function devJoin() {
   try {
     if (!window.Colyseus) throw new Error('Colyseus SDK 未載入');
     client = new Colyseus.Client(`ws://${WS_HOST}`);
-    room = await client.joinOrCreate('sam_gong', { nickname: nick });
+    // dev mode: pass nickname (no JWT required when NODE_ENV=development)
+    room = await client.joinOrCreate('sam_gong', { nickname: nick, token: 'dev' });
     mySessionId = room.sessionId;
     setConn('ok');
     setupRoomHandlers();
