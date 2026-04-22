@@ -28,7 +28,7 @@ export type WsMessageType =
   | 'fold'
   | 'see_cards'
   | 'confirm_anti_addiction'
-  | 'chat';
+  | 'send_chat';
 
 export interface BankerBetPayload {
   amount: number;
@@ -39,7 +39,7 @@ export interface ConfirmAntiAddictionPayload {
 }
 
 export interface ChatPayload {
-  message: string;
+  text: string;
 }
 
 // ── NetworkManager ──────────────────────────────────────────────────────────
@@ -160,10 +160,10 @@ export class NetworkManager {
 
   /**
    * 發送聊天訊息。
-   * Client → Server: `{ type: 'chat', message: { message } }`
+   * Client → Server: `{ type: 'send_chat', message: { text } }`
    */
-  public sendChat(message: string): void {
-    this._send<ChatPayload>('chat', { message });
+  public sendChat(text: string): void {
+    this._send<ChatPayload>('send_chat', { text });
   }
 
   // ── 私有 ────────────────────────────────────────────────────────────────

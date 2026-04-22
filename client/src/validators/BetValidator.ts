@@ -38,7 +38,8 @@ export const HALL_BET_CONFIG: Record<HallType, HallBetConfig> = {
 export type BetValidationError =
   | 'BELOW_MIN'
   | 'ABOVE_MAX'
-  | 'INSUFFICIENT_CHIPS';
+  | 'INSUFFICIENT_CHIPS'
+  | 'NOT_INTEGER';
 
 export interface BetValidationResult {
   valid: boolean;
@@ -54,11 +55,12 @@ export interface BetValidationResult {
  * 防止非法請求送達 Server。
  *
  * 驗證順序（優先序）：
+ * 0. amount 非正整數         → NOT_INTEGER
  * 1. amount < minBet        → BELOW_MIN
  * 2. amount > maxBet        → ABOVE_MAX
  * 3. amount > currentBalance → INSUFFICIENT_CHIPS
  *
- * 注意：amount 必須為正整數，負數/零視同 BELOW_MIN。
+ * 注意：amount 必須為正整數，非整數/負數/零 → NOT_INTEGER。
  */
 export class BetValidator {
   /**
@@ -76,6 +78,11 @@ export class BetValidator {
     maxBet: number,
     currentBalance: number,
   ): BetValidationResult {
+    // 0. 必須為正整數（非整數或非數字視為非法）
+    if (!Number.isInteger(amount) || amount <= 0) {
+      return { valid: false, error: 'NOT_INTEGER' };
+    }
+
     // 1. 低於最低注（含零/負數）
     if (amount < minBet) {
       return { valid: false, error: 'BELOW_MIN' };

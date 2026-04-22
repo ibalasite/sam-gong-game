@@ -169,7 +169,12 @@ export class SamGongRoom extends Room<SamGongState> {
       this.handleReport(client, message);
     });
 
-    this.onMessage<AntiAddictionConfirmMessage>('confirm_anti_addiction', (client, _message) => {
+    this.onMessage<AntiAddictionConfirmMessage>('confirm_anti_addiction', (client, message) => {
+      // 嚴格驗證 payload：只接受 { type: 'adult' }
+      if (!message || message.type !== 'adult') {
+        client.send('error', { code: 'invalid_payload', message: 'confirm_anti_addiction payload must be { type: "adult" }' });
+        return;
+      }
       const auth = client.auth as AuthToken;
       // 重置成人防沉迷計時器
       console.log(`[AntiAddiction] Adult warning confirmed by player ${auth?.player_id}`);
@@ -389,9 +394,11 @@ export class SamGongRoom extends Room<SamGongState> {
       .find((p) => p.seat_index === this.state.banker_seat_index);
 
     if (bankerPlayer) {
-      this.state.banker_bet_amount = this.state.min_bet;
-      bankerPlayer.bet_amount = this.state.min_bet;
-      bankerPlayer.chip_balance -= this.state.min_bet;
+      // 若莊家籌碼不足最低注，取其現有餘額（不讓 chip_balance 為負）
+      const autoBetAmount = Math.min(this.state.min_bet, bankerPlayer.chip_balance);
+      this.state.banker_bet_amount = autoBetAmount;
+      bankerPlayer.bet_amount = autoBetAmount;
+      bankerPlayer.chip_balance -= autoBetAmount;
     }
 
     this.startPlayerBetPhase();
@@ -653,6 +660,13 @@ export class SamGongRoom extends Room<SamGongState> {
     }
 
     const { amount } = message;
+
+    // amount 必須為正整數（非整數/負數視為非法）
+    if (!Number.isInteger(amount) || amount <= 0) {
+      client.send('error', { code: 'invalid_bet_amount', message: 'Bet amount must be a positive integer' });
+      return;
+    }
+
     if (amount < this.state.min_bet || amount > this.state.max_bet) {
       client.send('error', { code: 'bet_out_of_range', message: `Bet must be between ${this.state.min_bet} and ${this.state.max_bet}` });
       return;
@@ -766,7 +780,7 @@ export class SamGongRoom extends Room<SamGongState> {
     const player = this.findPlayerByClient(client);
     if (!player) return;
 
-    if (!message.text || message.text.length > 200) {
+    if (!message.text || message.text.trim().length === 0 || message.text.length > 200) {
       client.send('send_message_rejected', { reason: 'content_filter' });
       return;
     }
@@ -787,6 +801,16 @@ export class SamGongRoom extends Room<SamGongState> {
   private handleReport(client: Client, message: ReportMessage): void {
     const reporter = this.findPlayerByClient(client);
     if (!reporter) return;
+
+    // 驗證 payload 欄位長度，防止日誌注入與超大 payload 攻擊
+    if (
+      !message.target_id || typeof message.target_id !== 'string' || message.target_id.length > 100 ||
+      !message.message_id || typeof message.message_id !== 'string' || message.message_id.length > 100 ||
+      !message.reason || typeof message.reason !== 'string' || message.reason.length > 500
+    ) {
+      client.send('error', { code: 'invalid_payload', message: 'Invalid report payload' });
+      return;
+    }
 
     // TODO: 寫入 player_reports 表
     console.log(`[Report] player ${reporter.player_id} reported ${message.target_id}, reason: ${message.reason}`);
