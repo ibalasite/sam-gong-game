@@ -96,31 +96,28 @@ describe('DeckManager', () => {
       );
     });
 
-    it('TC-DM-006: 兩次 shuffle 結果（幾乎）不同（隨機性驗證）', () => {
-      // 注意：極小機率兩次洗牌結果相同（52! 可能性），此測試為統計性驗證
+    it('TC-DM-006: shuffle 改變牌序（洗後頭 5 張與未洗時不同）', () => {
+      // 驗證 shuffle 確實改變了牌序，而非維持建構時的固定順序
       const deck1 = new DeckManager();
       deck1.buildDeck();
-      deck1.shuffle();
-      const hand1 = deck1.deal(5);
+      // 不洗牌，取出頭 5 張（固定順序）
+      const unshuffled = deck1.deal(5);
 
       const deck2 = new DeckManager();
       deck2.buildDeck();
       deck2.shuffle();
-      const hand2 = deck2.deal(5);
+      // 洗牌後取出頭 5 張
+      const shuffled = deck2.deal(5);
 
-      // 比較牌的順序（兩副牌頭 5 張相同機率極低）
-      const same = hand1.every(
-        (c, i) => c.value === hand2[i].value && c.suit === hand2[i].suit,
+      // 洗牌後應有 5 張且花色/牌值為合法值
+      expect(shuffled).toHaveLength(5);
+      expect(unshuffled).toHaveLength(5);
+
+      // 洗牌後頭 5 張應與固定順序不同（機率 1 - 1/(52×51×50×49×48) ≈ 100%）
+      const sameAsUnshuffled = shuffled.every(
+        (c, i) => c.value === unshuffled[i].value && c.suit === unshuffled[i].suit,
       );
-
-      // 不強制不同（有極小機率相同），但記錄警告
-      if (same) {
-        console.warn('TC-DM-006: Two shuffles produced identical first 5 cards (extremely rare)');
-      }
-
-      // 牌張數量應相同
-      expect(hand1).toHaveLength(5);
-      expect(hand2).toHaveLength(5);
+      expect(sameAsUnshuffled).toBe(false);
     });
   });
 

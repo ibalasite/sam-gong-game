@@ -87,11 +87,13 @@ describe('AntiAddictionManager', () => {
       expect(status.should_warn).toBe(false);
     });
 
-    it('TC-AA-007: 未成年每日計時返回 daily_play_seconds', async () => {
+    it('TC-AA-007: 未成年每日計時返回 daily_play_seconds（剛加入應 < 1 秒）', async () => {
       const status = await manager.trackUnderageDaily('player_minor_3');
 
+      // daily_play_seconds 是數字，且剛加入時不超過 1 秒（非 undefined / 負數 / 異常大值）
       expect(typeof status.daily_play_seconds).toBe('number');
       expect(status.daily_play_seconds).toBeGreaterThanOrEqual(0);
+      expect(status.daily_play_seconds).toBeLessThan(1); // 剛呼叫，不可能超過 1 秒
     });
   });
 
