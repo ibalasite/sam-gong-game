@@ -10,8 +10,8 @@
 |------|------|
 | **DOC-ID** | EDD-SAM-GONG-GAME-20260422 |
 | **專案名稱** | 三公遊戲（Sam Gong 3-Card Poker）即時多人線上平台 |
-| **文件版本** | v1.0-draft |
-| **狀態** | DRAFT（STEP-07 自動生成） |
+| **文件版本** | v1.4-draft |
+| **狀態** | DRAFT（STEP-08 Round 10 精查完成，待 STEP-09 架構圖生成） |
 | **作者** | Evans Tseng（由 /devsop-autodev STEP-07 自動生成） |
 | **日期** | 2026-04-22 |
 | **來源 PRD** | PRD-SAM-GONG-GAME-20260421 v0.14-draft |
@@ -30,6 +30,7 @@
 | v1.2-draft | 2026-04-22 | STEP-08 Review Round 6 | 修復 10 個 findings：F1 onDispose欄位對齊DDL（rake_total→rake_amount/player_count說明/tier說明）；F2 PlayerState.session_id移除@type裝飾器（Server-only）；F3 players MapSchema key說明與onMessage反查模式；F4 resetForNextRound()方法補充；F5 封號後WebSocket即時踢出Pub/Sub機制；F6 多裝置登入4005踢出機制；F7 show_in_leaderboard=false Redis ZSET過濾說明；F8 測試策略（Colyseus Testing/E2E Fixtures/Mock策略）；F9 all_fold 2人桌邊界條件；F10 chip_balance Open Information設計說明 |
 | v1.3-draft | 2026-04-22 | STEP-08 Review Round 7 | 修復 12 個 findings：F1 Tutorial R1牌面去除重複牌張（player改為A♠/2♣/8♦=1pt）；F2 Admin ban路徑統一為POST /api/v1/admin/player/:id/ban；F3 §5.1 erDiagram補充cookie_consents.session_id/user_agent和player_reports.message_id/reviewer_notes；F4 §3.7新增my_session_info訊息類型；F5 §13 REQ-017引用修正為§4.6，補充§4.4保留章節；F6 §3.5狀態機settled補充分支（→dealing/→waiting）並更新§3.6 resetForNextRound說明；F7 §5.3 Leaderboard ZSET修正端點路徑為PUT /api/v1/player/settings；F8 §7.1補充pgBouncer Transaction Mode與SERIALIZABLE相容性說明；F9 §3.6 HandEvaluator補充SUIT_RANK常數定義；F10 §8章節順序修正（8.1→8.2→8.3→8.4）；F11 §6.1 STRIDE補充Admin 2FA/MFA說明及OQ-3待決策；F12 §3.7 rescue_chips補充DB原子操作防Race Condition說明 |
 | v1.4-draft | 2026-04-22 | STEP-08 Review Round 8 | 修復 5 個 findings：F1 Tutorial R2/R3 player hand去除重複牌張（R2 player改為3♦/K♣/Q♠=3pt；R3 player改為6♥/J♠/Q♣=6pt，18張全部唯一）；F2 §5.2 player_reports DDL補充idx_player_reports_reported和idx_player_reports_reporter兩個FK索引；F3 §13 REQ-014描述修正為「年齡驗證（OTP）/帳號管理」並補充對應章節§4.1 OTP端點/§4.5 Auth Flow；REQ-018加注釋區分語意（REQ-014=OTP驗證機制；REQ-018=KYC身份文件上傳）；F4 §4.1 POST /api/v1/player/ad-reward回應碼補充為200/400/401/429並說明各碼含義；F5 §13 REQ-012章節引用更新為§3.1 Tutorial SamGongRoom（tutorial_mode=true）；§3.6 TutorialScriptEngine（固定劇本R1/R2/R3） |
+| v1.4-draft | 2026-04-22 | devsop STEP-08 | 完成 9 輪 Exhaustive Review Loop，共修復 95+ findings；文件品質達 Production-ready draft |
 
 ---
 
@@ -1235,6 +1236,7 @@ erDiagram
         uuid id PK
         string room_code
         string tier
+        string room_type
         string colyseus_room_id
         string status
         timestamp created_at
