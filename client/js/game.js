@@ -315,7 +315,11 @@ function renderState(s) {
   const hallName = s.hall_name || '青銅廳';
 
   setText('c-phase', PHASE_NAMES[phase]||phase);
-  setText('c-pot',   pot > 0 ? pot.toLocaleString() : '—');
+  // 結算動畫時獎池裡的錢會「飛出去」給贏家/莊家，視覺上獎池應立刻歸 0，
+  // 避免中央數字與飛幣動畫語意不一致。Server 在 resetForNextRound（~5 秒後）
+  // 才把 current_pot 重置，這裡 Client 提早顯示「—」對齊使用者直覺。
+  const potShown = (phase === 'settled') ? 0 : pot;
+  setText('c-pot',   potShown > 0 ? potShown.toLocaleString() : '—');
   setText('c-hall',  hallName);
 
   // Collect players (plain array from room_state message)
@@ -522,8 +526,8 @@ function updateActionMarquee(s, me) {
     bits.push('✅ 本局結束，等待下一局自動開始');
   }
 
-  // 本局獎池 + 房間代號
-  if (typeof s.current_pot === 'number' && s.current_pot > 0) {
+  // 本局獎池 + 房間代號（結算時錢已飛出去，獎池不再顯示金額）
+  if (phase !== 'settled' && typeof s.current_pot === 'number' && s.current_pot > 0) {
     bits.push(`🪙 獎池 ${s.current_pot.toLocaleString()}`);
   }
   const rid = (_room && _room.id) ? _room.id : null;
