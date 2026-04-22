@@ -233,8 +233,8 @@ export class SamGongRoom extends Room<SamGongState> {
     this.onMessage<ReportMessage>('report_player', (client, message) => {
       this.handleReport(client, message);
     });
-    this.onMessage<{ player_id: string }>('confirm_anti_addiction', (client, message) => {
-      this.antiAddiction.onAdultWarningConfirmed(client.sessionId);
+    this.onMessage<{ type: 'adult' }>('confirm_anti_addiction', (client, message) => {
+      this.antiAddiction.onAdultWarningConfirmed(client.auth.player_id);
     });
   }
 
@@ -879,6 +879,7 @@ export class BankerRotation {
 | `anti_addiction_warning` | `{ type: 'adult', session_minutes: number }` | 成人 2h 連續遊玩提醒 |
 | `anti_addiction_signal` | `{ type: 'underage', daily_minutes_remaining: number, midnight_timestamp: number }` | 未成年每日 2h 硬停訊號 |
 | `rescue_chips` | `{ amount: 1000, new_balance: number }` | 結算後餘額 < 500 觸發救濟籌碼補發。Server 偵測 chip_balance < 500 時，先查 daily_rescue_claimed_at（與 POST /api/v1/player/rescue-chip REST API 共用同一冪等判斷）。若今日未領取，則自動發放並推送 rescue_chips 通知；若已領取（無論透過 REST 或自動觸發），不重複發放，改推送 rescue_not_available 通知。Race Condition 防護：使用 DB 原子更新（單一 SQL UPDATE）確保冪等：`UPDATE users SET daily_rescue_claimed_at = NOW(), chip_balance = chip_balance + 1000 WHERE id = $1 AND chip_balance < 500 AND (daily_rescue_claimed_at IS NULL OR DATE(daily_rescue_claimed_at AT TIME ZONE 'Asia/Taipei') < CURRENT_DATE AT TIME ZONE 'Asia/Taipei') RETURNING id, chip_balance;` — 若 RETURNING 返回空（無符合行），代表已領取或餘額不足，返回 403。此單一 SQL 原子操作防止並發雙重發放（Colyseus 自動觸發 + REST API 同時呼叫）。 |
+| `rescue_not_available` | `{ reason: 'already_claimed' \| 'balance_sufficient' }` | 餘額 < 500 但今日已領取（already_claimed）或餘額 ≥ 500（balance_sufficient）時推送；Client 顯示對應提示訊息 |
 | `rate_limit` | `{ error: 'rate_limit', retry_after_ms: number }` | 訊息速率超限回應 |
 | `error` | `{ code: string, message: string }` | 一般錯誤回應（非法操作、驗證失敗） |
 | `matchmaking_expanded` | `{ expanded_tiers: string[] }` | 配對擴展至相鄰廳別（30s 後） |
@@ -2236,7 +2237,7 @@ APM：
 | Q4 | 排行榜指標最終確認（週榜活躍玩家數 ≥ 500、每房間聊天 ≥ 1,000 則）| 2026-05-15 | PM | REQ-006、REQ-007 AC 正式化 |
 | Q5 | Beta 美術方向決策（像素風 vs 賭場風）| 2026-07-21 | PM + Art Director | REQ-013；影響美術資源量 |
 | Q6 | 每日任務具體清單（任務類型、獎勵金額範圍）| 2026-05-15 | Game Designer | REQ-021 AC-1 驗收條件 |
-| Q7 | Tutorial 第 3 輪精確牌面序列（EDD 需指定 tutorial_hand_sequence）| 2026-05-30 | Eng Lead | REQ-012 AC-5；PRD §5 設計說明 |
+| Q7 | Tutorial 第 3 輪精確牌面序列（EDD 需指定 tutorial_hand_sequence）TENTATIVE_RESOLVED：暫定版本已填入 §3.6 TutorialScriptEngine（R1/R2/R3 共 18 張唯一牌），待 Game Designer 最終確認牌面後即可關閉。| 2026-05-30 | Eng Lead | REQ-012 AC-5；PRD §5 設計說明 |
 | Q8 | OTP 簡訊服務供應商（Twilio / 本地電信業者）| 2026-05-15 | Eng Lead | REQ-014；成本與可靠性 |
 | Q9 | 滲透測試廠商選定 | 2026-07-01 | Legal + Eng Lead | NFR-05；GA 前完成 |
 | Q10 | suspicious_underage_flag 具體觸發邏輯（設備指紋、行為分析）| EDD 下次修訂 | Eng Lead | REQ-015；v1.0 是否列入 AC |
