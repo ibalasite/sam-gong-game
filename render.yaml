@@ -1,0 +1,28 @@
+databases:
+  - name: sam-gong-db
+    plan: free
+    databaseName: sam_gong
+    user: sam_gong_app
+    postgresMajorVersion: "16"
+
+services:
+  - type: web
+    name: sam-gong-server
+    runtime: node
+    plan: starter
+    region: singapore
+    branch: main
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: sam-gong-db
+          property: connectionString
+      - key: COLYSEUS_MONITOR_ENABLED
+        value: "false"

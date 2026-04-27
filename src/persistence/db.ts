@@ -25,16 +25,25 @@ let _dbReady = false;
 
 export function getPool(): Pool {
   if (_pool) return _pool;
-  _pool = new Pool({
-    host: HOST,
-    port: PORT,
-    user: USER,
-    password: PASSWORD,
-    database: DATABASE,
-    max: 10,
-    idleTimeoutMillis: 30_000,
-    connectionTimeoutMillis: 5_000,
-  });
+  const connectionString = process.env['DATABASE_URL'];
+  _pool = connectionString
+    ? new Pool({
+        connectionString,
+        ssl: { rejectUnauthorized: false },
+        max: 10,
+        idleTimeoutMillis: 30_000,
+        connectionTimeoutMillis: 5_000,
+      })
+    : new Pool({
+        host: HOST,
+        port: PORT,
+        user: USER,
+        password: PASSWORD,
+        database: DATABASE,
+        max: 10,
+        idleTimeoutMillis: 30_000,
+        connectionTimeoutMillis: 5_000,
+      });
   _pool.on('error', (err) => {
     console.error('[DB] Pool error:', err.message);
   });
